@@ -4,16 +4,16 @@ function newfig = figs2subplots( name , tiling , arr )
 %   The syntax:
 %
 %       >> newfig = figs2subplots(handles,tiling,arr);
-%   
+%
 %   creates a new figure with handle "newfig", in which the axes specified
-%   in vector "handles" are reproduced and aggregated as subplots. 
+%   in vector "handles" are reproduced and aggregated as subplots.
 %
 %   Vector "handles" is a vector of figure and/or axes handles. If an axes
 %   handle is encountered, the corresponding axes is simply reproduced as
 %   a subplot in the new figure; if a figure handle is encountered, all its
 %   children axes are reproduced as subplots in the figure.
 %
-%   Vector "tiling" is an optional subplot tiling vector of the form 
+%   Vector "tiling" is an optional subplot tiling vector of the form
 %   [M N], where M and N specify the number of rows and columns for the
 %   subplot tiling. M and N correspond to the first two arguments of the
 %   SUBPLOT command. By default, the tiling is such that all subplots are
@@ -32,13 +32,13 @@ function newfig = figs2subplots( name , tiling , arr )
 %
 %       figs2subplots([a1 a2 a3],[2 2],{[1 3],2,4})
 %
-%   copies the three axes a1, a2 and a3 as subplots in a new figure with a 
-%   2x2 tiling arangement. Axes a1 will be reproduced as a subplot 
-%   occupying tiles 1 and 3 (thus covering the left part of the figure), 
+%   copies the three axes a1, a2 and a3 as subplots in a new figure with a
+%   2x2 tiling arangement. Axes a1 will be reproduced as a subplot
+%   occupying tiles 1 and 3 (thus covering the left part of the figure),
 %   while axes a2 will be reproduced as a subplot occupying tile 2 (upper
 %   right corner) and a3 occupying tile 4 (lower right corner).
 
-%   Original version by François Bouffard (fbouffard@gmail.com)
+%   Original version by Franï¿½ois Bouffard (fbouffard@gmail.com)
 %   Legend copy code by Zoran Pasaric (pasaric@rudjer.irb.hr)
 %   further modifications made by Max Gagnon (maxwellg@stanford.edu) 12/17
 % Parsing handles vector
@@ -55,6 +55,8 @@ for k = 1:length(handles)
         fc = get(handles(k),'Children');
         for j = length(fc):-1:1
             if strcmp(get(fc(j),'Type'),'axes') && ~strcmp(get(fc(j),'Tag'),'legend')
+                av = [av fc(j)];
+            elseif strcmp(get(fc(j),'Type'),'polaraxes') && ~strcmp(get(fc(j),'Tag'),'legend')
                 av = [av fc(j)];
             end;
         end;
@@ -103,10 +105,10 @@ for k = 1:min(Ns,Na)
         na.Children(2).FontSize = 6;
     catch
     end
-        
+
     set(na,'Position',get(da(k),'Position'));
     % Produce legend if it exists in original axes
-    try 
+    try
         [ii jj] = ismember(av(k),hLegParAxes);
         if(jj>0)
             axes(na);
@@ -119,7 +121,7 @@ end
 
 
 % set up the export nicely
-A = figure(19);
+A = figure(20);
 A.PaperSize = [20 40];
 A.PaperOrientation = 'landscape';
 slots = tiling(1) * tiling(2);

@@ -43,7 +43,13 @@ labels = strcat(T.Type, {' '}, num2str( T.Frequency), { 'Hz '}, num2str(T.TimePo
 %% ---------------------------Import calibration file -------------------%%
 try  % Look in current folder
     filelist = dir;
-    calIndex = ~cellfun(@isempty,strfind({filelist.name}, 'calib'));    
+    calIndex = ~cellfun(@isempty,strfind({filelist.name}, 'calib'));   
+    % if no 'calib' file is found, try looking for alternative naming
+    % format
+    if sum(calIndex) == 0
+        altName = strcat(filenameroot, '_', 'cali.mat');
+        calIndex = contains({filelist.name}, altName);
+    end
     filenameCal = filelist(calIndex).name; pathnameCal = cd;
 catch % close popup to enter manually
     [filenameCal, pathnameCal] = uigetfile( {'*.mat','Matlab (.mat)'},'Pick a calibration file with scale factors','calib.mat');
