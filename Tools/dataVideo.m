@@ -5,7 +5,7 @@ C = fscanf(A, '%f');
 
 start = 1;
 dispLen = length(C) / 300;
-addition = dispLen / 100;
+addition = 200;
 i = 1;
 
 %% Get Frames
