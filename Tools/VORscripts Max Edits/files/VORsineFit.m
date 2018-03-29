@@ -288,7 +288,109 @@ for count = 1:nsegs
     end
 
 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Added by Max Gagnon 3/18. This section takes the difference of the
+    % final light condition and the first light condition.
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    
+    %Extract the correct segments
+    if count == 4
+        % get head vel. segments
+        headVelLong     = datchandata(dataseg,'hhvel');
+        headVel_light_begin = headVelLong(zeroCross(i):zeroCross(i)+cycleLength-1)';
 
+        % get drum vel. segments
+        drumVelLong     = datchandata(dataseg,'htvel');
+        drumVel_light_begin = drumVelLong(zeroCross(i):zeroCross(i)+cycleLength-1)';
+
+        % record the number of good cycles for each segment
+        goodCount_light_begin         = goodCount;
+        EyeVelCycle_light_begin  = smooth(eyevelCycleMean, 50);
+        EyeVelDes_light_begin    = smooth(eyevelDesMean, 50);
+        
+    elseif count == 14
+        % get head vel. segments
+        headVelLong     = datchandata(dataseg,'hhvel');
+        headVel_light_end = headVelLong(zeroCross(i):zeroCross(i)+cycleLength-1)';
+
+        % get drum vel. segments
+        drumVelLong     = datchandata(dataseg,'htvel');
+        drumVel_light_end = drumVelLong(zeroCross(i):zeroCross(i)+cycleLength-1)';
+
+        % record the number of good cycles for each segment
+        goodCount_light_end         = goodCount;
+        EyeVelCycle_light_end  = smooth(eyevelCycleMean, 50);
+        EyeVelDes_light_end    = smooth(eyevelDesMean, 50);
+        
+    % take difference of the two
+        BlueDiff = EyeVelCycle_light_end - EyeVelCycle_light_begin;
+        GreenDiff = EyeVelDes_light_end - EyeVelDes_light_begin;
+        
+        % Plotting
+        figure(count+1000); clf;
+        ttCycle = (1:cycleLength)/samplerate;
+        plot(ttCycle, BlueDiff,'b'); hold on
+        plot(ttCycle, GreenDiff, 'g');
+        
+        [eyevelH_offset, eyevelH_rel_phase_Light, eyevelH_amp, Light_Diff_eyeHgain] = VORsineFitMaxMod( sinefreq(1), data(1).samplerate, BlueDiff, (headVel_light_begin + headVel_light_end)'/2, (drumVel_light_begin + drumVel_light_end)'/2);
+        plot(ttCycle, eyevelH_offset+sin(2*pi*freq*ttCycle + deg2rad(eyevelH_rel_phase_Light+180))*eyevelH_amp,'r')
+        plot(ttCycle, headMean, 'k',ttCycle,zeros(size(ttCycle)),'--k');
+        ylim([-15 15]);   xlim([0 max(ttCycle)])
+        ylabel('deg/s');  xlabel('Time (s)');
+        title(['Light Delta Hor. Eye Vel: ', datatype(1:8) ' ']);
+        text (.1, 12, ['Eye amp: ', num2str(eyevelH_amp,3)],'FontSize',10);
+        legend({'t_2_7_._5 - t_2_._5 (Desaccaded full cycle removed)', 't_2_7_._5 - t_2_._5 (Desaccaded segments)','Sine fit','Stimulus'},'EdgeColor','w')
+        drawnow;
+        box off
+        
+
+        %% plot difference of raw traces
+        figure(1063); clf;
+        ttCycle = (1:cycleLength)/samplerate;
+        plot(ttCycle, EyeVelCycle_light_begin,'m'); hold on
+        plot(ttCycle, EyeVelCycle_light_end, 'r'); hold on
+        plot(ttCycle, BlueDiff,'b', 'LineWidth', 1);
+        plot(ttCycle, headMean, 'k',ttCycle,zeros(size(ttCycle)),'--k'); hold on
+
+        % Cosmetics of plot
+        ylim([-15 15]);   xlim([0 max(ttCycle)])
+        ylabel('deg/s');  xlabel('Time (s)');
+        title(['t_2_7_._5 & t_2_._5 & Delta Hor. Eye Vel: ', datatype(1:8) ' ']);
+        legend({'t_2_._5 (Desaccaded full cycle removed)', 't_2_7_._5 (Desaccaded full cycle removed)','t_2_7_._5 - t_2_._5 (Desaccaded full cycle removed)','Stimulus','zero'},'EdgeColor','w')
+        drawnow;
+
+        %% calc Sine fit for startEyeVelCycleMean & endEyeVelCycleMean
+        figure(1064); clf;
+        [STARTeyevelH_offset, STARTeyevelH_rel_phase, STARTeyevelH_amp, STARTeyeHgain] = VORsineFitMaxMod( sinefreq(1), data(1).samplerate, EyeVelCycle_light_begin,headVel_light_begin', drumVel_light_begin');
+        [ENDeyevelH_offset, ENDeyevelH_rel_phase, ENDeyevelH_amp, ENDeyeHgain]         = VORsineFitMaxMod( sinefreq(1), data(1).samplerate, EyeVelCycle_light_end, headVel_light_end', drumVel_light_end');
+
+        % plot differences in sine fits
+        plot(ttCycle, STARTeyevelH_offset+sin(2*pi*freq*ttCycle + deg2rad(STARTeyevelH_rel_phase+180))*STARTeyevelH_amp,'m'); hold on
+        plot(ttCycle, ENDeyevelH_offset+sin(2*pi*freq*ttCycle + deg2rad(ENDeyevelH_rel_phase+180))*ENDeyevelH_amp,'r'); hold on
+        plot(ttCycle, eyevelH_offset+sin(2*pi*freq*ttCycle + deg2rad(eyevelH_rel_phase_Light+180))*eyevelH_amp,'b')
+        plot(ttCycle, headMean, 'k',ttCycle,zeros(size(ttCycle)),'--k'); hold on
+
+        % Cosmetics of plot
+        figure(1064)
+        ylim([-15 15]);   xlim([0 max(ttCycle)])
+        ylabel('deg/s');  xlabel('Time (s)');
+        title(['Sine Fit Comparison: t_2_7_._5, t_2_._5, & Difference  Hor. Eye Vel:', datatype(1:8) ' ']);
+        legend({'t_2_._5 mean Sine Fit (Desaccaded full cycle removed)', 't_2_7_._5 mean Sine Fit (Desaccaded full cycle removed)','t_2_7_._5 - t_2_._5 mean Sine Fit (Desaccaded full cycle removed)', 'Stimulus','zero'},'EdgeColor','w')
+        drawnow;
+% 
+        vec3 = NaN(length(R.header), 1)';
+        vec3(4) =  Light_Diff_eyeHgain;
+        vec3(5) =  eyevelH_rel_phase_Light;
+        vec4 = NaN(length(R.header), 1)';
+        vec4(4) =  ENDeyeHgain - STARTeyeHgain;
+        vec4(5) = ENDeyevelH_rel_phase - STARTeyevelH_rel_phase;
+
+        
+    end
+    
+
+    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Added by Max Gagnon 11/17. This section takes the difference of the
     % last three (t = 30) recording's means and the first three (t = 0) recording's
@@ -416,7 +518,7 @@ figure(1068)
 ylim([-15 15]);   xlim([0 max(ttCycle)])
 ylabel('deg/s');  xlabel('Time (s)');
 title(['Sine Fit Comparison: t_3_0, t_0 mean, & Difference  Hor. Eye Vel:', datatype(1:8) ' ']);
-legend({'t_0 mean Sine Fit (Desaccaded full cycle removed)', 't_3_0 mean Sine Fit (Desaccaded segments)','t_3_0 mean - t_0 mean Sine Fit (Desaccaded segments)', 'Stimulus','zero'},'EdgeColor','w')
+legend({'t_0 mean Sine Fit (Desaccaded full cycle removed)', 't_3_0 mean Sine Fit (Desaccaded full cycle removed)','t_3_0 mean - t_0 mean Sine Fit (Desaccaded full cycle removed)', 'Stimulus','zero'},'EdgeColor','w')
 drawnow;
 
 %% add the new delta data to the results structure
@@ -426,8 +528,15 @@ vec1(5) =  eyevelH_rel_phase;
 vec2 = NaN(length(R.header), 1)';
 vec2(4) =  ENDeyeHgain - STARTeyeHgain;
 vec2(5) = ENDeyevelH_rel_phase - STARTeyevelH_rel_phase;
+
+
 R.data(trueSegments+1,:) = vec1;
 R.data(trueSegments+2,:) = vec2;
+R.data(trueSegments+3,:) = vec3;
+R.data(trueSegments+4,:) = vec4;
+
+
 while length(R.labels) < trueSegments+2
     R.labels = [R.labels; 'Apples'];
 end
+
