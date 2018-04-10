@@ -88,7 +88,6 @@ for count = 1:nsegs
     else
         drumvel = zeros(size(headvel));
     end
-    %     stim            = datchandata(dataseg,'stim pul');
 
     % Calculate the eye velocity signal from the eye position signal
     eyevelH = [diff(eyeposH); 0]*samplerate;
@@ -100,7 +99,7 @@ for count = 1:nsegs
     eyevelH = filter(b,a,eyevelH);
 
     % define vector of time
-    ndatapoints = length(headvel);   % number of datapoints in segment
+    ndatapoints = length(headvel);
     time = (1:ndatapoints)/samplerate;
 
     %% Set up variables for fitting data using a linear regression of Fourier Series
@@ -111,7 +110,7 @@ for count = 1:nsegs
     %     vars = [y1 y2];
     warning off
 
-    %% ====================== DESACCADE =======================
+    %% === DESACCADE =================================================== %%
     % First pass remove baseline eye mvmt
     if ~oldSaccade
         keep = abs(eyevelH) < 1.5*velthres;        % First pass remove saccades
@@ -129,7 +128,7 @@ for count = 1:nsegs
     % Fraction saccades
     R.data(count,strcmp(header,'saccadeFrac')) = mean(omitH);
 
-    %% Plot the pre and post-saccade removal velocity traces
+    %% === Plot the pre and post-saccade removal velocity traces ======= %%
     % Plot eye velocity trace with/without saccades
     if ploton
         figure(count); clf
@@ -144,21 +143,21 @@ for count = 1:nsegs
     end
 
 
-    %% ======== FIT SINE FITS BASED ON DESACCADED TRACES =========
+    %% === FIT SINE FITS BASED ON DESACCADED TRACES ==================== %%
     % fit data using a linear regression (data specified by 'keep_'index)
     % b=coefficients, bint=95% confidence intervals, r=residual, rint=interval
     % stats include 1)R-square, 2)F statistics, 3)p value 4)error variance
     warning('off','stats:regress:NoConst') % No constant term bc sine centered at 0
 
     % ------------CHAIR VELOCITY------------
-    [b,bint,r,rint,stat] = regress(headvel, vars);
+    [b,~,~,~,~] = regress(headvel, vars);
     headH_amp = sqrt(b(1)^2+b(2)^2);
     headH_angle = rad2deg(atan2(b(2), b(1)));
     R.data(count,strcmpi(header,'headamp'))= headH_amp;
     R.data(count,strcmpi(header,'headangle'))= headH_angle;
 
     % ------------DRUM VELOCITY------------
-    [b,bint,r,rint,stat] = regress(drumvel, vars);
+    [b,~,~,~,~] = regress(drumvel, vars);
     drumH_amp = sqrt(b(1)^2+b(2)^2);
     drumH_angle = rad2deg(atan2(b(2), b(1)));
     R.data(count,strcmpi(header,'drumamp'))= drumH_amp;
@@ -180,13 +179,13 @@ for count = 1:nsegs
     end
 
     % ------------ EYE VELOCITY------------
-    [b,bint,r,rint,stat] = regress(eyevelH(~omitH), vars(~omitH,:));
+    [b,~,~,~,stat] = regress(eyevelH(~omitH), vars(~omitH,:));
     eyevelH_amp = sqrt(b(1)^2+b(2)^2);
     eyevelH_phase = rad2deg(atan2(b(2), b(1)));
     R.data(count,strcmp(header,'eyeHamp'))= eyevelH_amp;
     R.data(count,strcmp(header,'eyeHangle'))= eyevelH_phase;
 
-    % ------------EYE RELATIVE TO CHAIR/DRUM------------
+    % ------------ EYE RELATIVE TO CHAIR/DRUM------------
     eyevelH_rel_gain = eyevelH_amp/refH_amp;
     eyevelH_rel_phase = (eyevelH_phase - refH_angle);
     eyevelH_rel_phase = mod(eyevelH_rel_phase,360) - 180;
@@ -199,7 +198,7 @@ for count = 1:nsegs
     R.data(count,strcmp(header,'variance'))= sqrt(stat(4)); % STD of error - more is worse
     warning on
 
-    %% Plot fitted sine
+    % Plot fitted sine
     if ploton
         figure(count); hold on
         y = vars*b;
@@ -207,18 +206,17 @@ for count = 1:nsegs
         title(sprintf('%s %s %.1f Amp: %.2f Phase: %.2f',filename,datatype, timepts(count), eyevelH_amp, eyevelH_rel_phase),'interpreter','none')
     end
 
-    %% =========== Get Cycle by Cycle Average ===============
+    %% === Get Cycle by Cycle Average ================================== %%
     % Find zero crossing of reference cycle
     cycleLength = round(samplerate/freq);
     startpt = max(1,round(mod(-refH_angle,360)/360 * samplerate/freq));
     zeroCross = startpt:cycleLength:ndatapoints;
     nCycles = length(zeroCross)-1;
 
-    % -----Take average of all cycles, with just saccades removed-----
+    % --- Average of All Cycles, with Only Saccades Removed ---------------
     eyevelAll = NaN(nCycles,cycleLength);
     eyevelDesAll = NaN(nCycles,cycleLength);
     headAll = NaN(nCycles,cycleLength);
-
     eyevel2cycle = NaN(nCycles,cycleLength*2);
 
     for i = 1:nCycles
@@ -233,14 +231,13 @@ for count = 1:nsegs
 
     eyevelDesMean = nanmean(eyevelDesAll);
     eyevelDesSem = nanstd(eyevelDesAll)./sqrt(sum(~isnan(eyevelDesAll)));
-
     headMean = nanmean(headAll);
 
     R.eyevelMean{count}  = eyevelDesMean;
     R.eyevelSem{count}  = eyevelDesSem;
     R.eyeVel2cycle{count} = eyevel2cycle';
 
-    % -----Take average of cycles, with entire bad cycle removed-----
+    % --- Average of Only Good Cycles -------------------------------------
     badCycles = false(1,nCycles);
     for i = 1:nCycles
         if any(omitCenters(zeroCross(i):zeroCross(i)+cycleLength-1))
@@ -265,8 +262,8 @@ for count = 1:nsegs
     goodCount =  sum(~badCycles);
     R.data(count,strcmp(header,'nGoodCycles')) = goodCount;
 
-    %% Plot Cycle by Cycle Average
-    if ploton
+    %% === Plot Cycle by Cycle Average ================================= %%
+    if ploton     
         figure(count+100); clf;
 
         ttCycle = (1:cycleLength)/samplerate;
