@@ -121,11 +121,13 @@ end
 
 
 % set up the export nicely
-A = figure(20);
+A = figure(newfig);
 A.PaperSize = [20 40];
 A.PaperOrientation = 'landscape';
 slots = tiling(1) * tiling(2);
 print('-fillpage',name,'-dpdf', '-r300');
+figName = strrep(name, '.pdf.', '.fig');
+savefig(figName)
 
 % let user know if not all figures were added to the subplot/export
 fprintf('\n\nThere are %d figures open, and there are %d in the subplot\n\n', length(handles), slots)
