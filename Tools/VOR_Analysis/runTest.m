@@ -68,8 +68,8 @@ function singleAnalysis(params)
             %VOR_Sriram(params)
         case 'Delta-7 Generalization'
             fprintf('Running: Delta-7 Generalization Analysis\n')
-            runVORa
-            %VOR_Delta7Gen(params)
+            %runVORa
+            VOR_Delta7Generalization(params)
     end
     
     % Make Subplots?
