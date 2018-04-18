@@ -9,27 +9,38 @@ TODO
     - Take note of each filterin/smoothing that takes place
     - Eye Coil filtering? - Ask Hannah
     - Seperate unique analysis to individual functions
-    - Error Handling for bad information
     - Turn runVOR into function, not script
-    - Name of Sriram's Project
     - auto remove 'calib' folders from attempts
-    - subplot auto choose dimensions / manual choose dimensions 
 %}
 
 % Single or Batch Analysis
-if params.count == 'Single Analysis'
+if strcmp(params.count, 'Single Analysis')
    singleAnalysis(params)
     
-elseif params.count == 'Batch Analysis'
+elseif strcmp(params.count,'Batch Analysis')
     
     subfolders = dir(params.folder);
+    topDirectory = params.folder;
+    
+    % remove non-folders and calib folders from 'subfolders' list
+    for ii = length(subfolders):-1:1
+        if ~(subfolders(ii).isdir)
+            subfolders(ii) = [];
+            continue
+        end
+        if contains(subfolders(ii).name, '_cali')
+            subfolders(ii) = [];
+            continue
+        end
+    end
+    
     goodFolders = cell(length(subfolders),1);
     badFolders = cell(length(subfolders),1);
     
     for ii = 3:length(subfolders)
         try
             % Change folder to the relevant sub-folder
-            params.folder = subfolders(ii).folder;
+            params.folder = strcat(subfolders(ii).folder, '\', subfolders(ii).name);
             
             % Run the single individual analysis on each subfolder
             singleAnalysis(params);
@@ -40,7 +51,15 @@ elseif params.count == 'Batch Analysis'
             badFolders{ii} = strcat(subfolders(ii).folder,'\', subfolders(ii).name);
         end
 
-        close all
+        % close all figures, except the GUI
+        figHandles = findobj('Type', 'figure');
+        for i = 1:length(figHandles)
+            if strcmp(figHandles(i).Name, 'VOR_Analysis')
+            figHandles(i) = [];
+            break
+            end
+        end
+        close(figHandles)
         cd(topDirectory)
     end
     
@@ -62,24 +81,37 @@ function singleAnalysis(params)
             fprintf("Running: Original Analysis\n")
             runVOR
             %VOR_original(params)
-        case 'Sriram'
-            fprintf('Running: Sriram''s Analysis\n')
+        case 'Dark Rearing'
+            fprintf('Running: Dark Rearing Analysis\n')
             runVORm
-            %VOR_Sriram(params)
+            %VOR_DarkRearing(params)
         case 'Delta-7 Generalization'
             fprintf('Running: Delta-7 Generalization Analysis\n')
-            %runVORa
             VOR_Delta7Generalization(params)
-    end
-    
-    % Make Subplots?
-    if params.do_subplots
-        figureName = strcat(params.folder, '_', 'SUBPLOT', '_', 'Unfiltered', '_', 'New_Saccade');
-        figs2subplots( figureName , [7 9] )
     end
     
     % make polar plots?
     if params.do_polar_plots
         polarPlotVectorsMean2
+    end
+    
+    % Make Subplots?
+    if params.do_subplots
+        figureName = strcat(params.folder, '_', 'SUBPLOT', '_', 'Unfiltered', '_', 'New_Saccade');
+        
+%         % Add extra blank figure for readability - NEEDS MORE WORK
+%         figureCount = length(findobj('Type', 'figure'));
+%         if mod(figureCount, 2) == 0
+%             figure()
+%             matlabImage = imread('C:\Users\maxga\Desktop\cartoon-eye-hi.png');
+%             image(matlabImage)
+%             axis off
+%             axis image
+%         end
+         figureCount = length(findobj('Type', 'figure'));
+        
+        % this function automatically finds the optimal subplot organization
+        [p, ~] = numSubplots(figureCount);
+        figs2subplots( figureName , p )
     end
 end        

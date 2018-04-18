@@ -47,8 +47,17 @@ function newfig = figs2subplots( name , tiling , arr )
 
 
 handles = findobj('Type', 'figure');
+
+% Do not include any GUI's in the subplot
+for ii = 1:length(handles)
+    if strcmp(handles(ii).Name, 'VOR_Analysis')
+        handles(ii) = [];
+        break
+    end
+end
+
 av = [];
-for k = 1:length(handles)
+for k = length(handles):-1:1
     if strcmp(get(handles(k),'Type'),'axes')
         av = [av handles(k)];
     elseif strcmp(get(handles(k),'Type'),'figure');
