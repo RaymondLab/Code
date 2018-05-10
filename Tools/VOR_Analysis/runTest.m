@@ -10,7 +10,7 @@ TODO
     - Eye Coil filtering? - Ask Hannah
     - Seperate unique analysis to individual functions
     - Turn runVOR into function, not script
-    - auto remove 'calib' folders from attempts
+    - debug button on GUI
 %}
 
 % Single or Batch Analysis
@@ -55,8 +55,7 @@ elseif strcmp(params.count,'Batch Analysis')
         figHandles = findobj('Type', 'figure');
         for i = 1:length(figHandles)
             if strcmp(figHandles(i).Name, 'VOR_Analysis')
-            figHandles(i) = [];
-            break
+                figHandles(i) = []; break
             end
         end
         close(figHandles)

@@ -135,7 +135,7 @@ hevel = movingslopeCausal(datchandata(data,'hepos'),round(fs*veltau))*fs;
 data(end+1) = dat(hevel,'hevel',[],fs,data(1).tstart,data(1).tend,'deg/s');
 
 %% === Run Sine Analysis for Each Relevant Segment ===================== %%
-result = VORsineFit(data, tstart, tstop, frequency, labels, timepts, saccadeThresh, ploton, saccadeWindow);
+result = VORsineFit_Delta7Generalization(data, tstart, tstop, frequency, labels, timepts, saccadeThresh, ploton, saccadeWindow);
 fprintf('Artifacts: \n%f\nRsquare: \n%f\n',mean(result.data(:,12)),mean(result.data(:,13)))
 
 %% === Plot Final Results ============================================== %%

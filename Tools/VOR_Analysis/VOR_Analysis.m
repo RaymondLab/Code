@@ -135,7 +135,7 @@ function popupmenu1_Callback(hObject, eventdata, handles)
     % Hints: contents = cellstr(get(hObject,'String')) returns popupmenu1 contents as cell array
     %        contents{get(hObject,'Value')} returns selected item from popupmenu1
     % only display the 'polar plots' checkbox when running sriram's data
-    if strcmp(hObject.String{handles.popupmenu1.Value}, 'Sriram')
+    if strcmp(hObject.String{handles.popupmenu1.Value}, 'Dark Rearing')
         handles.checkbox3.Visible = 'on';
         handles.checkbox3.Value = 1;
     else
