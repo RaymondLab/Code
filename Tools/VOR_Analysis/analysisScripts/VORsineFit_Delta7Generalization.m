@@ -112,25 +112,25 @@ for count = 1:nSegs
 
     %% === DESACCADE =================================================== %%
     % First pass remove baseline eye mvmt
-    %keep = abs(eyevelH) < 1.5*velthres;        % First pass remove saccades
-    % b = regress(eyevelH(keep), vars(keep,:));  % Initial fit
+    keep = abs(eyevelH) < 1.5*velthres;        % First pass remove saccades
+    b = regress(eyevelH(keep), vars(keep,:));  % Initial fit
     
     % fft
-    figure(666666)
-    plot(eyevelH)
-    
-    Y = fft(eyevelH);
-    L = length(Y);
-    Fs = 1000;
-    P2 = abs(Y/L);
-    P1 = P2(1:L/2+1);
-    P1(2:end-1) = 2*P1(2:end-1);
-    f = Fs*(0:(L/2))/L;
-    figure(6666667)
-    plot(f(1:2000),P1(1:2000) )
-    title('Single-Sided Amplitude Spectrum of X(t)')
-    xlabel('f (Hz)')
-    ylabel('|P1(f)|')
+%     figure(666666)
+%     plot(eyevelH)
+%     
+%     Y = fft(eyevelH);
+%     L = length(Y);
+%     Fs = 1000;
+%     P2 = abs(Y/L);
+%     P1 = P2(1:L/2+1);
+%     P1(2:end-1) = 2*P1(2:end-1);
+%     f = Fs*(0:(L/2))/L;
+%     figure(6666667)
+%     plot(f(1:2000),P1(1:2000) )
+%     title('Single-Sided Amplitude Spectrum of X(t)')
+%     xlabel('f (Hz)')
+%     ylabel('|P1(f)|')
     
     
     
