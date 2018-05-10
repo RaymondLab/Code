@@ -4,6 +4,7 @@ function [eyevelOut, omitCenters, rawThres] = desaccadeVelNew(eyevelIn, presacca
 minThresh = 13000;
 % Smooth
 %eyevelIn = smooth(eyevelIn,30);
+%eyevelIn = smoothdata(eyevelIn, 'movmean', 10);
 
 % Center the mean
 velMeanTemp = nanmean(eyevelIn);
