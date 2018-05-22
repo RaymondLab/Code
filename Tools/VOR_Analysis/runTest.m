@@ -9,8 +9,8 @@ TODO
     - Take note of each filterin/smoothing that takes place
     - Eye Coil filtering? - Ask Hannah
     - Seperate unique analysis to individual functions
-    - Turn runVOR into function, not script
-    - debug button on GUI
+    - finish desaccade script
+    - add new desaccade script now all analysis
 %}
 
 % Single or Batch Analysis
@@ -87,6 +87,9 @@ function singleAnalysis(params)
         case 'Delta-7 Generalization'
             fprintf('Running: Delta-7 Generalization Analysis\n')
             VOR_Delta7Generalization(params)
+        case 'Dark Rearing + Generalization'
+            fprintf('Running: Delta-7 Generalization Analysis\n')
+            VOR_DarkRearingGeneralization(params)
     end
     
     % make polar plots?
@@ -97,17 +100,7 @@ function singleAnalysis(params)
     % Make Subplots?
     if params.do_subplots
         figureName = strcat(params.folder, '_', 'SUBPLOT', '_', 'Unfiltered', '_', 'New_Saccade');
-        
-%         % Add extra blank figure for readability - NEEDS MORE WORK
-%         figureCount = length(findobj('Type', 'figure'));
-%         if mod(figureCount, 2) == 0
-%             figure()
-%             matlabImage = imread('C:\Users\maxga\Desktop\cartoon-eye-hi.png');
-%             image(matlabImage)
-%             axis off
-%             axis image
-%         end
-         figureCount = length(findobj('Type', 'figure'));
+        figureCount = length(findobj('Type', 'figure'));
         
         % this function automatically finds the optimal subplot organization
         [p, ~] = numSubplots(figureCount);

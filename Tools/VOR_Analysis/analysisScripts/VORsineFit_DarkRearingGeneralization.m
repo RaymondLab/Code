@@ -18,7 +18,7 @@
 % Modified 1/20/14 to remove vertical eye calculations
 
 
-function R = VORsineFit(data, tstart, tstop, sinefreq, labels, timepts,velthres,oldSaccade, ploton)
+function R = VORsineFit_DarkRearingGeneralization(data, tstart, tstop, sinefreq, labels, timepts,velthres,oldSaccade, ploton)
 % close all
 set(0, 'DefaultFigurePaperPositionMode', 'auto');
 [~, filename] = fileparts(pwd);
@@ -292,7 +292,7 @@ for count = 1:nsegs
     
     
     %Extract the correct segments
-    if count == 4
+    if count == 12
         % get head vel. segments
         headVelLong     = datchandata(dataseg,'hhvel');
         headVel_light_begin = headVelLong(zeroCross(i):zeroCross(i)+cycleLength-1)';
@@ -306,7 +306,7 @@ for count = 1:nsegs
         EyeVelCycle_light_begin  = smooth(eyevelCycleMean, 50);
         EyeVelDes_light_begin    = smooth(eyevelDesMean, 50);
         
-    elseif count == 14
+    elseif count == 22
         % get head vel. segments
         headVelLong     = datchandata(dataseg,'hhvel');
         headVel_light_end = headVelLong(zeroCross(i):zeroCross(i)+cycleLength-1)';
@@ -330,7 +330,7 @@ for count = 1:nsegs
         plot(ttCycle, BlueDiff,'b'); hold on
         plot(ttCycle, GreenDiff, 'g');
         
-        [eyevelH_offset, eyevelH_rel_phase_Light, eyevelH_amp, Light_Diff_eyeHgain] = VORsineFitMaxMod( sinefreq(1), data(1).samplerate, BlueDiff, (headVel_light_begin + headVel_light_end)'/2, (drumVel_light_begin + drumVel_light_end)'/2);
+        [eyevelH_offset, eyevelH_rel_phase_Light, eyevelH_amp, Light_Diff_eyeHgain] = VORsineFitMaxMod( sinefreq(10), data(1).samplerate, BlueDiff, (headVel_light_begin + headVel_light_end)'/2, (drumVel_light_begin + drumVel_light_end)'/2);
         plot(ttCycle, eyevelH_offset+sin(2*pi*freq*ttCycle + deg2rad(eyevelH_rel_phase_Light+180))*eyevelH_amp,'r')
         plot(ttCycle, headMean, 'k',ttCycle,zeros(size(ttCycle)),'--k');
         ylim([-30 30]);   xlim([0 max(ttCycle)])
@@ -359,8 +359,8 @@ for count = 1:nsegs
 
         %% calc Sine fit for startEyeVelCycleMean & endEyeVelCycleMean
         figure(1064); clf;
-        [STARTeyevelH_offset, STARTeyevelH_rel_phase, STARTeyevelH_amp, STARTeyeHgain] = VORsineFitMaxMod( sinefreq(1), data(1).samplerate, EyeVelCycle_light_begin,headVel_light_begin', drumVel_light_begin');
-        [ENDeyevelH_offset, ENDeyevelH_rel_phase, ENDeyevelH_amp, ENDeyeHgain]         = VORsineFitMaxMod( sinefreq(1), data(1).samplerate, EyeVelCycle_light_end, headVel_light_end', drumVel_light_end');
+        [STARTeyevelH_offset, STARTeyevelH_rel_phase, STARTeyevelH_amp, STARTeyeHgain] = VORsineFitMaxMod( sinefreq(10), data(1).samplerate, EyeVelCycle_light_begin,headVel_light_begin', drumVel_light_begin');
+        [ENDeyevelH_offset, ENDeyevelH_rel_phase, ENDeyevelH_amp, ENDeyeHgain]         = VORsineFitMaxMod( sinefreq(10), data(1).samplerate, EyeVelCycle_light_end, headVel_light_end', drumVel_light_end');
 
         % plot differences in sine fits
         plot(ttCycle, STARTeyevelH_offset+sin(2*pi*freq*ttCycle + deg2rad(STARTeyevelH_rel_phase+180))*STARTeyevelH_amp,'m'); hold on
@@ -375,6 +375,8 @@ for count = 1:nsegs
         title(['Sine Fit Comparison: t_2_7_._5, t_2_._5, & Difference  Hor. Eye Vel:', datatype(1:8) ' ']);
         legend({'t_2_._5 mean Sine Fit: Good Cycles', 't_2_7_._5 mean Sine Fit: Good Cycles','t_2_7_._5 - t_2_._5 mean Sine Fit: Good Cycles', 'Stimulus','zero'},'EdgeColor','w')
         drawnow;
+        
+        diffheadMean = headMean;
 % 
         vec3 = NaN(length(R.header), 1)';
         vec3(4) =  Light_Diff_eyeHgain;
@@ -407,7 +409,7 @@ for count = 1:nsegs
     end
 
     % keep a running sum of each waveform
-    if count == 1|| count == 2 || count == 3
+    if count == 9|| count == 10 || count == 11
 
         % get head vel. segments
         headVelLong     = datchandata(dataseg,'hhvel');
@@ -422,7 +424,7 @@ for count = 1:nsegs
         startEyeVelCycleSegments  = [startEyeVelCycleSegments; (smooth(eyevelCycleMean, 50) .* goodCount)'];
         startEyeVelDesSegments    = [startEyeVelDesSegments; (smooth(eyevelDesMean, 50) .* goodCount)'];
 
-    elseif count == (trueSegments - 3) || count == (trueSegments - 2) || count == (trueSegments - 1) % fourth to last, third to last, second to last
+    elseif count == (trueSegments - 10) || count == (trueSegments - 9) || count == (trueSegments - 8) % fourth to last, third to last, second to last
 
         % get head vel. segments
         headVelLong     = datchandata(dataseg,'hhvel');
@@ -457,7 +459,12 @@ GreenDiff = endEyeVelDesMean - startEyeVelDesMean;
 
 % data of plot
 figure(count+1000); clf;
+% HACK!! (not so terrible of a hack though) Reset the frequency - Max
+freq = sinefreq(10);
+cycleLength = round(samplerate/sinefreq(9));
 ttCycle = (1:cycleLength)/samplerate;
+
+
 plot(ttCycle, BlueDiff,'b'); hold on
 plot(ttCycle, GreenDiff, 'g');
 diffMeanData = data(1);
@@ -470,15 +477,16 @@ finalLabel = 'VOR 1Hz';
 % this new functionality, there would have to be to many changes to
 % the original function, so a new one was created. See Max Gagnon
 % for more details.
-[eyevelH_offset, eyevelH_rel_phase, eyevelH_amp, eyeHgain] = VORsineFitMaxMod( sinefreq(1), data(1).samplerate, BlueDiff', headVelMean', drumVelMean');
+[eyevelH_offset, eyevelH_rel_phase, eyevelH_amp, eyeHgain] = VORsineFitMaxMod( sinefreq(10), data(1).samplerate, BlueDiff', headVelMean', drumVelMean');
 plot(ttCycle, eyevelH_offset+sin(2*pi*freq*ttCycle + deg2rad(eyevelH_rel_phase+180))*eyevelH_amp,'r')
-plot(ttCycle, headMean, 'k',ttCycle,zeros(size(ttCycle)),'--k');
+plot(ttCycle, diffheadMean, 'k',ttCycle,zeros(size(ttCycle)),'--k');
 box off
+datatype = labels{10};
 
 % Cosmetics of plot
 ylim([-30 30]);   xlim([0 max(ttCycle)])
 ylabel('deg/s');  xlabel('Time (s)');
-title(['Delta Hor. Eye Vel: ', datatype(1:8) ' ']);
+title(['Delta Hor. Eye Vel: ', datatype(1:10) ' ']);
 %text (.1, 13.5, ['Good cycles: ', num2str(goodCount), '/', num2str(nCycles)],'FontSize',10);
 text (.01, 27, ['Eye amp: ', num2str(eyevelH_amp,3)],'FontSize',10);
 legend({'t_3_0 - t_0 mean: Good Cycles', 't_3_0 - t_0 mean: Good Cycles','Sine fit','Stimulus'},'EdgeColor','w')
@@ -490,7 +498,7 @@ ttCycle = (1:cycleLength)/samplerate;
 plot(ttCycle, startEyeVelCycleMean,'m'); hold on
 plot(ttCycle, endEyeVelCycleMean, 'r'); hold on
 plot(ttCycle, BlueDiff,'b', 'LineWidth', 1);
-plot(ttCycle, headMean, 'k',ttCycle,zeros(size(ttCycle)),'--k'); hold on
+plot(ttCycle, diffheadMean, 'k',ttCycle,zeros(size(ttCycle)),'--k'); hold on
 
 % Cosmetics of plot
 ylim([-30 30]);   xlim([0 max(ttCycle)])
@@ -501,14 +509,14 @@ drawnow;
 
 %% calc Sine fit for startEyeVelCycleMean & endEyeVelCycleMean
 figure(1068); clf;
-[STARTeyevelH_offset, STARTeyevelH_rel_phase, STARTeyevelH_amp, STARTeyeHgain] = VORsineFitMaxMod( sinefreq(1), data(1).samplerate, startEyeVelCycleMean',mean(headVelSegments(1:3,:), 1)', mean(drumVelSegments(1:3,:), 1)');
-[ENDeyevelH_offset, ENDeyevelH_rel_phase, ENDeyevelH_amp, ENDeyeHgain]         = VORsineFitMaxMod( sinefreq(1), data(1).samplerate, endEyeVelCycleMean', mean(headVelSegments(4:end,:), 1)', mean(drumVelSegments(4:end,:), 1)');
+[STARTeyevelH_offset, STARTeyevelH_rel_phase, STARTeyevelH_amp, STARTeyeHgain] = VORsineFitMaxMod( sinefreq(10), data(1).samplerate, startEyeVelCycleMean',mean(headVelSegments(1:3,:), 1)', mean(drumVelSegments(1:3,:), 1)');
+[ENDeyevelH_offset, ENDeyevelH_rel_phase, ENDeyevelH_amp, ENDeyeHgain]         = VORsineFitMaxMod( sinefreq(10), data(1).samplerate, endEyeVelCycleMean', mean(headVelSegments(4:end,:), 1)', mean(drumVelSegments(4:end,:), 1)');
 
 % plot differences in sine fits
 plot(ttCycle, STARTeyevelH_offset+sin(2*pi*freq*ttCycle + deg2rad(STARTeyevelH_rel_phase+180))*STARTeyevelH_amp,'m'); hold on
 plot(ttCycle, ENDeyevelH_offset+sin(2*pi*freq*ttCycle + deg2rad(ENDeyevelH_rel_phase+180))*ENDeyevelH_amp,'r'); hold on
 plot(ttCycle, eyevelH_offset+sin(2*pi*freq*ttCycle + deg2rad(eyevelH_rel_phase+180))*eyevelH_amp,'b')
-plot(ttCycle, headMean, 'k',ttCycle,zeros(size(ttCycle)),'--k'); hold on
+plot(ttCycle, diffheadMean, 'k',ttCycle,zeros(size(ttCycle)),'--k'); hold on
 
 % Cosmetics of plot
 figure(1068)

@@ -27,7 +27,7 @@ function varargout = VOR_Analysis(varargin)
 
     % Edit the above text to modify the response to help VOR_Analysis
 
-    % Last Modified by GUIDE v2.5 12-Apr-2018 11:17:19
+    % Last Modified by GUIDE v2.5 17-May-2018 13:42:44
 
     % Begin initialization code - DO NOT EDIT
     gui_Singleton = 1;
@@ -134,8 +134,12 @@ function pushbutton2_Callback(hObject, eventdata, handles)
 function popupmenu1_Callback(hObject, eventdata, handles)
     % Hints: contents = cellstr(get(hObject,'String')) returns popupmenu1 contents as cell array
     %        contents{get(hObject,'Value')} returns selected item from popupmenu1
-    % only display the 'polar plots' checkbox when running sriram's data
+    % only display the 'polar plots' checkbox when running Dark Rearing
+    % Analyis
     if strcmp(hObject.String{handles.popupmenu1.Value}, 'Dark Rearing')
+        handles.checkbox3.Visible = 'on';
+        handles.checkbox3.Value = 1;
+    elseif strcmp(hObject.String{handles.popupmenu1.Value}, 'Dark Rearing + Generalization')
         handles.checkbox3.Visible = 'on';
         handles.checkbox3.Value = 1;
     else
@@ -310,3 +314,12 @@ function checkbox5_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox5
+
+
+% --- Executes on button press in checkbox6.
+function checkbox6_Callback(hObject, eventdata, handles)
+if get(hObject, 'Value')
+    dbstop if error
+else 
+    dbclear if error
+end
