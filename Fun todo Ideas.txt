@@ -1,0 +1,4 @@
+Fun programming tasks
+    - Figures position detemrined by screen size, not absolute
+    - Shorted long titles in figures
+    - Picture for VOR
