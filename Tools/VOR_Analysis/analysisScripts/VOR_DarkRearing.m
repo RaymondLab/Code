@@ -91,7 +91,7 @@ chanlabels = {'hhpos','htpos','hepos1','hepos2','hepos','vepos','hhvel','htvel',
 chaninds = find(arrayfun(@(x) any(strcmp(x.title,chanlabels)),chanlist));
 rawdata = importSpike(fullfile(pathname,[filenameroot '.smr']),chanindsAll(chaninds));
 
-%% Calculate eye pos and eye head visual velocities
+%% === Calculate Drum and Chair Velocities ============================= %%
 data = rawdata;
 fs = data(1).samplerate;
 
@@ -104,7 +104,8 @@ if isempty(datchan(data,'htvel'))
 end
 
 % Add a chair velocity channel if needed
-if isempty(datchan(data,'hhvel'))
+if isempty(datchan(data,'hhvel')) || max(datchandata(data,'hhvel'))<.1
+    data(datchanind(data,'hhvel')) = [];
     ind = datchanind(data,'hhpos');
     data(end+1) = dat(smooth([diff(smooth(data(ind).data,50,'moving')); 0],50,'moving')*fs,'hhvel',[],fs,data(ind).tstart,data(ind).tend,'deg/s');
 end

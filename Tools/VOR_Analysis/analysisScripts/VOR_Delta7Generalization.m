@@ -1,7 +1,7 @@
 function VOR_Delta7Generalization(params)
 
 
-%% runVORa   Analyze VOR behavioral data directly from Spike2 files (.smr)
+%% runVOR   Analyze VOR behavioral data directly from Spike2 files (.smr)
 %
 % modified from SineFitBNwSlip_GenSD_auto 8/2012 by Hannah Payne:
 %   - automatically import files directly from Spike2 (.smr) to Matlab
@@ -56,6 +56,8 @@ tstop = T.EndTime;
 frequency = T.Frequency;
 timepts = T.TimePoint;
 if any((tstop-tstart)<0); error('Make sure end times are after start times'); end
+
+% Create labels for graphs
 labels = strcat(T.Type, {' '});
 
 %% === Import Calibration File ========================================= %%
@@ -85,7 +87,7 @@ end
 %  Load data from Spike2
 chanlist = readSpikeFile(fullfile(pathname,[filenameroot '.smr']),[]);
 chanindsAll = [chanlist.number];
-chanlabels = {'hhpos','htpos','hepos1','hepos2','hepos','vepos','hhvel','htvel','TTL3','TTL4'};
+chanlabels = {'hhpos','htpos','hepos1','hepos2','hepos','vepos','hhvel','htvel','htvel','TTL3','TTL4'};
 chaninds = find(arrayfun(@(x) any(strcmp(x.title,chanlabels)),chanlist));
 rawdata = importSpike(fullfile(pathname,[filenameroot '.smr']),chanindsAll(chaninds));
 
@@ -145,12 +147,10 @@ plotVOR(result,T.Type,norm);
 title(sprintf('%s: %s',filenameroot), 'Interpreter', 'none')
 print('resultfig','-djpeg')
 
-%% === Extra Analysis ================================================== %%
-
 %% ---Run STIM analysis for each relevant segment (aligns on rising pulse of TTL)---
 resultStim = [];
 resultStep = [];
-velthresStim =80;
+velthresStim = 80;
 
 if any(STIMmask)
     resultStim = VORstim(data, tstart, tstop, frequency, labels, timepts,velthresStim, pulseDur, ploton, STIMmask);    

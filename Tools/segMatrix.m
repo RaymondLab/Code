@@ -5,7 +5,14 @@ function segmentMatrix = segMatrix(params)%% this script is used to takes a segm
 
 %% Import & organize data
 
-load('Z:\1_Maxwell_Gagnon\ProjectData_Amin\Boris Recordings\2018- 05-20180502T212015Z-001\2018- 05\050118_2\050118_2_100Hz.mat')
+% Choose Which mouse to load from
+if params.mouse == 1
+    load('Z:\1_Maxwell_Gagnon\ProjectData_Amin\Boris Recordings\2018- 05-20180502T212015Z-001\2018- 05\050118_1\050118_1_100Hz.mat')
+elseif params.mouse == 2
+    load('Z:\1_Maxwell_Gagnon\ProjectData_Amin\Boris Recordings\2018- 05-20180502T212015Z-001\2018- 05\050118_2\050118_2_100Hz.mat')
+else
+    warning('Wrong Mouse number. Please Enter 1 or 2')
+end
 
 switch params.channel
     case 'Control'
@@ -19,6 +26,11 @@ end
 switch params.filter
     case 'Filtered'
         data = smooth(data, 10);
+    case 'Unfiltered'
+        
+    otherwise
+        warning('Typo!')
+        params.filter
 end
 
 

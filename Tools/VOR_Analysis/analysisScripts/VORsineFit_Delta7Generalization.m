@@ -18,7 +18,7 @@
 % Modified 1/20/14 to remove vertical eye calculations
 
 
-function R = VORsineFit(data, tstart, tstop, sinefreq, labels, timepts, velthres, ploton, saccadeWindow)
+function R = VORsineFit_Delta7Generalization(data, tstart, tstop, sinefreq, labels, timepts, velthres, ploton, saccadeWindow)
 %% Create R data Array and other parameters
 
 % Set up cell structure to hold all R.data

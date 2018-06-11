@@ -103,7 +103,7 @@ end;
 
 % Creating new figure
 da = zeros(1,Ns);
-newfig = figure;
+newfig = figure();
 for k = 1:min(Ns,Na)
     da(k) = subplot(tiling(1),tiling(2),arr{k});
     na = copyobj(av(k),newfig);
@@ -112,8 +112,15 @@ for k = 1:min(Ns,Na)
     try
         na.Children(1).FontSize = 6;
         na.Children(2).FontSize = 6;
+        a.Children.Children(1).SizeData = 10;
     catch
     end
+    try
+        na.Children(2).SizeData = 1;
+        na.Children(3).SizeData = 1;
+    catch
+    end
+    
 
     set(na,'Position',get(da(k),'Position'));
     % Produce legend if it exists in original axes
@@ -131,12 +138,15 @@ end
 
 % set up the export nicely
 A = figure(newfig);
-A.PaperSize = [20 40];
-A.PaperOrientation = 'landscape';
+
+A.PaperSize = [20 50];
+A.PaperOrientation = 'portrait';
 slots = tiling(1) * tiling(2);
-print('-fillpage',name,'-dpdf', '-r300');
-figName = strrep(name, '.pdf.', '.fig');
-savefig(figName)
+% Save as PDF
+print(A, '-fillpage',[name '.pdf'],'-dpdf', '-r300');
+% Save as Fig
+figName = [name '.fig'];
+savefig(A, figName)
 
 % let user know if not all figures were added to the subplot/export
 fprintf('\n\nThere are %d figures open, and there are %d in the subplot\n\n', length(handles), slots)
