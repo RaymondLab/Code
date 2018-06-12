@@ -59,6 +59,8 @@ postsaccadeN = round(postsaccade*samplerate);
 
 % Gather Screensize information for figure placement
 screensize = get( groot, 'Screensize' );
+leftPos = 5;
+botPos = 50;
 
 fprintf('Threshold = %g\n',velthres)
 fprintf('Presaccade = %g ms\n',presaccade)
@@ -150,7 +152,7 @@ for count = 1:nSegs
         end
         
         xlim([0 length(plot_eyevelH)/1000]);     ylim([-200 200])
-        xlabel('Time (s)');    set(gcf,'Position',[5 50 (screensize(3)-5) 300]);
+        xlabel('Time (s)');    set(gcf,'Position',[leftPos botPos (screensize(3)-leftPos) 300]);
         yy = linspace(0, length(plot_eyevelH)/1000, length(eyevelHtemp));
         hold on
 
@@ -289,7 +291,7 @@ for count = 1:nSegs
         plot(ttCycle, headMean, 'k',ttCycle,zeros(size(ttCycle)),'--k');
         % Cosmetics
         box off
-        set(gcf,'Position',[5 (screensize(4)-585) 700 500]);
+        set(gcf,'Position',[leftPos (botPos+400) 700 (screensize(4)-(botPos+400)-80)]);
         ylim([-30 30]);   xlim([0 max(ttCycle)])
         ylabel('deg/s');  xlabel('Time (s)');
         title(['Hor. Eye Vel: ', datatype ]);

@@ -207,19 +207,29 @@ function checkFolderStructer( folder, handles )
     end
 
     % check if .smr file is one level down
+    count = 0;
+    baselineDir = cd;
     for i = 3:length(HeadfolderContents)
         try
             cd(HeadfolderContents(i).name)
             tempDirectory = dir;
             for j = 3:length(tempDirectory)
                 if strcmp(tempDirectory(j).name, strcat(HeadfolderContents(i).name, '.smr')) && ~contains(HeadfolderContents(i).name, 'calib')
-                    handles.text7.String = 'Batch Analysis';
+                    count = count + 1;
+                    handles.text7.String = ['Batch Analysis: ' num2str(count)];
                     handles.text7.ForegroundColor = [0 .6 .25];
-                    return
                 end 
             end
+            cd(baselineDir)
         end
     end
+    
+    if count > 0
+        handles.text7.String = ['Batch Analysis: ' num2str(count)];
+        handles.text7.ForegroundColor = [0 .6 .25];
+        return
+    end
+    
 
     % print that nothing was found
     handles.text7.String = 'No ''.smr'' Detected';

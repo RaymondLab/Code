@@ -10,8 +10,6 @@ TODO
     - Eye Coil filtering? - Ask Hannah
     - Seperate unique analysis to individual functions
     - finish desaccade script
-    - add new desaccade script now all analysis
-    - in batch testing, report how many were found
     - Plot preview of segments to make sure that the start/finish are
     actually getting the proper parts
 %}
