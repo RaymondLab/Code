@@ -77,7 +77,7 @@ function varargout = VOR_Analysis_OutputFcn(hObject, eventdata, handles)
     % add image
     try
         axes(handles.axes1)
-        matlabImage = imread('C:\Users\maxga\Desktop\cartoon-eye-hi.png');
+        matlabImage = imread('Eye_Image.png');
         image(matlabImage)
         axis off
         axis image
