@@ -15,10 +15,10 @@ TODO
 %}
 
 % Single or Batch Analysis
-if strcmp(params.count, 'Single Analysis')
+if contains(params.count, 'Single Analysis')
    singleAnalysis(params)
     
-elseif strcmp(params.count,'Batch Analysis')
+elseif contains(params.count,'Batch Analysis')
     
     subfolders = dir(params.folder);
     topDirectory = params.folder;
@@ -66,8 +66,14 @@ elseif strcmp(params.count,'Batch Analysis')
     % Print which folders worked, and which didn't
     fprintf('FAILED FOLDERS:\n')
     disp(badFolders(~cellfun('isempty',badFolders)));
+    %params.badFolders = badFolders((~cellfun('isempty',badFolders)));
     fprintf('\n\nSUCCEEDED FOLDERS: \n')
     disp(goodFolders(~cellfun('isempty',goodFolders)));
+    %params.goodFolders = goodFolders(~cellfun('isempty',goodFolders));
+    
+    % Export parameters to a cvs file
+    exportParameters(params)
+    
 end
 end
 
@@ -170,4 +176,42 @@ function singleAnalysis(params)
         end
 
     end
-end        
+end    
+
+% This function will export all of the parameters of the data analysis so
+% they can be refered to later.
+function exportParameters(params)
+
+% Add more information to params
+params.Run_Date = char(datetime('now'));
+params.Run_Date = strrep(params.Run_Date, ':', '-');
+params.Computer = getenv('computername');
+params.Person = getenv('username');
+
+% convert params struct to table
+paramsTable = struct2table(params);
+
+% write summary of parameters to a csv file. csv Files can be read in EXCEL
+textFileName = ['Parameters File - ' params.analysis ' - ' params.Run_Date '.csv'];
+writetable(paramsTable, textFileName, 'Delimiter', ',')
+close('my_files.csv')
+
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

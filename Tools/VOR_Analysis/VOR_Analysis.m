@@ -119,13 +119,23 @@ function pushbutton1_Callback(hObject, eventdata, handles)
     handles.text11.String = 'Finished!';
     handles.text11.ForegroundColor = [0 .6 .25];
 
-
+% Z:\1_Maxwell_Gagnon\ProjectData_Amin\Delta 07 Amin Data\Gain Down\0.6 Hz Gain Down\KI
 
 % --- Executes on button press in pushbutton2.
 function pushbutton2_Callback(hObject, eventdata, handles)
+
+    % If there is already a folder listed in the edit box, open the popup
+    % window to that folder.
+    try cd(handles.edit1.String)
+    catch
+        handles.edi1.String = 'C:/';
+    end
+    
+    
     % Change string of edit box to the selected folder
-    folder = uigetdir('C:\', 'Choose Folder that Contains the Data');
+    folder = uigetdir(handles.edit1.String, 'Choose Folder that Contains the Data');
     handles.edit1.String = folder;
+    defaultFolder = handles.edit1.String;
     checkFolderStructer(folder, handles)
 
 
@@ -216,8 +226,10 @@ function checkFolderStructer( folder, handles )
             for j = 3:length(tempDirectory)
                 if strcmp(tempDirectory(j).name, strcat(HeadfolderContents(i).name, '.smr')) && ~contains(HeadfolderContents(i).name, 'calib')
                     count = count + 1;
-                    handles.text7.String = ['Batch Analysis: ' num2str(count)];
+                    handles.text7.String = ['Batch Analysis: ... ' num2str(count)];
                     handles.text7.ForegroundColor = [0 .6 .25];
+                    % Need pause here for these to actually display
+                    pause(.01);
                 end 
             end
             cd(baselineDir)

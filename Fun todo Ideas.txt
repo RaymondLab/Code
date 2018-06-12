@@ -1,3 +1,4 @@
 Fun programming tasks
     - Shorted long titles in figures
-    - Picture for VOR
+    - Start up and shut down scripts for MATLAB
+    - 'stop' buttom in GUI
