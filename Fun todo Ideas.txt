@@ -2,3 +2,15 @@ Fun programming tasks
     - Shorted long titles in figures
     - Start up and shut down scripts for MATLAB
     - 'stop' buttom in GUI
+    - Proper security on the repo
+    - Find a way to monitor other's repos
+    - SOP/ Protocol for setting up repo on computer
+	- Install Source Tree
+	- Make Atlassian Account
+
+Important todo
+	- Can we use same scripts for motor control, 
+	  but just load a 'parameters' file for the individual differences in motors?
+	- Standard PATH for all users of repo
+
+
