@@ -1,3 +1,0 @@
-Notes
-.s2s - Spike2 Scripting file
-.pls - Spike2 sequence file
