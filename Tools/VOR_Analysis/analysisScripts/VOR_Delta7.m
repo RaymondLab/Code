@@ -35,7 +35,9 @@ timepts = T.TimePoint;
 if any((tstop-tstart)<0); error('Make sure end times are after start times'); end
 
 % Create labels for graphs
-labels = strcat(T.Type, {' '}, num2str( T.Frequency), { 'Hz '}, num2str(T.TimePoint),{'min'});
+timePoints = strrep(cellstr(num2str(T.TimePoint)), ' ', '');
+
+labels = strcat(timePoints, {' min  '}, T.Type, {'  '}, num2str( T.Frequency), { 'Hz'});
 
 %% === Import Calibration File ========================================= %%
 % try to find automatically
@@ -95,7 +97,7 @@ if filenameCal
         copyfile(fullfile(pathnameCal, filenameCal),fullfile(cd, filenameCal))
     end       
 else   % If no calib file available, enter manually
-    figure; plot(datchan(data,{'hhvel','htvel','hepos1','hepos2'})); xlim([tstart(2) tstop(2)])
+    figure; plot(datchan(data,{'hhvel','htvel','hepos1','hepos2'})); xlim([tstart(1) tstop(1)])
     scaleCh1 = input('Scale1: ');
     scaleCh2 = input('Scale2: ');   
     save(fullfile(cd, 'manual_calib.mat'), 'scaleCh1','scaleCh2') % Save scale factors
@@ -121,7 +123,7 @@ fprintf('Artifacts: \n%f\nRsquare: \n%f\n',mean(result.data(:,12)),mean(result.d
 figure(200)
 norm = 0; % 0 plot absolute amp; 1 plot gain; 2 plot normalized gain
 plotVOR(result,T.Type,norm);
-title(sprintf('%s: %s',filenameroot), 'Interpreter', 'none')
+title('Eye Amp. Summary')
 print('resultfig','-djpeg')
 
 %% ---Run STIM analysis for each relevant segment (aligns on rising pulse of TTL)---

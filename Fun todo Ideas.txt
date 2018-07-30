@@ -1,4 +1,19 @@
 Fun programming tasks
-    - Shorted long titles in figures
     - Start up and shut down scripts for MATLAB
     - 'stop' buttom in GUI
+TODO
+    - Universal Segment Detection
+        - Use SampleKey numberings to automatically detect start/stop if expmt segments
+            - 0: Pause Start
+            - 1: Segment Start
+    - Universal Subplots
+    - Main title for subplot
+	- auto detect how many extra figures for the bottom
+	- Add in the figure that Amin always makes in excel
+    - Second pass on the Desaccading fit
+    - Print the Parameters in the results section (Test Summary document?)
+    - VORsineFit --> eyevel2cycle. What is this used for?
+    - Take note of each filterin/smoothing that takes place
+    - Eye Coil filtering? - Ask Hannah
+    - Seperate unique analysis to individual functions
+    - finish desaccade script

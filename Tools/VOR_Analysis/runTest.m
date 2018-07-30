@@ -1,29 +1,11 @@
 function runTest(params)
 % This function takes in the information given to the UI and runs the
 % relavent test(s) on the data
-%{
-
-TODO
-    - live segment detection
-    - Improved Plotting for all Analysis
-    - AUtodetect segments --> no need to select different protocols
-    - Second pass on the Desaccading fit
-    - Print the Parameters in the results section (Test Summary document?)
-    - VORsineFit --> eyevel2cycle. What is this used for?
-    - Take note of each filterin/smoothing that takes place
-    - Eye Coil filtering? - Ask Hannah
-    - Seperate unique analysis to individual functions
-    - finish desaccade script
-    - Plot preview of segments to make sure that the start/finish are
-    actually getting the proper parts
-    - new subplot for all analysis
-    - is 'original' needed anymore?
-%}
 
 % Single or Batch Analysis
 if contains(params.count, 'Single Analysis')
    singleAnalysis(params)
-
+   disp('Done! :)')
 elseif contains(params.count,'Batch Analysis')
 
     subfolders = dir(params.folder);
@@ -79,7 +61,7 @@ elseif contains(params.count,'Batch Analysis')
 
     % Export parameters to a cvs file
     exportParameters(params)
-
+    disp('Done! :)')
 end
 end
 
@@ -160,9 +142,6 @@ end
 
 function subplotOrganization(params, figureName)
 
-
-    params.segCount + params.extraFigs
-    [ (params.segCount + params.extraFigs) , 10]
     spDim = [ (params.segCount + params.extraFigs) , 10];
     firsts = 1:spDim(2):spDim(1)*spDim(2);
     firsts = firsts';

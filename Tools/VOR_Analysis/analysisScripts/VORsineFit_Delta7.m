@@ -228,7 +228,8 @@ for count = 1:nSegs
         figure(count); hold on
         y = vars*b;
         plot(time, y,'r','LineWidth',1)
-        title(sprintf('%s %s %.1f Amp: %.2f Phase: %.2f',filename,datatype, timepts(count), eyevelH_amp, eyevelH_rel_phase),'interpreter','none')
+        %title(sprintf('%s %s %.1f Amp: %.2f Phase: %.2f',filename,datatype, timepts(count), eyevelH_amp, eyevelH_rel_phase),'interpreter','none')
+        title(sprintf('%s        Amp: %.2f Phase: %.2f',datatype, eyevelH_amp, eyevelH_rel_phase),'interpreter','none')
     end
 
     %% === Get Cycle by Cycle Average ================================== %%
@@ -294,8 +295,8 @@ for count = 1:nSegs
         set(gcf,'Position',[leftPos (botPos+400) 700 (screensize(4)-(botPos+400)-80)]);
         ylim([-30 30]);   xlim([0 max(ttCycle)])
         ylabel('deg/s');  xlabel('Time (s)');
-        title(['Hor. Eye Vel: ', datatype ]);
-        text (.01, 14, ['Good cycles: ', num2str(goodCount), '/', num2str(length(zeroCross))],'FontSize',10);
+        title('Average Traces');
+        text (.01, 15, ['Good cycles: ', num2str(goodCount), '/', num2str(length(zeroCross))],'FontSize',10);
         text (.01, 12, ['Eye amp: ', num2str(eyevelH_amp,3)],'FontSize',10);
         legend({'Desaccaded full cycle removed', 'Desaccaded segments','Sine fit','Stimulus'},'EdgeColor','w')
         drawnow;
