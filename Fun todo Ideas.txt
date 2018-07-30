@@ -17,3 +17,13 @@ TODO
     - Eye Coil filtering? - Ask Hannah
     - Seperate unique analysis to individual functions
     - finish desaccade script
+    - Proper security on the repo
+    - Find a way to monitor other's repos
+    - SOP/ Protocol for setting up repo on computer
+	- Install Source Tree
+	- Make Atlassian Account
+
+Important todo
+	- Can we use same scripts for motor control, 
+	  but just load a 'parameters' file for the individual differences in motors?
+	- Standard PATH for all users of repo
