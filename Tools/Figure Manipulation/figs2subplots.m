@@ -72,18 +72,15 @@ for k = length(handles):-1:1
     end;
 end;
 
-% --- find all legends
-hAxes = findobj('type','axes');
-tags = get(hAxes,'tag');
-iLeg = strmatch('legend',tags);
-hLeg = hAxes(iLeg); % only legend axes
-userDat = get(hLeg,'UserData');
+% % --- find all legends
+% legends = findobj('Type','legend');
+% 
+% % Extract Strings from each legend with thier figure number
+% for iii = 1:length(legends)
+%     legend_strings{iii} = legends(iii).String;
+%     legend_strings_loc(iii) = legends(iii).Parent.Number;
+% end
 
-% Extract axes handles that own particular legend, and corresponding strings
-for i1 = 1:length(userDat)
-    hLegParAxes(i1) = userDat{i1}.PlotHandle;
-    hLegString{i1} = userDat{i1}.lstrings;
-end
 
 % Setting the subplots arrangement
 Na = length(av);
@@ -104,11 +101,15 @@ end;
 % Creating new figure
 da = zeros(1,Ns);
 newfig = figure();
+hasLegend = zeros(1,min(Ns,Na));
 for k = 1:min(Ns,Na)
     da(k) = subplot(tiling(1),tiling(2),arr{k});
     na = copyobj(av(k),newfig);
-    na.FontSize = 6;
-
+    na.FontSize = 7;
+    na.TitleFontSizeMultiplier = 1.7;
+    na.Box = 'off';
+    na.XLabel.Position = [23.3790 -209.1040 -5.0000]
+    
     try
         na.Children(1).FontSize = 6;
         na.Children(2).FontSize = 6;
@@ -121,8 +122,14 @@ for k = 1:min(Ns,Na)
     catch
     end
     
+%     % does it have a legend?
+%     original_fig = get(av(k));
+%     if isprop(original_fig.Legend, 'String')
+%         hasLegend(k) = 1;
+%     end
 
     set(na,'Position',get(da(k),'Position'));
+
     % Produce legend if it exists in original axes
     try
         [ii jj] = ismember(av(k),hLegParAxes);
@@ -135,10 +142,31 @@ for k = 1:min(Ns,Na)
     delete(da(k));
 end
 
-
-% set up the export nicely
 A = figure(newfig);
 
+% % WIP!!!!!
+% % finally, add back in the legends to each fig that originally had one
+% a = length(legend_strings);
+% hasLegend = fliplr(hasLegend);
+% for ggg = length(hasLegend):-1:1
+%     if hasLegend(ggg) == 1
+%        legend(A.Children(ggg), legend_strings{a})
+%        A.Children(ggg).FontSize = 1;
+%        %A.Children(ggg).Position
+%        Pos1 = A.Children(ggg+1).Position(1) + (6 * A.Children(ggg+1).Position(4));
+%        Pos2 = A.Children(ggg+1).Position(2) + (.1 * A.Children(ggg+1).Position(3));
+%        Pos3 = A.Children(ggg+1).Position(4) / 300;
+%        Pos4 = A.Children(ggg+1).Position(3) / 300;
+%        
+%        A.Children(ggg).Position = [Pos1 Pos2 Pos3 Pos4];
+%        %A.Children(ggg).Position
+%        
+%        a = a - 1;      
+%     end
+% end
+
+
+% set up the export nicely
 A.PaperSize = [20 50];
 A.PaperOrientation = 'portrait';
 slots = tiling(1) * tiling(2);
