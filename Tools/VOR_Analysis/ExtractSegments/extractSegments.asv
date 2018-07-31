@@ -64,18 +64,32 @@ for i = 1:length(newObj)
     end
 end
 
-%% Take the Experiment start time listed in the excel file, and remove incorrect segments
+%% Remove segments before the Experiment Start Time
+len = floor((endTimes - startTimes) / 100000);
+i = 1;
+for i = 1:length(len)
+    if len(i) < 30
+        endTimes(i) = [];
+        startTimes(i) = [];
+    end
+end
 
-% remove segments before start time
+%% Take the Experiment start time listed in the excel file, and remove any
+% segments that take place before that time. 
+% remove additional segments before start time
 expmt_start_time = xlsread(fullfile(pathname,[filenameroot '.xlsx']), 1, 'G2' );
 endTimes(startTimes < (expmt_start_time *100000)) = [];
 startTimes(startTimes < (expmt_start_time *100000)) = [];
 
-% remove segments after experiment is over
-[~, segment_Names, ~] = xlsread(fullfile(pathname,[filenameroot '.xlsx']), 1, 'A2:A500' );
+% remove additional segments after experiment is over
+[~, segment_Names, ~] = xlsread(fullfile(pathname,[filenameroot '.xlsx']), 1, 'A2:A500' )
+
 if length(segment_Names) < length(endTimes)
-    endTime(length(segment_Names)+1:end) = [];
+    endTime(length(segment_Names):end) = [];
 end
+
+
+
 
 %% Convert to seconds
 endTimes = endTimes' /     100000;
