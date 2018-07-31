@@ -47,7 +47,7 @@ labels = strcat(T.Type, {' '}, num2str( T.Frequency), { 'Hz '}, num2str(T.TimePo
 %% ---------------------------Import calibration file -------------------%%
 try  % Look in current folder
     filelist = dir;
-    calIndex = ~cellfun(@isempty,strfind({filelist.name}, 'calib'));    
+    calIndex = ~cellfun(@isempty,strfind({filelist.name}, 'calib'));
     filenameCal = filelist(calIndex).name; pathnameCal = cd;
 catch % close popup to enter manually
     [filenameCal, pathnameCal] = uigetfile( {'*.mat','Matlab (.mat)'},'Pick a calibration file with scale factors','calib.mat');
@@ -73,7 +73,7 @@ data = rawdata;
 fs = data(1).samplerate;
 
 % Add a drum velocity channel if needed
-if isempty(datchan(data,'htvel')) 
+if isempty(datchan(data,'htvel'))
     ind = datchanind(data,'htpos');
     if ~isempty(ind)
     data(end+1) = dat(smooth([diff(smooth(data(ind).data,50)); 0],50)*fs,'htvel',[],fs,data(ind).tstart,data(ind).tend,'deg/s');
@@ -90,14 +90,14 @@ end
 %% Calculate eye position from magnet signal
 % Load calibration factors or enter manually
 if filenameCal
-    load(fullfile(pathnameCal, filenameCal));    
+    load(fullfile(pathnameCal, filenameCal));
     if ~strncmpi(pathnameCal, cd, min(length(cd),length(pathnameCal)))
         copyfile(fullfile(pathnameCal, filenameCal),fullfile(cd, filenameCal))
-    end       
+    end
 else   % If no calib file available, enter manually
     figure; plot(datchan(data,{'hhvel','htvel','hepos1','hepos2'})); xlim([tstart(2) tstop(2)])
     scaleCh1 = input('Scale1: ');
-    scaleCh2 = input('Scale2: ');   
+    scaleCh2 = input('Scale2: ');
     save(fullfile(cd, 'manual_calib.mat'), 'scaleCh1','scaleCh2') % Save scale factors
 end
 
@@ -138,7 +138,7 @@ velthresStim =80;
 
 ploton = 1;
 if any(STIMmask)
-    resultStim = VORstim(data, tstart, tstop, frequency, labels, timepts,velthresStim, pulseDur, ploton, STIMmask);    
+    resultStim = VORstim(data, tstart, tstop, frequency, labels, timepts,velthresStim, pulseDur, ploton, STIMmask);
     resultsFilename =  'resultStim';
     save(fullfile(pathname, resultsFilename),'resultStim','velthresStim');
 end
@@ -153,7 +153,4 @@ save(fullfile(pathname, 'settings'),'velthres','velthresStim')
 xlswrite(fullfile(pathname,tFilename),result.data(:,4:end),'Sheet1','J2');
 xlswrite(fullfile(pathname,tFilename),result.header(4:end),'Sheet1','J1');
 figure(200)
-
 fprintf('Results saved in %s\n', pathname)
-
-

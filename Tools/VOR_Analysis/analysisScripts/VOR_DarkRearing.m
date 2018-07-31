@@ -66,7 +66,7 @@ filelist = dir;
 clear filenameCal
 for i = 1:length(filelist)
     if contains(filelist(i).name, 'calib.mat') || contains(filelist(i).name, 'cali.mat')
-        filenameCal = filelist(i).name; 
+        filenameCal = filelist(i).name;
         pathnameCal = cd;
         break
     end
@@ -96,7 +96,7 @@ data = rawdata;
 fs = data(1).samplerate;
 
 % Add a drum velocity channel if needed
-if isempty(datchan(data,'htvel')) 
+if isempty(datchan(data,'htvel'))
     ind = datchanind(data,'htpos');
     if ~isempty(ind)
     data(end+1) = dat(smooth([diff(smooth(data(ind).data,50)); 0],50)*fs,'htvel',[],fs,data(ind).tstart,data(ind).tend,'deg/s');
@@ -113,14 +113,14 @@ end
 %% === Scale Eye Chans and Calculate Eye Velocity ====================== %%
 % Load calibration factors or enter manually
 if filenameCal
-    load(fullfile(pathnameCal, filenameCal));    
+    load(fullfile(pathnameCal, filenameCal));
     if ~strncmpi(pathnameCal, cd, min(length(cd),length(pathnameCal)))
         copyfile(fullfile(pathnameCal, filenameCal),fullfile(cd, filenameCal))
-    end       
+    end
 else   % If no calib file available, enter manually
     figure; plot(datchan(data,{'hhvel','htvel','hepos1','hepos2'})); xlim([tstart(2) tstop(2)])
     scaleCh1 = input('Scale1: ');
-    scaleCh2 = input('Scale2: ');   
+    scaleCh2 = input('Scale2: ');
     save(fullfile(cd, 'manual_calib.mat'), 'scaleCh1','scaleCh2') % Save scale factors
 end
 
@@ -136,13 +136,8 @@ veltau = .01;
 hevel = movingslopeCausal(datchandata(data,'hepos'),round(fs*veltau))*fs;
 data(end+1) = dat(hevel,'hevel',[],fs,data(1).tstart,data(1).tend,'deg/s');
 
-%%  -----------------------------------------------------
-%  ----------Set final parameters - desaccading----------
-%  -----------------------------------------------------
+%% === Run Sine Analysis for Each Relevant Segment ===================== %%
 velthres = 80;    % *** SET THRESHOLD HERE ***Higher threshold means fewer saccades will be detected
-% load settings
-
-%% -------------Run sine analysis for each relevant segment -------------%%
 result = VORsineFit(data, T.StartTime, T.EndTime, T.Frequency, labels, T.TimePoint,velthres, ploton);
 fprintf('Artifacts: \n%f\nRsquare: \n%f\n',mean(result.data(:,12)),mean(result.data(:,13)))
 
@@ -159,19 +154,20 @@ resultStep = [];
 velthresStim = velthres;
 
 if any(STIMmask)
-    resultStim = VORstim(data, tstart, tstop, frequency, labels, timepts,velthresStim, pulseDur, ploton, STIMmask);    
+    resultStim = VORstim(data, tstart, tstop, frequency, labels, timepts,velthresStim, pulseDur, ploton, STIMmask);
     resultsFilename =  'resultStim';
     save(fullfile(pathname, resultsFilename),'resultStim','velthresStim');
 end
 
-%% -------------Save results -------------
+%% === Save Results ==================================================== %%
 save(fullfile(pathname, 'result'), 'result','resultStep','resultStim');
 
 % Save threshold settings
 save(fullfile(pathname, 'settings'),'velthres','velthresStim')
 
 % Append results to Excel
-xlswrite(fullfile(pathname,tFilename),{'Delta [t30 - t0]'}, 'Sheet1', 'A20'); 
+xlswrite(fullfile(pathname,tFilename),{'Delta [t30 - t0]'}, 'Sheet1', 'A20');
 xlswrite(fullfile(pathname,tFilename),result.data(:,4:end),'Sheet1','J2');
 xlswrite(fullfile(pathname,tFilename),result.header(4:end),'Sheet1','J1');
-figure(200)
+
+fprintf('Results saved in %s\n', pathname)

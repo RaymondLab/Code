@@ -9,7 +9,7 @@ in order to automatically determine the start and stop of SINE segments.
 'L' indicates LIGHT ON
 'l' indicates LIGHT OFF
 
-NOTE: THIS SCRIPT ONLY WORKS WHEN THE WHOLE EXPERIMENT IS BASED ON SINWAVES
+NOTE: THIS SCRIPT ONLY WORKS WHEN THE WHOLE EXPERIMENT IS BASED ON SINEWAVES
 
 DO NOT USE FOR EXPERIMENTS WITH STEPS!!
 DO NOT USE FOR EXPERIMENTS WITH STIM-ONLY SEGMENTS!!
@@ -18,7 +18,6 @@ DO NOT USE FOR EXPERIMENTS WITH STIM-ONLY SEGMENTS!!
 
 %% Setup
 cd('Z:\1_Maxwell_Gagnon\ProjectData_Amin\Delta 07 Amin Data\Gain Up\1 hz gain up\WT\Exp-Delta07-Ch01-04-11102017');
-
 pathname = cd;
 activateCEDS64;
 [~, filenameroot] = fileparts(pathname);
@@ -81,7 +80,7 @@ end
 endTimes = endTimes' /     100000;
 startTimes = startTimes' / 100000;
 
-% place start and end times into the excel file
+%% place start and end times into the excel file
 tFilename = [filenameroot '.xlsx'];
 xlswrite(tFilename, startTimes, 'Sheet1', 'D2')
 xlswrite(tFilename, endTimes, 'Sheet1', 'E2')
