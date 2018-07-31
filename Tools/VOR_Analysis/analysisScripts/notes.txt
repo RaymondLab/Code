@@ -1,0 +1,88 @@
+Active files
+  - VOR_DarkRearing
+  - VOR_DarkRearingGeneralization
+  - VOR_Delta7
+  - VOR_Delta7Generalization
+  - VOR_Default
+
+  - runVOR
+  - runVORm
+  - runVORa
+  - runVORLight
+
+- Use runVOR as baseline
+
+  runVORa --> located in maxEdits
+    - Improved calibration importing
+    - alternate labels section
+    - different threshold for saccades(old saccades)
+    CONCLUSION: Can be removed, no special properties
+
+  runVORa --> located in maxEdits/files
+    CONCLUSION: Can be removed, no special properties
+
+  runVORm     == runVORa (maxEdits)
+  runVORLight == runVORa (maxEdits/files)
+
+  D7 is baseline for new ones ============================================
+    VOR_DarkRearingGeneralization
+      - Labels
+        - D7
+      - desaccading
+        - D7
+      - DRG adds additional line to excel
+      - SineFit
+      - DRG uses T structure
+        - ?????
+
+    VOR_DarkRearing
+      - labels
+        - D7
+      - desaccading
+        - D7
+      - DR adds additional line to excel
+      - SineFit
+      - DR uses T structure
+        - ?????
+
+    D7G
+      - Sinefit
+      - Labels
+==============================================================================
+  DRG & DR
+    - Different SineFit
+    - Different Labels
+      - Neither will be kept
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      ddd

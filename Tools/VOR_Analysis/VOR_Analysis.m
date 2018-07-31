@@ -98,7 +98,7 @@ function pushbutton1_Callback(hObject, eventdata, handles)
     % Data Location
     params.folder = handles.edit1.String;
 
-    % Extras
+    % Extras Analysis / plotting
     params.do_subplots = handles.checkbox1.Value;
     params.do_individual = handles.checkbox5.Value;
     params.do_polar_plots = handles.checkbox3.Value;
@@ -107,6 +107,7 @@ function pushbutton1_Callback(hObject, eventdata, handles)
     params.saccadePre = str2double(handles.edit2.String);
     params.saccadePost = str2double(handles.edit3.String);
     params.saccadeThresh = str2double(handles.edit4.String);
+    [~, params.seg_names, ~] = xlsread(fullfile(pathname,[filenameroot '.xlsx']), 1, 'A2:A500' );
 
     % Single / Batch
     params.count = handles.text7.String;

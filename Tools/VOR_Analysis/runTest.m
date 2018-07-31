@@ -71,10 +71,9 @@ function singleAnalysis(params)
 
     % Run appropriate Test
     switch params.analysis
-        case 'original'
-            fprintf("Running: Original Analysis\n")
-            runVOR
-            %VOR_original(params)
+        case 'Sine Only - Vanilla'
+            fprintf('Running - Sine Analysis with no additinal measuers')
+            VOR_Default(params)
         case 'Dark Rearing'
             fprintf('Running: Dark Rearing Analysis\n')
             runVORm
@@ -201,3 +200,4 @@ function subplotOrganization(params, figureName)
     figs2subplots( figureName{1}, spDim, arr)
 
 end
+
