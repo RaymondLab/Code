@@ -15,14 +15,14 @@ DO NOT USE FOR EXPERIMENTS WITH STEPS!!
 DO NOT USE FOR EXPERIMENTS WITH STIM-ONLY SEGMENTS!!
 
 %}
-
+function [startTimes, endTimes] = extractSegments(folder)
 %% Setup
-cd('Z:\1_Maxwell_Gagnon\ProjectData_Amin\Delta 07 Amin Data\Gain Up\1 hz gain up\WT\Exp-Delta07-Ch01-04-11102017');
+cd(folder);
 pathname = cd;
 activateCEDS64;
 [~, filenameroot] = fileparts(pathname);
 A = CEDS64Open(fullfile(pathname,[filenameroot '.smr']));
-[iRead, vMObj] = CEDS64ReadMarkers(A, 31, 1000, 0);
+[~, vMObj] = CEDS64ReadMarkers(A, 31, 10000, 0);
 
 %% Extract the S, s, and L Markers from the recording 
 g = 1;
@@ -73,7 +73,8 @@ startTimes(startTimes < (expmt_start_time *100000)) = [];
 % remove segments after experiment is over
 [~, segment_Names, ~] = xlsread(fullfile(pathname,[filenameroot '.xlsx']), 1, 'A2:A500' );
 if length(segment_Names) < length(endTimes)
-    endTime(length(segment_Names)+1:end) = [];
+    endTimes(length(segment_Names)+1:end) = [];
+    startTimes(length(segment_Names)+1:end) = [];
 end
 
 %% Convert to seconds

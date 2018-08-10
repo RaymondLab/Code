@@ -18,7 +18,7 @@
 % Modified 1/20/14 to remove vertical eye calculations
 
 
-function R = VORsineFit_Delta7(data, tstart, tstop, sinefreq, labels, timepts, velthres, ploton, saccadeWindow)
+function R = VORsineFit_Delta7Generalization(data, tstart, tstop, sinefreq, labels, timepts, velthres, ploton, saccadeWindow)
 %% Create R data Array and other parameters
 
 % Set up cell structure to hold all R.data
@@ -50,17 +50,12 @@ end
 [~, filename] = fileparts(pwd);
 samplerate = data(1).samplerate;
 % time to exclude before saccade (s)
-presaccade = saccadeWindow(1);   
+presaccade = saccadeWindow(1);
 % time to exclude after saccade (s)
 postsaccade = saccadeWindow(2);
 % convert back to # of datapoints
 presaccadeN = round(presaccade*samplerate);
 postsaccadeN = round(postsaccade*samplerate);
-
-% Gather Screensize information for figure placement
-screensize = get( groot, 'Screensize' );
-leftPos = 5;
-botPos = 50;
 
 fprintf('Threshold = %g\n',velthres)
 fprintf('Presaccade = %g ms\n',presaccade)
@@ -117,15 +112,10 @@ for count = 1:nSegs
 
     %% === DESACCADE =================================================== %%
     % First pass remove baseline eye mvmt
-    keep = abs(eyevelH) < 5*std(abs(eyevelH)) + mean(abs(eyevelH));        % First pass remove saccades
+    keep = abs(eyevelH) < 1.5*velthres;        % First pass remove saccades
     b = regress(eyevelH(keep), vars(keep,:));  % Initial fit
     fit1 = vars *b;
     eyevelHtemp = eyevelH - vars*b;            % Subtract fitted sine
-    
-%     figure()
-%     hold on
-%     plot(abs(eyevelH))
-%     hline(5*std(abs(eyevelH)) + mean(abs(eyevelH)))
 
     % Find saccades in eye movement and blank out an interval on either side
     [eyevelH_des_temp, omitCenters, rawThres1] = desaccadeVelNew(eyevelHtemp, presaccadeN, postsaccadeN, velthres);
@@ -133,7 +123,7 @@ for count = 1:nSegs
     omitH = isnan(eyevelH_des_temp);
     eyevelH_des1 = eyevelH;
     eyevelH_des1(omitH) = NaN;
- 
+
     R.data(count,strcmp(header,'saccadeFrac')) = mean(omitH);
 
     %% === Plot the pre and post-saccade removal velocity traces ======= %%
@@ -150,9 +140,9 @@ for count = 1:nSegs
         if exist('eyevelH_des', 'var')
             plot(time, eyevelH_des, 'b')
         end
-        
+
         xlim([0 length(plot_eyevelH)/1000]);     ylim([-200 200])
-        xlabel('Time (s)');    set(gcf,'Position',[leftPos botPos (screensize(3)-leftPos) 300]);
+        xlabel('Time (s)');    set(gcf,'Position',[10 50 1500 300]);
         yy = linspace(0, length(plot_eyevelH)/1000, length(eyevelHtemp));
         hold on
 
@@ -164,7 +154,7 @@ for count = 1:nSegs
             plot(yy, fit1 + rawThres1(2), ':r');
         end
 
-        
+
     end
 
 
@@ -228,8 +218,12 @@ for count = 1:nSegs
         figure(count); hold on
         y = vars*b;
         plot(time, y,'r','LineWidth',1)
-        %title(sprintf('%s %s %.1f Amp: %.2f Phase: %.2f',filename,datatype, timepts(count), eyevelH_amp, eyevelH_rel_phase),'interpreter','none')
-        title(sprintf('%s        Amp: %.2f Phase: %.2f',datatype, eyevelH_amp, eyevelH_rel_phase),'interpreter','none')
+        section = {'Test 1a', 'Test 1a', 'Test 1a', 'Test 1a', 'Test 1a', 'Test 1a', ...
+                   'Test 1b', 'Test 1b', 'Test 1b', 'Test 1b', 'Test 1b', 'Test 1b', ...
+                   'Train 1', 'Test 2a', 'Test 2b', 'Train 2', ...
+                   'Test 2a', 'Test 2a', 'Test 2a', 'Test 2a', 'Test 2a', 'Test 2a', ...
+                   'Test 2b', 'Test 2b', 'Test 2b', 'Test 2b', 'Test 2b', 'Test 2b'};
+        title(sprintf('%s   %s  %s  Amp: %.2f  Phase: %.2f',filename,datatype, section{count}, eyevelH_amp, eyevelH_rel_phase),'interpreter','none')
     end
 
     %% === Get Cycle by Cycle Average ================================== %%
@@ -278,11 +272,11 @@ for count = 1:nSegs
         eyevelCycleMean = zeros(size(eyevelAll(1,:)));
     end
 
-    R.eyevelCycleMean{count}  = eyevelCycleMean;   
+    R.eyevelCycleMean{count}  = eyevelCycleMean;
     R.data(count,strcmp(header,'nGoodCycles')) = goodCount;
 
     %% === Plot Cycle by Cycle Average ================================= %%
-    if ploton     
+    if ploton
         figure(count+100); clf;
         % plot data
         ttCycle = (1:cycleLength)/samplerate;
@@ -292,12 +286,12 @@ for count = 1:nSegs
         plot(ttCycle, headMean, 'k',ttCycle,zeros(size(ttCycle)),'--k');
         % Cosmetics
         box off
-        set(gcf,'Position',[leftPos (botPos+400) 700 (screensize(4)-(botPos+400)-80)]);
+        set(gcf,'Position',[10 430 600 350]);
         ylim([-30 30]);   xlim([0 max(ttCycle)])
         ylabel('deg/s');  xlabel('Time (s)');
-        title('Average Traces');
-        text (.01, 15, ['Good cycles: ', num2str(goodCount), '/', num2str(length(zeroCross))],'FontSize',10);
-        text (.01, 12, ['Eye amp: ', num2str(eyevelH_amp,3)],'FontSize',10);
+        title(['Hor. Eye Vel: ', datatype ' ', section{count}]);
+        text (.01, 27, ['Good cycles: ', num2str(goodCount), '/', num2str(length(zeroCross))],'FontSize',10);
+        text (.01, 23, ['Eye amp: ', num2str(eyevelH_amp,3)],'FontSize',10);
         legend({'Desaccaded full cycle removed', 'Desaccaded segments','Sine fit','Stimulus'},'EdgeColor','w')
         drawnow;
     end

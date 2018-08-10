@@ -23,6 +23,24 @@ CONTENTS
 ================================================================================
 PIPELINE OR FLOW OF VOR_ANALYSIS
 ================================================================================
+
+VOR_Analysis
+    - GUI
+    - User inputs their desired Parameters, then clicks 'run'
+    - VOR_Analysis sends takes that information and builds the 'params' structure
+      and sends it to runTest
+
+VOR_Tests
+  - 'backbone' of scripts
+  - Two main jobs
+    1) Run specific analysis(s)
+    2) Make subplot of all figures created in the analysis(s)
+
+VOR_Default
+  -
+
+VOR_SineFit
+  - 
 ================================================================================
 LIST OF FILES AND THEIR USE
 ================================================================================

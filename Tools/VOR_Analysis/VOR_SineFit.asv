@@ -1,0 +1,326 @@
+%% VOR_SineFit.m
+% Input:
+% data      - dat structure with channels
+%   'htvel'
+%   'hhvel'
+%   'hepos'
+%   'vepos'
+%   'stim pul'
+% tstart    - time window start times
+% tstop     - time wndow stop times
+% sinefreq  - frequency of stimulus for each segment
+% labels    - label for each segment
+% timepts   - time label for each segment (optional)
+% velthres  - velocity threshold
+%
+% Output: R.data structure with data and header
+%
+% Modified 1/20/14 to remove vertical eye calculations
+
+
+function R = VOR_SineFit(data, tstart, tstop, sinefreq, labels, timepts, velthres, ploton, saccadeWindow, params)
+%% === Create R data Array and other parameters ======================== %%
+
+sp = figure(1);
+set(sp, 'visible', 'off')
+
+% Set up cell structure to hold all R.data
+
+fprintf('\n\nGenerating Segment Figures...')
+
+header = {'timept'  'start' 'end'   'eyeHgain' 'eyeHphase'...
+    'headamp' 'headangle' 'drumamp' 'drumangle' 'eyeHamp' 'eyeHangle'...
+    'saccadeFrac' 'rsquare' 'pval' 'variance','nGoodCycles'};
+
+nSegs = length(tstart);
+nCols = length(header);
+
+R.data = NaN(nSegs,nCols);
+R.header = header;
+R.labels = labels;
+
+if ~exist('timepts','var')
+    timepts = mean([tstart tstop],2);
+end
+R.data(:,strcmpi(header,'timept')) = timepts;
+
+% Other parameters
+if ~exist('velthres','var')
+    velthres = .55;
+end
+
+if ~exist('ploton','var')
+    ploton = 1;
+end
+
+samplerate = data(1).samplerate;
+presaccadeN = round(saccadeWindow(1)*samplerate);
+postsaccadeN = round(saccadeWindow(2)*samplerate);
+
+% Gather Screensize information for figure placement
+screensize = get( groot, 'Screensize' );
+leftPos = 5;
+botPos = 50;
+
+%% === Cycle through each segment ====================================== %%
+for count = 1:nSegs
+    
+    %% === Prep Data =================================================== %%
+    
+    % Skip segments where frequency or start time is NaN
+    if isnan(sinefreq(count)) || isnan(tstart(count))
+        continue
+    end
+
+    % Get the current label and frequency
+    datatype = labels{count};
+    freq = sinefreq(count);
+
+    % fill data matrix with file information
+    R.data(count,strcmpi(header,'start')) = tstart(count);
+    R.data(count,strcmpi(header,'end')) = tstop(count);
+
+    % Segment data to current time segment
+    dataseg = datseg(data, [tstart(count) tstop(count)]);
+
+    % Import Eye, Chair, and Drum velocity
+    headvel = datchandata(dataseg,'hhvel');
+    eyevelH = datchandata(dataseg,'hevel');
+    drumvel = datchandata(dataseg,'htvel');
+
+    % Filter eye velocity to maintain consistency with eye coil
+%     N = 3;      % Filter order
+%     fc = 100;   % Cutoff frequency
+%     [b,a] = butter(N, fc/samplerate);
+%     eyevelH = filter(b,a,eyevelH);
+
+    % define vector of time
+    ndatapoints = length(headvel);
+    time = (1:ndatapoints)/samplerate;
+
+    %% Set up variables for fitting data using a linear regression of Fourier Series
+    y1 = sin(2*pi*freq*time(:));
+    y2 = cos(2*pi*freq*time(:));
+    constant = ones(ndatapoints,1);
+    vars = [y1 y2 constant];
+    warning off
+
+    %% === DESACCADE =================================================== %%
+    % First pass remove baseline eye mvmt
+    keep = abs(eyevelH) < 5*std(abs(eyevelH)) + mean(abs(eyevelH));        % First pass remove saccades
+    b = regress(eyevelH(keep), vars(keep,:));  % Initial fit
+    fit1 = vars *b;
+    eyevelHtemp = eyevelH - vars*b;            % Subtract fitted sine
+
+    % Find saccades in eye movement and blank out an interval on either side
+    [eyevelH_des_temp, omitCenters, rawThres1] = desaccadeVelNew(eyevelHtemp, presaccadeN, postsaccadeN, velthres);
+    omitH = isnan(eyevelH_des_temp);
+    eyevelH_des1 = eyevelH;
+    eyevelH_des1(omitH) = NaN;
+
+    R.data(count,strcmp(header,'saccadeFrac')) = mean(omitH);
+
+    %% === FIT SINE FITS BASED ON DESACCADED TRACES ==================== %%
+    % fit data using a linear regression (data specified by 'keep_'index)
+    % b=coefficients, bint=95% confidence intervals, r=residual, rint=interval
+    % stats include 1)R-square, 2)F statistics, 3)p value 4)error variance
+    
+    % No constant term bc sine centered at 0
+    warning('off','stats:regress:NoConst') 
+
+    % --- CHAIR VELOCITY --------------------------------------------------
+    [b,~,~,~,~] = regress(headvel, vars);
+    headH_amp = sqrt(b(1)^2+b(2)^2);
+    headH_angle = rad2deg(atan2(b(2), b(1)));
+
+    % --- DRUM VELOCITY ---------------------------------------------------
+    [b,~,~,~,~] = regress(drumvel, vars);
+    drumH_amp = sqrt(b(1)^2+b(2)^2);
+    drumH_angle = rad2deg(atan2(b(2), b(1)));
+
+    % calculate eye gain as VOR or OKR based on head signal
+    if headH_amp > 3         % Chair signal
+        refH_amp = headH_amp;
+        refH_angle = headH_angle;
+        idealEye = drumvel-headvel;
+    elseif drumH_amp > 3      % No chair signal, drum signal
+        refH_amp = drumH_amp;
+        refH_angle = drumH_angle;
+        idealEye = drumvel;
+    else                    % No stimulus
+        refH_amp = 1;
+        refH_angle = 0;
+        idealEye = zeros(1,ndatapoints);
+    end
+
+    % --- EYE VELOCITY ----------------------------------------------------
+    [b,~,~,~,stat] = regress(eyevelH(~omitH), vars(~omitH,:));
+    eyevelH_amp = sqrt(b(1)^2+b(2)^2);
+    eyevelH_phase = rad2deg(atan2(b(2), b(1)));
+
+    % --- EYE RELATIVE TO CHAIR/DRUM --------------------------------------
+    eyevelH_rel_gain = eyevelH_amp/refH_amp;
+    eyevelH_rel_phase = (eyevelH_phase - refH_angle);
+    eyevelH_rel_phase = mod(eyevelH_rel_phase,360) - 180;
+    warning on
+    
+    % --- Plot full segment, saccades, and fitted sine --------------------
+    if ploton
+        % temp subplot solution
+         %figure(sp);
+%         set(sp, 'visible', 'off')
+        subplot(params.sp_Dim(1), params.sp_Dim(2), params.figure_loc{params.temp_placement});
+        params.temp_placement = params.temp_placement + 1;
+        
+        % Smooth Visuals
+        plot_eyevelH = smoothdata(eyevelH, 'movmean', 10);
+        plot_eyevelH_des = plot_eyevelH;
+        plot_eyevelH_des(omitH) = NaN;
+        
+        % Plot 
+%         tempHandle = figure(count); clf
+%         tempHandle.Visible = 'off';
+%         set(count, 'visible', 'off');
+        plot(time,plot_eyevelH,'k', 'LineWidth', .25); hold on   % SMOOTHED
+        plot(time, plot_eyevelH_des,'b', 'LineWidth', .25);      % SMOOTHED
+        %plot(time, eyevelH, 'k', 'LineWidth', .25); hold on       % RAW
+        %plot(time, eyevelH_des1, 'b', 'LineWidth', .25);          % RAW
+        plot(time, vars*b,'r', 'LineWidth', .5)
+        plot(time, fit1 + rawThres1(1), ':r', 'LineWidth', .25);
+        plot(time, fit1 + rawThres1(2), ':r', 'LineWidth', .25);
+        
+        % Cosmetics
+        xlim([0 length(eyevelH)/1000]);     ylim([-200 200])
+        if count == nSegs
+            xlabel('Time (s)');    
+        end 
+%         set(gcf,'Position',[leftPos botPos (screensize(3)-leftPos) 300]);
+        title([datatype, '        Amp: ', num2str(eyevelH_amp), '  Rel-Phase: ', num2str(eyevelH_rel_phase)])
+        
+        % Manual y axis b/c matlab is literal garbage
+        yticks([min(ylim) 0 max(ylim)])
+        yticklabels({})
+        text(min(xlim)-(.015*abs(max(xlim))-abs(min(xlim))), .9*max(ylim), num2str(max(ylim)), 'FontSize', 7) % top
+        text(min(xlim)-(.015*abs(max(xlim))-abs(min(xlim))), 0, num2str(0), 'FontSize', 7) % 0
+        text(min(xlim)-(.015*abs(max(xlim))-abs(min(xlim))), .9*min(ylim), num2str(min(ylim)), 'FontSize', 7) % bottom
+        
+        % Manual x axis
+        xticks([0 round(max(xlim)/2, 1) max(xlim)])
+        xticklabels({})
+        text(max(xlim)*.99, min(ylim)*1.1, num2str(round(max(xlim))), 'FontSize', 7)
+        text(max(xlim)/2, min(ylim)*1.1, num2str(round(max(xlim)/2)), 'FontSize', 7)
+        drawnow;
+        %box off
+    end
+    
+    % --- Write to R.data -------------------------------------------------
+    R.data(count,strcmpi(header,'headamp'))     = headH_amp;
+    R.data(count,strcmpi(header,'headangle'))   = headH_angle;   
+    R.data(count,strcmpi(header,'drumamp'))     = drumH_amp;
+    R.data(count,strcmpi(header,'drumangle'))   = drumH_angle;    
+    R.data(count,strcmp(header,'eyeHamp'))      = eyevelH_amp;
+    R.data(count,strcmp(header,'eyeHangle'))    = eyevelH_phase;
+    R.data(count,strcmp(header,'eyeHgain'))     = eyevelH_rel_gain;
+    R.data(count,strcmp(header,'eyeHphase'))    = eyevelH_rel_phase;
+    R.data(count,strcmp(header,'rsquare'))      = stat(1);
+    R.data(count,strcmp(header,'pval'))         = stat(3);
+    R.data(count,strcmp(header,'variance'))     = sqrt(stat(4)); % STD of error - more is worse
+    
+    %% === Calculate Cycle Averages ==================================== %%
+
+    cycleLength = round(samplerate/freq);
+    startpt = max(1,round(mod(-refH_angle,360)/360 * samplerate/freq));
+
+    [eyeVel_All, ~]     = vec2mat(eyevelH(startpt:end), cycleLength, NaN);
+    [eyeVel_AllDes, ~]  = vec2mat(eyevelH_des1(startpt:end), cycleLength, NaN);
+    [headVel_All, ~]    = vec2mat(headvel(startpt:end), cycleLength, NaN);
+    [omit_All, ~]       = vec2mat(double(omitCenters(startpt:end)), cycleLength, NaN);
+
+    eyeVel_All(end,:)   = [];
+    eyeVel_AllDes(end,:) = [];
+    headVel_All(end,:)  = [];
+    omit_All(end,:)     = [];
+    
+    eyeVel_AllDesMean   = nanmean(eyeVel_AllDes);
+    eyeVel_DesSem       = nanstd(eyeVel_AllDes)./sqrt(sum(~isnan(eyeVel_AllDes)));
+    headVel_AllMean     = nanmean(headVel_All);
+
+    badCycles = any(omit_All,2);
+    goodCount = sum(~badCycles);
+    
+    if goodCount > 0
+        eyeVel_GoodCyclesMean = nanmean(eyeVel_All(~badCycles,:), 1);
+    else
+        eyeVel_GoodCyclesMean = zeros(size(eyeVel_All(1,:)));
+    end
+    
+    R.eyeVel_GoodCyclesMean{count}  = eyeVel_GoodCyclesMean;
+    R.eyevelMean{count} = eyeVel_AllDesMean;
+    R.eyevelSem{count}  = eyeVel_DesSem;
+    R.headMean{count}   = headVel_AllMean;
+    R.data(count,strcmp(header,'nGoodCycles')) = goodCount;
+
+    %% === Plot Averages =============================================== %%
+    
+    if ploton
+        
+        
+        % subplot solution
+        %figure(sp);
+        %set(sp, 'visible', 'off')
+        subplot(params.sp_Dim(1), params.sp_Dim(2), params.figure_loc{params.temp_placement});
+        params.temp_placement = params.temp_placement + 1;
+        
+        if max(headVel_AllMean) < 15
+            ylimits = [-15 15];
+        else
+            ylimits = [-30 30];
+        end
+        
+        % plot data
+%         tempHandle = figure(count+100); clf;
+%         tempHandle.Visible = 'off';
+%         set(count+100, 'visible', 'off');
+        ttCycle = (1:cycleLength)/samplerate;
+        plot(ttCycle, smooth(eyeVel_GoodCyclesMean, 50),'b'); hold on
+        plot(ttCycle, smooth(eyeVel_AllDesMean, 50), 'g');
+        plot(ttCycle, sin(2*pi*freq*ttCycle + deg2rad(eyevelH_rel_phase+180))*eyevelH_amp,'r');
+        plot(ttCycle, headVel_AllMean, 'k');
+        plot(ttCycle, zeros(size(ttCycle)),'--k');
+        % Cosmetics
+        box off
+%         set(gcf,'Position',[leftPos (botPos+400) 700 (screensize(4)-(botPos+400)-80)]);
+        ylim(ylimits);   xlim([0 max(ttCycle)])
+        if count == 1
+            %ylabel('deg/s');
+            text(0-max(xlim)*.06, 0, 'deg/s', 'FontSize', 8, 'Rotation', 90)
+            %legend({'Mean: Good Cycles', 'Mean: All Cycles, Desaccaded','Sine fit','Stimulus'},'EdgeColor','w')
+        end
+        if count == nSegs
+            xlabel('Time (s)');    
+        end 
+        text(.01, ylimits(2)-1, ['Rel Gain: ' num2str(eyevelH_rel_gain)], 'Fontsize', 5);
+        text(.01, ylimits(2)-4, ['Good Cycles: ', num2str(goodCount), '/', num2str(length(badCycles))],'FontSize',5);
+        text(.01, ylimits(2)-7, ['Eye Amp: ', num2str(eyevelH_amp,3)],'FontSize',5);
+
+        % Manual y axis b/c matlab is literal garbage
+        yticks([min(ylim) 0 max(ylim)])
+        yticklabels({})
+        text(0-max(xlim)*.035, .9*max(ylim), num2str(max(ylim)), 'FontSize', 7)
+        text(0-max(xlim)*.035, 0, num2str(0), 'FontSize', 7)
+        text(0-max(xlim)*.035, .9*min(ylim), num2str(min(ylim)), 'FontSize', 7)
+        
+        % Manual x axis
+        xticks([0 round(max(xlim)/2, 1) max(xlim)])
+        xticklabels({})
+        text(max(xlim)*.99, min(ylim)*1.1, num2str(max(xlim)), 'FontSize', 7)
+        text(max(xlim)/2, min(ylim)*1.1, num2str(max(xlim)/2), 'FontSize', 7)
+        drawnow;
+    end
+end
+sp.PaperSize = [params.sp_Dim(2)*1.5 params.sp_Dim(1)*1.25];
+sp.PaperPosition = [0 0 params.sp_Dim(2)*1.5 params.sp_Dim(1)*1.25];
+fprintf('Done!\n')
+fprintf('saving...')
+print(sp, '-fillpage',['applesX325' '.pdf'],'-dpdf', '-r300');
+fprintf('Done!\n')

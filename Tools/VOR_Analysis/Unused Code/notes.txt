@@ -1,0 +1,136 @@
+Misc Notes
+  - Filtering Locations
+    - VOR_Default
+      - 100 Hz low pass filter on scaled eye position, then calculated to Velocity
+    - SineFit
+      - Filter for ONLY display
+        - full segment [ smoothdata(X, 'movmean', 10) ]
+        - summary [ smooth(X, 50) ]
+  - RunTests
+    - VOR_Default
+      - Data Prep + sine analysis
+      - Stim analysis?????
+    - Summary Eye amp
+    - Summary Eye gain
+    - Polar Plots
+
+    - Make+Export Subplot
+    - save params to excel file
+
+  - tell people about importance of starting point in excel file
+  - do not add anything extra to the excel file
+
+
+
+
+
+
+Active files
+  - VOR_DarkRearing
+  - VOR_DarkRearingGeneralization
+  - VOR_Delta7
+    - Combined into VOR_Default. Can be deleted
+  - VOR_Delta7Generalization
+    - Combined into VOR_Default. Can be deleted
+  - VOR_Default
+
+  - runVOR
+    - unused
+  - runVORm
+    - Used instead of VOR_DarkRearing
+  - runVORa (maxEdits/Files)
+    - is a copy. can delete
+  - runVORa (maxEdits)
+    - unused
+  - runVORLight
+    - is a copy. can delete
+
+  runVORm == runVORa (maxEdits/files) == runVORLight
+
+
+  labels
+    - Use from D7
+  desaccade
+    - Use new version, found in D7
+  SineFit
+    - Different for each?
+  plotVOR
+    - Different for each?
+  Additional line in excel file
+    -
+
+
+  D7 is baseline for new ones ============================================
+    VOR_DarkRearingGeneralization
+      - Labels
+        - D7
+      - desaccading
+        - D7
+      - DRG adds additional line to excel
+      - SineFit
+      - DRG uses T structure
+        - ?????
+
+    VOR_DarkRearing
+      - labels
+        - D7
+      - desaccading
+        - D7
+      - DR adds additional line to excel
+      - SineFit
+      - DR uses T structure
+        - ?????
+
+    D7G
+      - Sinefit
+      - Labels
+==============================================================================
+  DRG & DR
+    - Different SineFit
+    - Different Labels
+      - Neither will be kept
+
+==============================================================================
+==============================================================================
+==============================================================================
+plotVOR
+  plotVORm
+    - used for DR and DRG
+  plotVOR
+    - used for everything else
+
+SineFit
+  D7G
+    - combined into VOR_sineFit_Default
+  D7
+    - copied and used as VOR_sineFit_Default
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      ddd

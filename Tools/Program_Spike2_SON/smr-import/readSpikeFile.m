@@ -23,6 +23,7 @@ end
 [pathname, filename2, extension]=fileparts(filename);
 
 fprintf('Reading Spike2 file: %s\n',fullfile(pathname, filename2));
+warning('off','backtrace')
 
 if strcmpi(extension,'.smr')==1 || strcmpi(extension,'.srf')==1
     % Spike2 for Windows source file so little-endian
@@ -70,7 +71,7 @@ else
                 
                 if isempty(data)
                     % Empty channel
-                    warning(sprintf('Empty channel %i',chan))
+                    warning('Empty channel %i',chan)
                     continue
                 end
                 

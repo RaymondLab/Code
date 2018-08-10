@@ -1,22 +1,60 @@
 TODO
-  - ===== FEATURES =============================================================
-    - Auto export of params summary file
-    - De-saccading Script
-    - Amin: Automatic generation of the figure he always makes in excel
-    - Main title in the subplot
-    - Stop button in GUI
+  - ===== High P =============================================================
+    - Order more 9v for Sriram
+    - Implement drift correction to motors
+    - investigate Yields(); in protocols
+    - investigate irregular timing of the lasers in 253
+    - buy short BNC cables
+    - Move experiment Protocols to repository
+    - Run Amins D019 ephys segment
+    - Spike sort Boris's data
+    - New Spike2 visuals
+    - Params export
+
+  - ===== PROJETS ==============================================================
+    - VOR Analysis
+      - Remove dark rearing specific scripts
+      - Change channel names to reflect the new naming schema
+      - different titles for different experiments?
+      - update descriptions
+      - Summary figure Scale and labels! for generalization
+      - Publish
+      - Automatic detection of frequency
+      - remove first 5 seconds from data
+      - Update Notes
+
+  - ===== Low P ================================================================
     - Startup and shutdown scripts for MATLAB
-    - Auto detect how many extra figures are going to be in the summary subplot
-  - ===== INSTRUCTIONS/ GUIDES =================================================
-    - Opto guide
-    - Experimental Conditions guide
-  - ===== TOOLS FOR MAX ========================================================
-    - Monitor other's repositories
-    - Repository security
-  - ===== OTHER ===================================================
-    - Move the experiment protocols to the repo instead of only on D253
-  - ===== CLARIFY ==============================================================
-    - Hannah: What is the purpose of the eye coil filtering?
-    - VORsineFit --> eyevel2cycle. What is this used for?
-    - Take note of each filtering/smoothing that takes place
-    - How to read conflict syntax
+    - Main title in the subplot
+    - Review De-saccading Script
+    - GUIDE: Opto
+    - GUIDE: Experimental Conditions
+    - Tool: Repo Monitoring
+    - Tool: Repo Security (ssh)
+    - LU: file conflict syntax
+    - Why do we recalculate the eye velocity in sineFit? What different from runVOR?
+    - padding for subplots
+
+
+
+
+    Things Done
+    Sriram
+    - OKR Protocol
+    - OKR Analysis
+    - OKR+Gen+DEfault analysis
+    - Met with GC people to discuss spike sorting
+
+    Amin
+    - Fixed step code in sequencer file
+    - Step GC protocol
+
+    Other
+    - Solved Drift Issue
+    - Improved speed/performance of VOR analysis
+    - Improved visuals of subplot
+    - Application
+    - Calibration debugging (days!)
+
+    Jay & Jenn
+    - Helping with access/certification issues

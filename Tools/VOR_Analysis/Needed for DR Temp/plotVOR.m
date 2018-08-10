@@ -36,7 +36,8 @@ end
 
 clf
 conds = unique(type);
-colorsAll = {'k','w','g','m'};
+my_colour = [112 138 215] ./ 255;
+colorsAll = {'b','k','r','g','y', 'c','m', my_colour };
 colors = colorsAll(1:length(conds));
 
 plot(t(VORDmask),gain(VORDmask),'-k'); hold on; 
