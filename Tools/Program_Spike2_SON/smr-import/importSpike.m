@@ -134,6 +134,10 @@ contchans = arrayfun(@(x) strcmp(x,'cont'),getchantype(datout));
 samplerates_sub = arrayfun(@(x) x.samplerate, datout(contchans));
 samplerates = zeros(size(contchans)); samplerates(contchans) = samplerates_sub;
 unique_samplerates = unique(samplerates(samplerates>0));
+if ~any(samplerates)
+    return
+end
+
 
 for ii = length(unique_samplerates)
     curr_mask = unique_samplerates(ii)==samplerates & contchans;
