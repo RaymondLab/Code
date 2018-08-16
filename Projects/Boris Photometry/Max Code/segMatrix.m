@@ -1,7 +1,4 @@
-function segmentMatrix = segMatrix(params)%% this script is used to takes a segments, or chunks of data, and organize
-% them in a useful way.
-%
-% max.gagnon11@gmail.com 5/18
+function [segMat_405_Control, segMat_472_GCaMP, segMat_Diff]  = segMatrix(params)
 
 %% Import & organize data
 
@@ -28,21 +25,14 @@ else
     warning('Wrong Mouse number. Please Enter 1 or 2')
 end
 
-switch params.channel
-    case 'Control'
-        data = Chan_405_Control;
-        %data = sig_405_RS;
-    case 'GCaMP'
-        data = Chan_472_GCaMP;
-       % data = sig_472_RS; 
-    case 'Difference'
-        data = Chan_472_GCaMP - Chan_405_Control;
-        %data = sig_472_RS - sig_405_RS;
-end
+%% Organize data - Normal
+Chan_Diff = Chan_472_GCaMP - Chan_405_Control;
 
 switch params.filter
     case 'Filtered'
-        data = smooth(data, 10);
+        Chan_405_Control = smooth(Chan_405_Control, 10);
+        Chan_472_GCaMP = smooth(Chan_472_GCaMP, 10);
+        Chan_Diff = smooth(Chan_Diff, 10);
     case 'Unfiltered'
         
     otherwise
@@ -50,91 +40,60 @@ switch params.filter
         params.filter
 end
 
+offset = params.segLen / 4;
+startT = camtime(params.segment(1)) * 100 + offset;
+endT = camtime(params.segment(2))  * 100;
+% make control chan matrix
+segMat_405_Control = vec2mat(Chan_405_Control(startT:endT),params.segLen);
+segMat_405_Control(end,:) = [];
+
+% make GCaMP chan matrix
+segMat_472_GCaMP = vec2mat(Chan_472_GCaMP(startT:endT),params.segLen);
+segMat_472_GCaMP(end,:) = [];
+
+% make difference matrix
+segMat_Diff = vec2mat(Chan_Diff(startT:endT),params.segLen);
+segMat_Diff(end,:) = [];
+
+
 
 %% setup for CUstom Process (Comment this section out be default)
-
-% this vector contains pause lengths
-m2r1s1 = [0 0 0 4 1 1 1 1 1 1 1 1 4 2  2 2 2 2 2 2  2  2  2 2];
-% add time for movement
-m2r1s1 = m2r1s1 + 2;
-% this vector contains pause lengths
-m2r1s2 = [3 5 5 5 6 5 4 4 3 4 3 3 4 15 7 9 6 6 7 12 10 14 7 9 17];
-% add time for movement
-m2r1s2 = m2r1s2 + 2;
-
-segment = m2r1s2;
-
-% pre-alocate
-%R_matrix = NaN(length(segment), (2+max(segment))*400);
-%L_matrix = NaN(length(segment), (2+max(segment))*400);
-segmentMatrix = NaN(length(segment), (2+max(segment))*400);
-startT = camtime(params.segment(1)) * 100;
-%endT = camtime(params.segment(2))  * 100;
-
-for i = 1:length(segment)  
-
-    segmentMatrix(i,1:segment(i)*400) = data(startT:startT+(segment(i)*400)-1);
-    
-    % First movement is always rightward (from MOUSE PERSPECTIVE!!)
-%     if mod(i, 2) == 1
-%         R_matrix(i,1:segment(i)*400) = data(startTime:startTime+(segment(i)*400)-1);
-%     else
-%         L_matrix(i,1:segment(i)*400) = data(startTime:startTime+(segment(i)*400)-1);
-%     end
-
-    startT = startT + (segment(i)+2)*400;
-end
-
-% %% Normal Process
-% % Define start time
-% offset = params.segLen / 4;
-% startT = camtime(params.segment(1)) * 100 + offset;
 % 
-% % CHOOSE ONE: total amount of segments, or end time of the segments
-% endT = camtime(params.segment(2)) * 100;
-% %segNum = 4;
+% % this vector contains pause lengths
+% m2r1s1 = [0 0 0 4 1 1 1 1 1 1 1 1 4 2  2 2 2 2 2 2  2  2  2 2];
+% % add time for movement
+% m2r1s1 = m2r1s1 + 2;
+% % this vector contains pause lengths
+% m2r1s2 = [3 5 5 5 6 5 4 4 3 4 3 3 4 15 7 9 6 6 7 12 10 14 7 9 17];
+% % add time for movement
+% m2r1s2 = m2r1s2 + 2;
 % 
-% % Define length of each segment, and the gap between them
-% segLen = params.segLen;
-% gapLen = 0;
+% segment = m2r1s2;
 % 
-% % if segNum is given, find endT
-% if ~exist('endT', 'var')
-%     segSum = segLen * segNum;
-%     gapSum = gapLen * (segNum -1);
-%     endT = startT + segSum + gapSum;
-% end
+% % pre-alocate
+% %R_matrix = NaN(length(segment), (2+max(segment))*400);
+% %L_matrix = NaN(length(segment), (2+max(segment))*400);
+% segmentMatrix = NaN(length(segment), (2+max(segment))*400);
+% startT = camtime(params.segment(1)) * 100;
+% %endT = camtime(params.segment(2))  * 100;
 % 
-% startTList = startT:segLen+gapLen:endT;
-% startTList = floor(startTList);
+% for i = 1:length(segment)  
 % 
-% % if endT is given, find the segNum
-% if ~exist('segNum', 'var')
-%     segNum = length(startTList);
-% end
-% 
-% %% create matrix with rows for each segment
-% 
-% % pre-Allocate matrix
-% segmentMatrix = zeros(segNum, segLen);
-% 
-% row = 1;
-% 
-% for i = startTList
-%   
-%     if row == segNum
-%          % on the final segment, fill in the rest of the values with NaN, as the
-%         % final segment is likely to be only a partial cycle.
-%         finalSeg = data( i : endT);
-%         finalSeg = [finalSeg' NaN(1, segLen - length(finalSeg))];
-%         segmentMatrix(row,:) = finalSeg;
-%     else
-%         % add to matrix normally
-%         segmentMatrix(row,:) = data(i:i+segLen-1)';
-%     end
+%     segmentMatrix(i,1:segment(i)*400) = data(startT:startT+(segment(i)*400)-1);
 %     
-%     row = row + 1;
+%     % First movement is always rightward (from MOUSE PERSPECTIVE!!)
+% %     if mod(i, 2) == 1
+% %         R_matrix(i,1:segment(i)*400) = data(startTime:startTime+(segment(i)*400)-1);
+% %     else
+% %         L_matrix(i,1:segment(i)*400) = data(startTime:startTime+(segment(i)*400)-1);
+% %     end
+% 
+%     startT = startT + (segment(i)+2)*400;
 % end
+
+
+
+
 
 
 

@@ -22,13 +22,13 @@ clear;clc;close all
 lightGreen = [117 187 49] ./ 255;
 
 % Choose Segment
-params.whichSeg = 'M115_R1_S2';
+params.whichSeg = 'M114_R1_S2';
 
 % Filtered or Unfiltered
 params.filter = 'Unfiltered';
 
 % What direction? % TEMP. This is only needed for unique situations!!!
-params.direction = 'R';
+%params.direction = 'R';
 
 switch params.whichSeg 
     
@@ -36,7 +36,7 @@ switch params.whichSeg
         params.mouse = 1;
         params.segment = [734 2014];
         params.segLen = 800;
-    case 'M114_R1_S2' % done
+    case 'M114_R1_S2'
         params.mouse = 1;
         params.segment = [2414 3459];
         params.segLen = 1600;
@@ -62,7 +62,7 @@ switch params.whichSeg
         params.mouse = 3;
         params.segment = [5509 14425];
         params.segLen = [];
-    case 'M115_R1_S3' % 20d range (40 total
+    case 'M115_R1_S3' % 20d range (40 total)
         params.mouse = 3;
         params.segment = [14869 14989];
         params.segLen = 200;
@@ -88,267 +88,257 @@ switch params.whichSeg
         params.segLen = 1600; 
                
 end
-%params.direction = {'L', 'R'}; 
 
-%% Gather matrix of relevent segments for each of the conditions
+params.direction = {'L', 'R'}; 
+[segMat_405_Control, segMat_472_GCaMP, segMat_Diff] = segMatrix(params);
 
-% Control
-params.channel = 'Control';
-segmentMatrixControl = segMatrix(params);
-%title_Control = strcat('Segment_', params.whichSeg, '_', params.filter, '_', params.channel);
+spikeAnalysis(segMat_405_Control, params)
+spikeAnalysis(segMat_472_GCaMP, params)
+spikeAnalysis(segMat_Diff, params)
 
-% GCaMP
-params.channel = 'GCaMP';
-segmentMatrixGCaMP = segMatrix(params);
-%title_GCaMP = strcat('Segment_', params.whichSeg, '_', params.filter, '_', params.channel);
 
-% Difference between the two channels
-params.channel = 'Difference';
-segmentMatrixDifference = segMatrix(params);
-%title_Difference = strcat('Segment_', params.whichSeg, '_', params.filter, '_', params.channel);
 
 %% direction seperation TEMP COMMENT THIS OUT UNLESS SPECIAL CASE
-if params.direction == 'R'
-    segmentMatrixControl = segmentMatrixControl(1:2:end, :);
-    segmentMatrixGCaMP = segmentMatrixGCaMP(1:2:end, :);
-    segmentMatrixDifference = segmentMatrixDifference(1:2:end, :);
-else 
-    segmentMatrixControl = segmentMatrixControl(2:2:end, :);
-    segmentMatrixGCaMP = segmentMatrixGCaMP(2:2:end, :);
-    segmentMatrixDifference = segmentMatrixDifference(2:2:end, :);
-end
+% if params.direction == 'R'
+%     segMat_405_Control = segMat_405_Control(1:2:end, :);
+%     segMat_472_GCaMP = segMat_472_GCaMP(1:2:end, :);
+%     segMat_Diff = segMat_Diff(1:2:end, :);
+% else 
+%     segMat_405_Control = segMat_405_Control(2:2:end, :);
+%     segMat_472_GCaMP = segMat_472_GCaMP(2:2:end, :);
+%     segMat_Diff = segMat_Diff(2:2:end, :);
+% end
 
 %% plot the individual traces and their means
-subplotfigure = figure();
-
-% 1) Mean of GCaMP %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-meanGCaMP = subplot(3, 1, 1);
-plot(segmentMatrixControl', 'color', lightGreen); hold on;
-plot(nanmean(segmentMatrixControl), 'k', 'linewidth', 2)
-title([params.direction ' Segment - ' params.whichSeg ' ' params.filter ': Mean - Control'])
-legend('Individual Trials', 'Mean')
-figureCosmetics(params)
-
-% 2) Mean of Controls %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-MeanControl = subplot(3, 1, 2);
-plot(segmentMatrixGCaMP','color', lightGreen); hold on;
-plot(nanmean(segmentMatrixGCaMP), 'k', 'linewidth', 2)
-title('GCaMP')
-figureCosmetics(params)
-
-% 3) Mean of Difference %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-meanDifference = subplot(3, 1, 3);
-plot(segmentMatrixDifference', 'color', lightGreen); hold on;
-plot(nanmean(segmentMatrixDifference), 'k', 'linewidth', 2)
-title('Difference')
-figureCosmetics(params)
-
-% save Figure %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fileName = [params.direction ' Segment - ' params.whichSeg ' ' params.filter ' Means'];
-orient(subplotfigure,'landscape')
-print([fileName], '-dpdf', '-bestfit')
-saveas(subplotfigure, strcat(cd, '\', fileName, '.fig'))
+% subplotfigure = figure();
+% 
+% % 1) Mean of GCaMP %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% meanGCaMP = subplot(3, 1, 1);
+% plot(segMat_405_Control', 'color', lightGreen); hold on;
+% plot(nanmean(segMat_405_Control), 'k', 'linewidth', 2)
+% title([params.direction ' Segment - ' params.whichSeg ' ' params.filter ': Mean - Control'])
+% legend('Individual Trials', 'Mean')
+% figureCosmetics(params)
+% 
+% % 2) Mean of Controls %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% MeanControl = subplot(3, 1, 2);
+% plot(segMat_472_GCaMP','color', lightGreen); hold on;
+% plot(nanmean(segMat_472_GCaMP), 'k', 'linewidth', 2)
+% title('GCaMP')
+% figureCosmetics(params)
+% 
+% % 3) Mean of Difference %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% meanDifference = subplot(3, 1, 3);
+% plot(segMat_Diff', 'color', lightGreen); hold on;
+% plot(nanmean(segMat_Diff), 'k', 'linewidth', 2)
+% title('Difference')
+% figureCosmetics(params)
+% 
+% % save Figure %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% fileName = [params.direction ' Segment - ' params.whichSeg ' ' params.filter ' Means'];
+% orient(subplotfigure,'landscape')
+% print([fileName], '-dpdf', '-bestfit')
+% saveas(subplotfigure, strcat(cd, '\', fileName, '.fig'))
 
 %% Plot various measures of variation in the data
-subplotfigure = figure();
-
-% 1) Variance between each cycle %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-varFig = subplot(4, 1, 1);
-plot(nanvar(segmentMatrixControl, 0, 1), 'b'); hold on
-plot(nanvar(segmentMatrixGCaMP, 0, 1), 'color', lightGreen);
-plot(nanvar(segmentMatrixDifference, 0, 1), 'k');
-title([params.direction ' Segment - ' params.whichSeg ' ' params.filter ': Variance'])
-legend('Control', 'GCaMP', 'Difference')
-figureCosmetics(params)
-
-% 2) CV at each timepoints %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-cvFig = subplot(4, 1, 2);
-plot(nanstd(segmentMatrixControl, 1) ./ nanmean(segmentMatrixControl, 1) * 100, 'b'); hold on
-plot(nanstd(segmentMatrixGCaMP, 1) ./ nanmean(segmentMatrixGCaMP, 1) * 100, 'color', lightGreen);
-%plot(nanstd(segmentMatrixDifference, 1) ./ nanmean(segmentMatrixDifference, 1) * 100, 'k');
-title('Coeficient of Variance')
-figureCosmetics(params)
-
-% 3) SD at each time point %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-sdFig = subplot(4,1,3);
-plot(nanstd(segmentMatrixControl, 1), 'b'); hold on
-plot(nanstd(segmentMatrixGCaMP, 1), 'color', lightGreen);
-plot(nanstd(segmentMatrixDifference, 1), 'k');
-title('Standard Deviation')
-figureCosmetics(params)
-
-% 4) Mean at each timepoint %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-meanFig = subplot(4,1,4);
-plot(nanmean(segmentMatrixControl, 1), 'b'); hold on
-plot(nanmean(segmentMatrixGCaMP, 1), 'color', lightGreen);
-%plot(nanmean(segmentMatrixDifference, 1), 'k');
-title('Mean')
-figureCosmetics(params)
-
-% Save Figure %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fileName = [params.direction ' Segment - ' params.whichSeg ' ' params.filter ' Measures of Variation'];
-orient(subplotfigure,'landscape')
-print([fileName], '-dpdf', '-bestfit')
-saveas(subplotfigure, strcat(cd, '\', fileName, '.fig'))
+% subplotfigure = figure();
+% 
+% % 1) Variance between each cycle %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% varFig = subplot(4, 1, 1);
+% plot(nanvar(segMat_405_Control, 0, 1), 'b'); hold on
+% plot(nanvar(segMat_472_GCaMP, 0, 1), 'color', lightGreen);
+% plot(nanvar(segMat_Diff, 0, 1), 'k');
+% title([params.direction ' Segment - ' params.whichSeg ' ' params.filter ': Variance'])
+% legend('Control', 'GCaMP', 'Difference')
+% figureCosmetics(params)
+% 
+% % 2) CV at each timepoints %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% cvFig = subplot(4, 1, 2);
+% plot(nanstd(segMat_405_Control, 1) ./ nanmean(segMat_405_Control, 1) * 100, 'b'); hold on
+% plot(nanstd(segMat_472_GCaMP, 1) ./ nanmean(segMat_472_GCaMP, 1) * 100, 'color', lightGreen);
+% %plot(nanstd(segMat_Diff, 1) ./ nanmean(segMat_Diff, 1) * 100, 'k');
+% title('Coeficient of Variance')
+% figureCosmetics(params)
+% 
+% % 3) SD at each time point %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% sdFig = subplot(4,1,3);
+% plot(nanstd(segMat_405_Control, 1), 'b'); hold on
+% plot(nanstd(segMat_472_GCaMP, 1), 'color', lightGreen);
+% plot(nanstd(segMat_Diff, 1), 'k');
+% title('Standard Deviation')
+% figureCosmetics(params)
+% 
+% % 4) Mean at each timepoint %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% meanFig = subplot(4,1,4);
+% plot(nanmean(segMat_405_Control, 1), 'b'); hold on
+% plot(nanmean(segMat_472_GCaMP, 1), 'color', lightGreen);
+% %plot(nanmean(segMat_Diff, 1), 'k');
+% title('Mean')
+% figureCosmetics(params)
+% 
+% % Save Figure %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% fileName = [params.direction ' Segment - ' params.whichSeg ' ' params.filter ' Measures of Variation'];
+% orient(subplotfigure,'landscape')
+% print([fileName], '-dpdf', '-bestfit')
+% saveas(subplotfigure, strcat(cd, '\', fileName, '.fig'))
 
 %% Windowed Measures
-% windowed SD %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-windowLen = 100;
-windowedSDFig = figure();
-
-for i = 1:size(segmentMatrixControl, 1)
-    moveSTDsegmentMatrixControl(i,:) = movstd(segmentMatrixControl(i,:), windowLen);
-    moveSTDsegmentMatrixGCaMP(i,:) = movstd(segmentMatrixGCaMP(i,:), windowLen);
-    moveSTDsegmentMatrixDifference(i,:) = movstd(segmentMatrixDifference(i,:), windowLen);
-end
-
-% Control
-subplot(3,1,1)
-plot(moveSTDsegmentMatrixControl', 'color', lightGreen, 'lineWidth', .3); hold on
-plot(nanmean(moveSTDsegmentMatrixControl, 1), 'k', 'lineWidth', 2)
-title([params.direction ' Segment - ' params.whichSeg ' ' params.filter ': Windowed Standard Deviation (' num2str(windowLen) ' samples) - Control'])
-legend('Individual Trials', 'Mean')
-figureCosmetics(params)
-
-% GCaMP
-subplot(3,1,2)
-plot(moveSTDsegmentMatrixGCaMP', 'color', lightGreen, 'lineWidth', .3); hold on
-plot(nanmean(moveSTDsegmentMatrixGCaMP, 1), 'k', 'lineWidth', 2)
-title('GCamp')
-figureCosmetics(params)
-
-% Difference
-subplot(3,1,3)
-plot(moveSTDsegmentMatrixDifference', 'color', lightGreen, 'lineWidth', .3); hold on
-plot(nanmean(moveSTDsegmentMatrixDifference, 1), 'k', 'lineWidth', 2)
-title('Difference')
-figureCosmetics(params)
-
-% Save Figure
-fileName = [params.direction ' Segment - ' params.whichSeg ' ' params.filter ' Windowed Standard Deviation (' num2str(windowLen) ' samples)'];
-orient(windowedSDFig,'landscape')
-print(fileName, '-dpdf', '-bestfit')
-saveas(windowedSDFig, strcat(cd, '\', fileName, '.fig'))
-
-
-
-% windowed Mean %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-windowedMeanFig = figure();
-
-for i = 1:size(segmentMatrixControl, 1)
-    moveMEANsegmentMatrixControl(i,:) = movmean(segmentMatrixControl(i,:), windowLen);
-    moveMEANsegmentMatrixGCaMP(i,:) = movmean(segmentMatrixGCaMP(i,:), windowLen);
-    moveMEANsegmentMatrixDifference(i,:) = movmean(segmentMatrixDifference(i,:), windowLen);
-end
-
-% Control
-subplot(3,1,1)
-plot(moveMEANsegmentMatrixControl', 'color', lightGreen, 'lineWidth', .3); hold on
-plot(nanmean(moveMEANsegmentMatrixControl, 1), 'k', 'lineWidth', 2)
-title([params.direction ' Segment - ' params.whichSeg ' ' params.filter ': Windowed Mean (' num2str(windowLen) ' samples) - Control'])
-legend('Individual Trials', 'Mean')
-figureCosmetics(params)
-
-% GCaMP
-subplot(3,1,2)
-plot(moveMEANsegmentMatrixGCaMP', 'color', lightGreen, 'lineWidth', .3); hold on
-plot(nanmean(moveMEANsegmentMatrixGCaMP, 1), 'k', 'lineWidth', 2)
-title('GCamp')
-figureCosmetics(params)
-
-% Difference
-subplot(3,1,3)
-plot(moveMEANsegmentMatrixDifference', 'color', lightGreen, 'lineWidth', .3); hold on
-plot(nanmean(moveMEANsegmentMatrixDifference, 1), 'k', 'lineWidth', 2)
-title('Difference')
-figureCosmetics(params)
-
-% Save Figure
-fileName = [params.direction ' Segment - ' params.whichSeg ' ' params.filter ' Windowed Mean (' num2str(windowLen) ' samples)'];
-orient(windowedMeanFig,'landscape')
-print(fileName, '-dpdf', '-bestfit')
-saveas(windowedMeanFig, strcat(cd, '\', fileName, '.fig'))
-
-
-% windowed Var %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-windowedVARFig = figure();
-
-for i = 1:size(segmentMatrixControl, 1)
-    moveVARsegmentMatrixControl(i,:) = movvar(segmentMatrixControl(i,:), windowLen);
-    moveVARsegmentMatrixGCaMP(i,:) = movvar(segmentMatrixGCaMP(i,:), windowLen);
-    moveVARsegmentMatrixDifference(i,:) = movvar(segmentMatrixDifference(i,:), windowLen);
-end
-
-% Control
-subplot(3,1,1)
-plot(moveVARsegmentMatrixControl', 'color', lightGreen, 'lineWidth', .3); hold on
-plot(nanmean(moveVARsegmentMatrixControl, 1), 'k', 'lineWidth', 2)
-title([params.direction ' Segment - ' params.whichSeg ' ' params.filter ': Windowed Variance (' num2str(windowLen) ' samples) - Control'])
-legend('Individual Trials', 'Mean')
-figureCosmetics(params)
-
-% GCaMP
-subplot(3,1,2)
-plot(moveVARsegmentMatrixGCaMP', 'color', lightGreen, 'lineWidth', .3); hold on
-plot(nanmean(moveVARsegmentMatrixGCaMP, 1), 'k', 'lineWidth', 2)
-title('GCamp')
-figureCosmetics(params)
-
-% Difference
-subplot(3,1,3)
-plot(moveVARsegmentMatrixDifference', 'color', lightGreen, 'lineWidth', .3); hold on
-plot(nanmean(moveVARsegmentMatrixDifference, 1), 'k', 'lineWidth', 2)
-title('Difference')
-figureCosmetics(params)
-
-% Save Figure
-fileName = [params.direction ' Segment - ' params.whichSeg ' ' params.filter ' Windowed Variance (' num2str(windowLen) ' samples)'];
-orient(windowedVARFig,'landscape')
-print(fileName, '-dpdf', '-bestfit')
-saveas(windowedVARFig, strcat(cd, '\', fileName, '.fig'))
-
-
-% windowed CV %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-windowedCVFig = figure();
-
-for i = 1:size(segmentMatrixControl, 1)
-    moveCVsegmentMatrixControl(i,:) = movstd(segmentMatrixControl(i,:), windowLen) ./ movmean(segmentMatrixControl(i,:), windowLen);
-    moveCVsegmentMatrixGCaMP(i,:) = movstd(segmentMatrixGCaMP(i,:), windowLen) ./ movmean(segmentMatrixGCaMP(i,:), windowLen);
-    moveCVsegmentMatrixDifference(i,:) = movstd(segmentMatrixDifference(i,:), windowLen) ./ movmean(segmentMatrixDifference(i,:), windowLen);
-end
-
-% Control
-subplot(3,1,1)
-plot(moveCVsegmentMatrixControl', 'color', lightGreen, 'lineWidth', .3); hold on
-plot(nanmean(moveCVsegmentMatrixControl, 1), 'k', 'lineWidth', 2)
-title([params.direction ' Segment - ' params.whichSeg ' ' params.filter ': Windowed CV (' num2str(windowLen) ' samples) - Control'])
-legend('Individual Trials', 'Mean')
-figureCosmetics(params)
-
-% GCaMP
-subplot(3,1,2)
-plot(moveCVsegmentMatrixGCaMP', 'color', lightGreen, 'lineWidth', .3); hold on
-plot(nanmean(moveCVsegmentMatrixGCaMP, 1), 'k', 'lineWidth', 2)
-title('GCamp')
-figureCosmetics(params)
-
-% Difference
-subplot(3,1,3)
-plot(moveCVsegmentMatrixDifference', 'color', lightGreen, 'lineWidth', .3); hold on
-plot(nanmean(moveCVsegmentMatrixDifference, 1), 'k', 'lineWidth', 2)
-title('Difference')
-figureCosmetics(params)
-
-% Save Figure
-fileName = [params.direction ' Segment - ' params.whichSeg ' ' params.filter ' Windowed CV (' num2str(windowLen) ' samples)'];
-orient(windowedCVFig,'landscape')
-print(fileName, '-dpdf', '-bestfit')
-saveas(windowedCVFig, strcat(cd, '\', fileName, '.fig'))
-
+% % windowed SD %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+% windowLen = 100;
+% windowedSDFig = figure();
+% 
+% for i = 1:size(segMat_405_Control, 1)
+%     moveSTDsegMat_405_Control(i,:) = movstd(segMat_405_Control(i,:), windowLen);
+%     moveSTDsegMat_472_GCaMP(i,:) = movstd(segMat_472_GCaMP(i,:), windowLen);
+%     moveSTDsegMat_Diff(i,:) = movstd(segMat_Diff(i,:), windowLen);
+% end
+% 
+% % Control
+% subplot(3,1,1)
+% plot(moveSTDsegMat_405_Control', 'color', lightGreen, 'lineWidth', .3); hold on
+% plot(nanmean(moveSTDsegMat_405_Control, 1), 'k', 'lineWidth', 2)
+% title([params.direction ' Segment - ' params.whichSeg ' ' params.filter ': Windowed Standard Deviation (' num2str(windowLen) ' samples) - Control'])
+% legend('Individual Trials', 'Mean')
+% figureCosmetics(params)
+% 
+% % GCaMP
+% subplot(3,1,2)
+% plot(moveSTDsegMat_472_GCaMP', 'color', lightGreen, 'lineWidth', .3); hold on
+% plot(nanmean(moveSTDsegMat_472_GCaMP, 1), 'k', 'lineWidth', 2)
+% title('GCamp')
+% figureCosmetics(params)
+% 
+% % Difference
+% subplot(3,1,3)
+% plot(moveSTDsegMat_Diff', 'color', lightGreen, 'lineWidth', .3); hold on
+% plot(nanmean(moveSTDsegMat_Diff, 1), 'k', 'lineWidth', 2)
+% title('Difference')
+% figureCosmetics(params)
+% 
+% % Save Figure
+% fileName = [params.direction ' Segment - ' params.whichSeg ' ' params.filter ' Windowed Standard Deviation (' num2str(windowLen) ' samples)'];
+% orient(windowedSDFig,'landscape')
+% print(fileName, '-dpdf', '-bestfit')
+% saveas(windowedSDFig, strcat(cd, '\', fileName, '.fig'))
+% 
+% 
+% 
+% % windowed Mean %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+% windowedMeanFig = figure();
+% 
+% for i = 1:size(segMat_405_Control, 1)
+%     moveMEANsegMat_405_Control(i,:) = movmean(segMat_405_Control(i,:), windowLen);
+%     moveMEANsegMat_472_GCaMP(i,:) = movmean(segMat_472_GCaMP(i,:), windowLen);
+%     moveMEANsegMat_Diff(i,:) = movmean(segMat_Diff(i,:), windowLen);
+% end
+% 
+% % Control
+% subplot(3,1,1)
+% plot(moveMEANsegMat_405_Control', 'color', lightGreen, 'lineWidth', .3); hold on
+% plot(nanmean(moveMEANsegMat_405_Control, 1), 'k', 'lineWidth', 2)
+% title([params.direction ' Segment - ' params.whichSeg ' ' params.filter ': Windowed Mean (' num2str(windowLen) ' samples) - Control'])
+% legend('Individual Trials', 'Mean')
+% figureCosmetics(params)
+% 
+% % GCaMP
+% subplot(3,1,2)
+% plot(moveMEANsegMat_472_GCaMP', 'color', lightGreen, 'lineWidth', .3); hold on
+% plot(nanmean(moveMEANsegMat_472_GCaMP, 1), 'k', 'lineWidth', 2)
+% title('GCamp')
+% figureCosmetics(params)
+% 
+% % Difference
+% subplot(3,1,3)
+% plot(moveMEANsegMat_Diff', 'color', lightGreen, 'lineWidth', .3); hold on
+% plot(nanmean(moveMEANsegMat_Diff, 1), 'k', 'lineWidth', 2)
+% title('Difference')
+% figureCosmetics(params)
+% 
+% % Save Figure
+% fileName = [params.direction ' Segment - ' params.whichSeg ' ' params.filter ' Windowed Mean (' num2str(windowLen) ' samples)'];
+% orient(windowedMeanFig,'landscape')
+% print(fileName, '-dpdf', '-bestfit')
+% saveas(windowedMeanFig, strcat(cd, '\', fileName, '.fig'))
+% 
+% 
+% % windowed Var %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+% windowedVARFig = figure();
+% 
+% for i = 1:size(segMat_405_Control, 1)
+%     moveVARsegMat_405_Control(i,:) = movvar(segMat_405_Control(i,:), windowLen);
+%     moveVARsegMat_472_GCaMP(i,:) = movvar(segMat_472_GCaMP(i,:), windowLen);
+%     moveVARsegMat_Diff(i,:) = movvar(segMat_Diff(i,:), windowLen);
+% end
+% 
+% % Control
+% subplot(3,1,1)
+% plot(moveVARsegMat_405_Control', 'color', lightGreen, 'lineWidth', .3); hold on
+% plot(nanmean(moveVARsegMat_405_Control, 1), 'k', 'lineWidth', 2)
+% title([params.direction ' Segment - ' params.whichSeg ' ' params.filter ': Windowed Variance (' num2str(windowLen) ' samples) - Control'])
+% legend('Individual Trials', 'Mean')
+% figureCosmetics(params)
+% 
+% % GCaMP
+% subplot(3,1,2)
+% plot(moveVARsegMat_472_GCaMP', 'color', lightGreen, 'lineWidth', .3); hold on
+% plot(nanmean(moveVARsegMat_472_GCaMP, 1), 'k', 'lineWidth', 2)
+% title('GCamp')
+% figureCosmetics(params)
+% 
+% % Difference
+% subplot(3,1,3)
+% plot(moveVARsegMat_Diff', 'color', lightGreen, 'lineWidth', .3); hold on
+% plot(nanmean(moveVARsegMat_Diff, 1), 'k', 'lineWidth', 2)
+% title('Difference')
+% figureCosmetics(params)
+% 
+% % Save Figure
+% fileName = [params.direction ' Segment - ' params.whichSeg ' ' params.filter ' Windowed Variance (' num2str(windowLen) ' samples)'];
+% orient(windowedVARFig,'landscape')
+% print(fileName, '-dpdf', '-bestfit')
+% saveas(windowedVARFig, strcat(cd, '\', fileName, '.fig'))
+% 
+% 
+% % windowed CV %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+% windowedCVFig = figure();
+% 
+% for i = 1:size(segMat_405_Control, 1)
+%     moveCVsegMat_405_Control(i,:) = movstd(segMat_405_Control(i,:), windowLen) ./ movmean(segMat_405_Control(i,:), windowLen);
+%     moveCVsegMat_472_GCaMP(i,:) = movstd(segMat_472_GCaMP(i,:), windowLen) ./ movmean(segMat_472_GCaMP(i,:), windowLen);
+%     moveCVsegMat_Diff(i,:) = movstd(segMat_Diff(i,:), windowLen) ./ movmean(segMat_Diff(i,:), windowLen);
+% end
+% 
+% % Control
+% subplot(3,1,1)
+% plot(moveCVsegMat_405_Control', 'color', lightGreen, 'lineWidth', .3); hold on
+% plot(nanmean(moveCVsegMat_405_Control, 1), 'k', 'lineWidth', 2)
+% title([params.direction ' Segment - ' params.whichSeg ' ' params.filter ': Windowed CV (' num2str(windowLen) ' samples) - Control'])
+% legend('Individual Trials', 'Mean')
+% figureCosmetics(params)
+% 
+% % GCaMP
+% subplot(3,1,2)
+% plot(moveCVsegMat_472_GCaMP', 'color', lightGreen, 'lineWidth', .3); hold on
+% plot(nanmean(moveCVsegMat_472_GCaMP, 1), 'k', 'lineWidth', 2)
+% title('GCamp')
+% figureCosmetics(params)
+% 
+% % Difference
+% subplot(3,1,3)
+% plot(moveCVsegMat_Diff', 'color', lightGreen, 'lineWidth', .3); hold on
+% plot(nanmean(moveCVsegMat_Diff, 1), 'k', 'lineWidth', 2)
+% title('Difference')
+% figureCosmetics(params)
+% 
+% % Save Figure
+% fileName = [params.direction ' Segment - ' params.whichSeg ' ' params.filter ' Windowed CV (' num2str(windowLen) ' samples)'];
+% orient(windowedCVFig,'landscape')
+% print(fileName, '-dpdf', '-bestfit')
+% saveas(windowedCVFig, strcat(cd, '\', fileName, '.fig'))
 
 %% Let user know it's done
 disp('DONE! :) ')
@@ -402,3 +392,4 @@ function figureCosmetics(params)
 
 
 end
+
