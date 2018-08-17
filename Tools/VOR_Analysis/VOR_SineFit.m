@@ -196,10 +196,10 @@ for count = 1:nSegs
 %         tempHandle = figure(count); clf
 %         tempHandle.Visible = 'off';
 %         set(count, 'visible', 'off');
-        plot(time,plot_eyevelH,'k', 'LineWidth', .25); hold on   % SMOOTHED
-        plot(time, plot_eyevelH_des,'b', 'LineWidth', .25);      % SMOOTHED
-        %plot(time, eyevelH, 'k', 'LineWidth', .25); hold on       % RAW
-        %plot(time, eyevelH_des1, 'b', 'LineWidth', .25);          % RAW
+        %plot(time,plot_eyevelH,'k', 'LineWidth', .25); hold on   % SMOOTHED
+        %plot(time, plot_eyevelH_des,'b', 'LineWidth', .25);      % SMOOTHED
+        plot(time, eyevelH, 'k', 'LineWidth', .25); hold on       % RAW
+        plot(time, eyevelH_des1, 'b', 'LineWidth', .25);          % RAW
         plot(time, vars*b,'r', 'LineWidth', .5)
         plot(time, fit1 + rawThres1(1), ':r', 'LineWidth', .25);
         plot(time, fit1 + rawThres1(2), ':r', 'LineWidth', .25);
