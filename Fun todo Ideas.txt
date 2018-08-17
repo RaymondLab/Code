@@ -1,8 +1,8 @@
 TODO
   - ===== High P =============================================================
-    - Order more 9v for Sriram --> Jay
-    - buy short BNC cables
-
+    - Order new Hard Drive
+    - Ask Pragna about the new computers
+    
     - Run Amins D019 ephys segment
     - Spike sort Boris's data
 

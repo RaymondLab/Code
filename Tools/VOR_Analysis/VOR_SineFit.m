@@ -173,9 +173,24 @@ for count = 1:nSegs
         params.temp_placement = params.temp_placement + 1;
         
         % Smooth Visuals
-        plot_eyevelH = smoothdata(eyevelH, 'movmean', 10);
-        plot_eyevelH_des = plot_eyevelH;
-        plot_eyevelH_des(omitH) = NaN;
+        if params.do_filter
+            [bb,aa] = butter(2,[params.BPFilterLow, params.BPFilterHigh]/(samplerate/2),'bandpass');
+            eyevelH_Filtered = filter(eyevelH,bb,aa);
+            eyevelH_des1_Filered = filter(eyevelH_des1, bb, bb);
+            
+            N = 3;      % Filter order
+            fc = [.5 10];   % Cutoff frequency
+            [b,a] = butter(N, fc/samplerate, 'bandpass');
+            eyevelH_F = filter(b,a,eyevelH);
+            
+            figure()
+            subplot(2,1,1)
+            plot(eyevelH_F)
+            subplot(2,1,2)
+            plot(eyevelH)
+            
+        end
+        
         
         % Plot 
 %         tempHandle = figure(count); clf
@@ -234,16 +249,30 @@ for count = 1:nSegs
     [eyeVel_All, ~]     = vec2mat(eyevelH(startpt:end), cycleLength, NaN);
     [eyeVel_AllDes, ~]  = vec2mat(eyevelH_des1(startpt:end), cycleLength, NaN);
     [headVel_All, ~]    = vec2mat(headvel(startpt:end), cycleLength, NaN);
+    [DrumVel_All, ~]   = vec2mat(drumvel(startpt:end), cycleLength, NaN);
     [omit_All, ~]       = vec2mat(double(omitCenters(startpt:end)), cycleLength, NaN);
 
-    eyeVel_All(end,:)   = [];
+    % Remove fist cycles of segment? --> Optional and will be removed once
+    % Drift issue is solved on the motors in the experimental protocol
+    if 1
+        eyeVel_All(1:5,:)    = []; % TODO Is this needed? Can use this partial cycle?
+        eyeVel_AllDes(1:5,:) = [];
+        headVel_All(1:5,:)   = [];
+        omit_All(1:5,:)      = [];
+        DrumVel_All(1:5,:)  = [];
+    end
+    
+    
+    eyeVel_All(end,:)    = []; % TODO Is this needed? Can use this partial cycle? 
     eyeVel_AllDes(end,:) = [];
-    headVel_All(end,:)  = [];
-    omit_All(end,:)     = [];
+    headVel_All(end,:)   = [];
+    omit_All(end,:)      = [];
+    DrumVel_All(end,:)  = [];
     
     eyeVel_AllDesMean   = nanmean(eyeVel_AllDes);
     eyeVel_DesSem       = nanstd(eyeVel_AllDes)./sqrt(sum(~isnan(eyeVel_AllDes)));
     headVel_AllMean     = nanmean(headVel_All);
+    chairVel_AllMean    = nanmean(DrumVel_All);
 
     badCycles = any(omit_All,2);
     goodCount = sum(~badCycles);
@@ -264,45 +293,47 @@ for count = 1:nSegs
     
     if ploton
         
-        
-        % subplot solution
-        %figure(sp);
-        %set(sp, 'visible', 'off')
+        % Prep
         subplot(params.sp_Dim(1), params.sp_Dim(2), params.figure_loc{params.temp_placement});
         params.temp_placement = params.temp_placement + 1;
         
-        if max(headVel_AllMean) < 15
-            ylimits = [-15 15];
+        % Choose Stim
+        if contains(R.labels{count}, 'OKR')
+            plotStim = chairVel_AllMean;
+            stimType = 'Drum';
         else
-            ylimits = [-30 30];
+            plotStim = headVel_AllMean;
+            stimType = 'Chair';
         end
-        
+        ylimits = double([floor(min(plotStim)*1.1) ceil(max(plotStim)*1.1)]);
+
         % plot data
-%         tempHandle = figure(count+100); clf;
-%         tempHandle.Visible = 'off';
-%         set(count+100, 'visible', 'off');
         ttCycle = (1:cycleLength)/samplerate;
         plot(ttCycle, smooth(eyeVel_GoodCyclesMean, 50),'b'); hold on
         plot(ttCycle, smooth(eyeVel_AllDesMean, 50), 'g');
         plot(ttCycle, sin(2*pi*freq*ttCycle + deg2rad(eyevelH_rel_phase+180))*eyevelH_amp,'r');
-        plot(ttCycle, headVel_AllMean, 'k');
+        plot(ttCycle, plotStim, 'k');
         plot(ttCycle, zeros(size(ttCycle)),'--k');
+        
         % Cosmetics
         box off
-%         set(gcf,'Position',[leftPos (botPos+400) 700 (screensize(4)-(botPos+400)-80)]);
-        ylim(ylimits);   xlim([0 max(ttCycle)])
+        ylim(ylimits);
+        xlim([0 max(ttCycle)]);
+        
         if count == 1
-            %ylabel('deg/s');
             text(0-max(xlim)*.06, 0, 'deg/s', 'FontSize', 8, 'Rotation', 90)
-            %legend({'Mean: Good Cycles', 'Mean: All Cycles, Desaccaded','Sine fit','Stimulus'},'EdgeColor','w')
         end
         if count == nSegs
             xlabel('Time (s)');    
         end 
+        
+        % Add Quick reference text
         text(max(ttCycle)*1.05, ylimits(2), ['Good Cycles: ', num2str(goodCount), '/', num2str(length(badCycles))],'FontSize',7);
         text(max(ttCycle)*1.05, ylimits(2)-5, ['Rel Gain: ' num2str(eyevelH_rel_gain)], 'Fontsize', 7);
         text(max(ttCycle)*1.05, ylimits(2)-10, ['Eye Amp: ', num2str(eyevelH_amp,3)],'FontSize',7);
         text(max(ttCycle)*1.05, ylimits(2)-15, ['Rel. Phase: ', num2str(eyevelH_rel_phase,3)],'FontSize',7);
+        text(max(ttCycle)*1.05, ylimits(2)-20, ['Stim: ', stimType],'FontSize',7);
+        
 
         % Manual y axis b/c matlab is literal garbage
         yticks([min(ylim) 0 max(ylim)])
@@ -311,7 +342,7 @@ for count = 1:nSegs
         text(0-max(xlim)*.05, 0, num2str(0), 'FontSize', 7)
         text(0-max(xlim)*.05, .9*min(ylim), num2str(min(ylim)), 'FontSize', 7)
         
-        % Manual x axis
+        % Manual x axis b/c matlab is literal garbage
         xticks([0 round(max(xlim)/2, 1) max(xlim)])
         xticklabels({})
         text(max(xlim)*.99, min(ylim)*1.1, num2str(max(xlim)), 'FontSize', 7)

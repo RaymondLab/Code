@@ -16,72 +16,51 @@ DO NOT USE FOR EXPERIMENTS WITH STIM-ONLY SEGMENTS!!
 
 %}
 function [startTimes, endTimes] = extractSegments(folder)
-%% Setup
-cd(folder);
-pathname = cd;
-activateCEDS64;
-[~, filenameroot] = fileparts(pathname);
-A = CEDS64Open(fullfile(pathname,[filenameroot '.smr']));
-[~, vMObj] = CEDS64ReadMarkers(A, 31, 10000, 0);
+%% new setup
+[~, file] = fileparts(folder);
+chanlist = readSpikeFile(fullfile(folder,[file '.smr']),[]);
+chanindsAll = [chanlist.number];
+chaninds = find(      arrayfun(@(x) any(strcmp(x.title,{'Keyboard'})),chanlist)     );
+rawdata = importSpike(fullfile(folder,[file '.smr']),chanindsAll(chaninds));
 
-%% Extract the S, s, and L Markers from the recording 
-g = 1;
-for i = 1:length(vMObj) 
-    switch char(vMObj(i).m_Code1)
-        case {'S', 's', 'L'}
-            newObj(g) = vMObj(i);
-            g = g + 1;
-    end
+
+SampleKeys = strcat(rawdata.samplerate(any(rawdata.samplerate == ['S' 's' 'L'], 2))');
+SampleKeyTimes = rawdata.data(any(rawdata.samplerate == ['S' 's' 'L'], 2))';
+
+start_Ss_loc = SampleKeyTimes(strfind(SampleKeys, 'Ss'));
+end_Ss_loc = SampleKeyTimes(strfind(SampleKeys, 'Ss')+1);
+start_SL_loc = SampleKeyTimes(strfind(SampleKeys, 'SL'));
+end_SL_loc = SampleKeyTimes(strfind(SampleKeys, 'SL')+1);
+
+if ~isempty(start_SL_loc)
+    start_Ls_loc = SampleKeyTimes(strfind(SampleKeys, 'Ls'));
+    end_Ls_loc = SampleKeyTimes(strfind(SampleKeys, 'Ls')+1);
+    start_LL_loc = SampleKeyTimes(strfind(SampleKeys, 'LL'));
+    end_LL_loc = SampleKeyTimes(strfind(SampleKeys, 'LL')+1);
+else
+    start_Ls_loc = [];
+    end_Ls_loc = [];
+    start_LL_loc = [];
+    end_LL_loc = [];
 end
 
-%% use S, s, and L to find the start and end times of the experiment
-startTimes = [];
-endTimes = [];
-k = 1;
-j = 1;
-for i = 1:length(newObj)
-    
-    % find S start Times
-    if char(newObj(i).m_Code1) == 'S' 
-        startTimes(k) = newObj(i).m_Time;
-        k = k + 1; 
-        % s end Time
-        if char(newObj(i+1).m_Code1) == 's'
-            endTimes(j) = newObj(i+1).m_Time;
-            j = j + 1;
-        % L end Time & start Time
-        elseif char(newObj(i+1).m_Code1) == 'L'
-            endTimes(j) = newObj(i+1).m_Time;
-            j = j + 1;
-            startTimes(k) = newObj(i+1).m_Time;
-            k = k + 1;
-            if char(newObj(i+2).m_Code1) == 's' || char(newObj(i+2).m_Code1) == 'L'
-                endTimes(j) = newObj(i + 2).m_Time;
-                j = j + 1;
-            end
-        end
-    end
-end
+startTimes = sort([start_Ss_loc start_SL_loc start_Ls_loc start_LL_loc])';
+endTimes = sort([end_Ss_loc end_SL_loc end_Ls_loc end_LL_loc])';
 
 %% Take the Experiment start time listed in the excel file, and remove incorrect segments
 
 % remove segments before start time
-expmt_start_time = xlsread(fullfile(pathname,[filenameroot '.xlsx']), 1, 'G2' );
-endTimes(startTimes < (expmt_start_time *100000)) = [];
-startTimes(startTimes < (expmt_start_time *100000)) = [];
+expmt_start_time = xlsread(fullfile(folder,[file '.xlsx']), 1, 'G2' );
+endTimes(startTimes < (expmt_start_time)) = [];
+startTimes(startTimes < (expmt_start_time)) = [];
 
 % remove segments after experiment is over
-[~, segment_Names, ~] = xlsread(fullfile(pathname,[filenameroot '.xlsx']), 1, 'A2:A500' );
+[~, segment_Names, ~] = xlsread(fullfile(folder,[file '.xlsx']), 1, 'A2:A500' );
 if length(segment_Names) < length(endTimes)
     endTimes(length(segment_Names)+1:end) = [];
     startTimes(length(segment_Names)+1:end) = [];
 end
 
-%% Convert to seconds
-endTimes = endTimes' /     100000;
-startTimes = startTimes' / 100000;
-
 %% place start and end times into the excel file
-tFilename = [filenameroot '.xlsx'];
-xlswrite(tFilename, startTimes, 'Sheet1', 'D2')
-xlswrite(tFilename, endTimes, 'Sheet1', 'E2')
+xlswrite(fullfile(folder,[file '.xlsx']), startTimes, 'Sheet1', 'D2')
+xlswrite(fullfile(folder,[file '.xlsx']), endTimes, 'Sheet1', 'E2')
