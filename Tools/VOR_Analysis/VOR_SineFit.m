@@ -166,41 +166,35 @@ for count = 1:nSegs
     
     % --- Plot full segment, saccades, and fitted sine --------------------
     if ploton
-        % temp subplot solution
-         %figure(sp);
-%         set(sp, 'visible', 'off')
+
         subplot(params.sp_Dim(1), params.sp_Dim(2), params.figure_loc{params.temp_placement});
         params.temp_placement = params.temp_placement + 1;
         
-        % Smooth Visuals
+        % Filter signal Visual?
         if params.do_filter
-            [bb,aa] = butter(2,[params.BPFilterLow, params.BPFilterHigh]/(samplerate/2),'bandpass');
-            eyevelH_Filtered = filter(eyevelH,bb,aa);
-            eyevelH_des1_Filered = filter(eyevelH_des1, bb, bb);
-            
-            N = 3;      % Filter order
-            fc = [.5 10];   % Cutoff frequency
-            [b,a] = butter(N, fc/samplerate, 'bandpass');
-            eyevelH_F = filter(b,a,eyevelH);
-            
-            figure()
-            subplot(2,1,1)
-            plot(eyevelH_F)
-            subplot(2,1,2)
-            plot(eyevelH)
-            
+            N = 3;
+            fc = [params.BPFilterLow params.BPFilterHigh];
+            [bb,aa] = butter(N, fc/samplerate, 'bandpass');
+            eyevelH_plot = filter(bb,aa,eyevelH);
+            eyevelH_des1_plot = eyevelH_plot;
+            eyevelH_des1_plot(omitH) = NaN;
+        else
+            eyevelH_plot = eyevelH;
+            eyevelH_des1_plot = eyevelH_des1;
         end
-        
+
         
         % Plot 
-%         tempHandle = figure(count); clf
-%         tempHandle.Visible = 'off';
-%         set(count, 'visible', 'off');
-        %plot(time,plot_eyevelH,'k', 'LineWidth', .25); hold on   % SMOOTHED
-        %plot(time, plot_eyevelH_des,'b', 'LineWidth', .25);      % SMOOTHED
-        plot(time, eyevelH, 'k', 'LineWidth', .25); hold on       % RAW
-        plot(time, eyevelH_des1, 'b', 'LineWidth', .25);          % RAW
-        plot(time, vars*b,'r', 'LineWidth', .5)
+        plot(time, eyevelH_plot, 'k', 'LineWidth', .25); hold on
+        plot(time, eyevelH_des1_plot, 'b', 'LineWidth', .25); 
+        
+        
+        if params.do_filter
+            plot(time, vars*b,':r', 'LineWidth', .25);
+        else
+            plot(time, vars*b,'r', 'LineWidth', .5);
+        end
+        
         plot(time, fit1 + rawThres1(1), ':r', 'LineWidth', .25);
         plot(time, fit1 + rawThres1(2), ':r', 'LineWidth', .25);
         
@@ -209,7 +203,6 @@ for count = 1:nSegs
         if count == nSegs
             xlabel('Time (s)');    
         end 
-%         set(gcf,'Position',[leftPos botPos (screensize(3)-leftPos) 300]);
         title(datatype)
         
         % Manual y axis b/c matlab is literal garbage
