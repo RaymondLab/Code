@@ -34,8 +34,13 @@ function savename=TDTformatBDH(channel)
 
     % Get S.data as a vector (repeat for each channel)
     % unwrap data from m x 256 or 64 array 
-    chani1S472 = S472.channels==1; sig_472 = S472.data(chani1S472,:); sig_472 = reshape(sig_472', [],1);% 472N 6kHz%'472N'
-    chani1S405 = S405.channels==1; sig_405 = S405.data(chani1S405,:); sig_405 = reshape(sig_405', [],1);% 405N 6kHz%'405N'
+    chani1S472 = S472.channels==1; 
+    sig_472 = S472.data(chani1S472,:); 
+    sig_472 = reshape(sig_472', [],1);% 472N 6kHz%'472N'
+    
+    chani1S405 = S405.channels==1; 
+    sig_405 = S405.data(chani1S405,:); 
+    sig_405 = reshape(sig_405', [],1);% 405N 6kHz%'405N'
     %camchan has timestamps and effective frame rate for camera
     if (exist('Scam'))
         camtime = Scam.timestamps; 

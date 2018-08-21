@@ -4,9 +4,9 @@ if ~(struct.special)
     vline(struct.segLen / 4 * 3, 'r')
     b = ylim;
     text(0, ((b(2)-b(1)) * .05) + b(1), '* Center')
-    text(struct.segLen * .25, ((b(2)-b(1)) * .05) + b(1), ['* '  direction{1} ' Motion' ])
+    text(struct.segLen * .25, ((b(2)-b(1)) * .05) + b(1), ['* L Motion' ])
     text(struct.segLen * .50, ((b(2)-b(1)) * .05) + b(1), '* Center')
-    text(struct.segLen * .75, ((b(2)-b(1)) * .05) + b(1), ['* '  direction{2} ' Motion' ])
+    text(struct.segLen * .75, ((b(2)-b(1)) * .05) + b(1), ['* R Motion' ])
     
 else
     % Temp for 'M114_R2_S3'

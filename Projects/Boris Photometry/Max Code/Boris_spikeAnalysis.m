@@ -1,7 +1,7 @@
-function Boris_spikeAnalysis(ephysdata, struct, direction)
+function Boris_spikeAnalysis(ephysdata, struct, thresh)
 
 %temp
-thresh = 120;
+%thresh = 120;
 
 % Prep & params
 window = [20 40];
@@ -35,12 +35,13 @@ putitive_spikes_mat_x8 = putitive_spikes_mat_x4(1:2:end) + putitive_spikes_mat_x
 %% plotting
 figure()
 % subplot(2,1,1)
-% bar(putitive_spikes_mat_x4)
+bar(putitive_spikes_mat_x4)
 % subplot(2,1,2)
-plot(ephysdata'); hold on
-plot(nanmean(ephysdata), 'k');
+%plot(ephysdata'); hold on
+% plot(nanmean(ephysdata), 'k');
 %hline(thresh, ':k')
 xlabel('Time (ms)')
+struct.segLen = struct.segLen / 4;
 Boris_figureCosmetics
 
 
