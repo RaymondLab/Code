@@ -12,7 +12,7 @@ rc = size(putitive_spikes);
 RC = rc(1) * rc(2);
 spikeVec = reshape(putitive_spikes', 1,RC);
 
-% create spike window
+% % create spike window
 % for j = 1:length(spikeVec)
 %     if spikeVec(j) == 1
 %         % block out the rest of spike. Only keep initial detection point
@@ -35,13 +35,13 @@ putitive_spikes_mat_x8 = putitive_spikes_mat_x4(1:2:end) + putitive_spikes_mat_x
 %% plotting
 figure()
 % subplot(2,1,1)
-bar(putitive_spikes_mat_x4)
+bar([1:4:struct.segLen]./100, putitive_spikes_mat_x4); hold on
+xlim([0 struct.segLen]./100)
 % subplot(2,1,2)
 %plot(ephysdata'); hold on
 % plot(nanmean(ephysdata), 'k');
 %hline(thresh, ':k')
-xlabel('Time (ms)')
-struct.segLen = struct.segLen / 4;
+xlabel('Seconds')
 Boris_figureCosmetics
 
 
