@@ -2,8 +2,10 @@ savename = 'd\d_100Hz';
 savename=strcat(savename,'.mat');
 load(savename)
 seg = 1;
+
+temp.special = 1;
 samplerate = 101.7253; % mouse 115, recording 1 (only recording) 
-thresh = 1.5;
+thresh = 1.3;
 
 %% Mouse Specific
 
@@ -15,6 +17,7 @@ stop_camFrame = [3753; 14425; 14989; 15589; 17432; 19949; 23682; 27909];
 start_abs = camtime(start_camFrame);
 stop_abs = camtime(stop_camFrame);
 cycleLen_abs = [0; 0; 2; 2; 4; 8; 8; 16];
+temp.segLen = cycleLen_abs(seg);
 
 % FP SAMPLE  (~ 100 samples / s)
 start_FPsample = NaN(1, length(start_camFrame));
@@ -60,9 +63,9 @@ legend('Control', 'GCaMP')
 title('Mouse 115: Complete Unfiltered Unbleached Recording')
 vline(FP_cycle_starts)
 
-%% Filter Design
-N = 3;
-fc = [.3 4];
+%% Filter Design    
+N = 2;
+fc = [.3 7];
 [bb,aa] = butter(N, fc/samplerate, 'bandpass');
 sig_405_RS_Filt = filter(bb, aa, (sig_405_RS));
 sig_472_RS_Filt = filter(bb, aa, (sig_472_RS));
@@ -74,36 +77,49 @@ xaxis = linspace(0,stop_FPsample(seg) - start_FPsample(seg), length(start_FPsamp
 
 
 figure('units','normalized','outerposition',[0 0 1 1])
-
-subplot(3,1,1)
-plot(xaxis, sig_405_RS(start_FPsample(seg):stop_FPsample(seg)), 'b'); hold on
+subplot(2,1,1)
+%plot(xaxis, sig_405_RS(start_FPsample(seg):stop_FPsample(seg)), 'b'); hold on
 plot(xaxis, sig_472_RS(start_FPsample(seg):stop_FPsample(seg)), 'b'); hold on
 vline([FP_cycle_starts - FP_cycle_starts(1)] / 100)
 title(['Mouse 115: Segment ' num2str(seg) ' Raw'])
+%xlim([300 360])
 
-subplot(3,1,2)
+%figure('units','normalized','outerposition',[0 0 1 1])
+subplot(2,1,2)
 plot(xaxis, sig_472_RS_Filt(start_FPsample(seg):stop_FPsample(seg)), 'b'); hold on
-plot(xaxis, sig_405_RS_Filt(start_FPsample(seg):stop_FPsample(seg)),'k'); hold on
+%plot(xaxis, sig_405_RS_Filt(start_FPsample(seg):stop_FPsample(seg)),'k'); hold on
+title(['Mouse 115: Segment ' num2str(seg) ' Filtered'])
+%xlim([300 360])
 
 % cosmetics
-ylim([-4 4])
+ylim([-5 5])
 hline(thresh)
 hline(-1*thresh)
 vline([FP_cycle_starts - FP_cycle_starts(1)] / 100)
 
 
 % difference
-subplot(3,1,3)
-plot(xaxis, sig_472_RS_Filt(start_FPsample(seg):stop_FPsample(seg)) - sig_405_RS_Filt(start_FPsample(seg):stop_FPsample(seg)))
+%subplot(3,1,3)
+%plot(xaxis, sig_472_RS_Filt(start_FPsample(seg):stop_FPsample(seg)) - sig_405_RS_Filt(start_FPsample(seg):stop_FPsample(seg)))
+%xlim([300 360])
 
 % cosmetics
-ylim([-4 4])
+ylim([-5 5])
 hline(thresh)
 hline(-1*thresh)
 vline([FP_cycle_starts - FP_cycle_starts(1)] / 100)
 
-
+axH = findall(gcf,'type','axes');
+%set(axH,'xlim',[600 675])
+if temp.special
+    cycleVec = nan(length(FP_cycle_starts), max(segLenSpecial) * 100);
+    for i = 1:length(segLenSpecial)
+        cycleVec(i,1:segLenSpecial(i)*100) = sig_472_RS(FP_cycle_starts(i):FP_cycle_stops(i)-1);
+    end
+    
+    
+else
 % bar
-temp.segLen = cycleLen_abs(seg);
-temp.special = 0;
-Boris_spikeAnalysis(sig_472_RS_Filt(start_FPsample(seg):stop_FPsample(seg)) - sig_405_RS_Filt(start_FPsample(seg):stop_FPsample(seg)), temp, thresh)
+Boris_spikeAnalysis(sig_472_RS_Filt, temp, thresh)
+end
+

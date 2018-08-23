@@ -12,15 +12,15 @@ rc = size(putitive_spikes);
 RC = rc(1) * rc(2);
 spikeVec = reshape(putitive_spikes', 1,RC);
 
-% % create spike window
-% for j = 1:length(spikeVec)
-%     if spikeVec(j) == 1
-%         % block out the rest of spike. Only keep initial detection point
-%         spikeVec(j+1:j+window(2)-1) = 0;
-%     end
-% end
+% create spike window
+for j = 1:length(spikeVec)
+    if spikeVec(j) == 1
+        % block out the rest of spike. Only keep initial detection point
+        spikeVec(j+1:j+window(2)-1) = 0;
+    end
+end
 
-putitive_spikes_mat = vec2mat(spikeVec, struct.segLen);
+putitive_spikes_mat = vec2mat(spikeVec, struct.segLen * 100);
 
 % x1 bins (raw)
 putitive_spikes_mat_x1 = sum(putitive_spikes_mat);
@@ -35,8 +35,8 @@ putitive_spikes_mat_x8 = putitive_spikes_mat_x4(1:2:end) + putitive_spikes_mat_x
 %% plotting
 figure()
 % subplot(2,1,1)
-bar([1:4:struct.segLen]./100, putitive_spikes_mat_x4); hold on
-xlim([0 struct.segLen]./100)
+bar([1:4:struct.segLen * 100]./100, putitive_spikes_mat_x4); hold on
+xlim([0 struct.segLen * 100]./100)
 % subplot(2,1,2)
 %plot(ephysdata'); hold on
 % plot(nanmean(ephysdata), 'k');
