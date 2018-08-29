@@ -79,7 +79,7 @@ plot(seg_groups(strcmpi(seg_labels,'VORD')), seg_measure(strcmpi(seg_labels,'VOR
 
 % Universal Cosmetics
 xlim([min(seg_groups)-.5, max(seg_groups)+.5])
-xticks(unique(seg_groups))
+%xticks(unique(seg_groups))
 xlabel('Segment')
 
 % Norm Specific Cosmetics

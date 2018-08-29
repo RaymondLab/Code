@@ -81,32 +81,26 @@ subplot(2,1,1)
 %plot(xaxis, sig_405_RS(start_FPsample(seg):stop_FPsample(seg)), 'b'); hold on
 plot(xaxis, sig_472_RS(start_FPsample(seg):stop_FPsample(seg)), 'b'); hold on
 vline([FP_cycle_starts - FP_cycle_starts(1)] / 100)
-title(['Mouse 115: Segment ' num2str(seg) ' Raw'])
-%xlim([300 360])
+title(['Mouse 115: Segment ' num2str(seg) ' GCaMP'])
+xlim([0 60])
+vline(1:400)
+ylim([min(ylim),min(ylim)+10])
 
 %figure('units','normalized','outerposition',[0 0 1 1])
 subplot(2,1,2)
 plot(xaxis, sig_472_RS_Filt(start_FPsample(seg):stop_FPsample(seg)), 'b'); hold on
+%plot(xaxis, sig_405_RS(start_FPsample(seg):stop_FPsample(seg)), 'b'); hold on
 %plot(xaxis, sig_405_RS_Filt(start_FPsample(seg):stop_FPsample(seg)),'k'); hold on
-title(['Mouse 115: Segment ' num2str(seg) ' Filtered'])
-%xlim([300 360])
+title(['Mouse 115: Segment ' num2str(seg) ' Filter'])
+xlim([0 60])
+ylim([min(ylim),min(ylim)+9])
+
 
 % cosmetics
 ylim([-5 5])
 hline(thresh)
 hline(-1*thresh)
-vline([FP_cycle_starts - FP_cycle_starts(1)] / 100)
-
-
-% difference
-%subplot(3,1,3)
-%plot(xaxis, sig_472_RS_Filt(start_FPsample(seg):stop_FPsample(seg)) - sig_405_RS_Filt(start_FPsample(seg):stop_FPsample(seg)))
-%xlim([300 360])
-
-% cosmetics
-ylim([-5 5])
-hline(thresh)
-hline(-1*thresh)
+vline(1:400)
 vline([FP_cycle_starts - FP_cycle_starts(1)] / 100)
 
 axH = findall(gcf,'type','axes');
@@ -115,9 +109,7 @@ if temp.special
     cycleVec = nan(length(FP_cycle_starts), max(segLenSpecial) * 100);
     for i = 1:length(segLenSpecial)
         cycleVec(i,1:segLenSpecial(i)*100) = sig_472_RS(FP_cycle_starts(i):FP_cycle_stops(i)-1);
-    end
-    
-    
+    end  
 else
 % bar
 Boris_spikeAnalysis(sig_472_RS_Filt, temp, thresh)

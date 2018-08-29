@@ -64,6 +64,12 @@ function singleAnalysis(params)
             VOR_DarkRearingGeneralization(params)
     end
 
+    %% JENN ANALYSIS (rename)
+    switch params.analysis
+        case 'Sriram_OKR'
+            fprintf('Running: Fit Subtraction Analysis\n')
+            % JENN FUNCTION
+    end
     
     %% Sine Analysis
     if params.do_sineAnalysis
