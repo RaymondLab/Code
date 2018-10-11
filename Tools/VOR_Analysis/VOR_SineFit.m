@@ -87,6 +87,7 @@ for count = 1:nSegs
     headvel = datchandata(dataseg,'hhvel');
     eyevelH = datchandata(dataseg,'hevel');
     drumvel = datchandata(dataseg,'htvel');
+    eyepos = datchandata(dataseg,'hepos');
 
     % Filter eye velocity to maintain consistency with eye coil
 %     N = 3;      % Filter order
@@ -113,7 +114,12 @@ for count = 1:nSegs
     eyevelHtemp = eyevelH - vars*b;            % Subtract fitted sine
 
     % Find saccades in eye movement and blank out an interval on either side
-    [eyevelH_des_temp, omitCenters, rawThres1] = desaccadeVelNew(eyevelHtemp, presaccadeN, postsaccadeN, velthres);
+    if params.newSac == 0
+        [eyevelH_des_temp, omitCenters, rawThres1] = desaccadeVelNew(eyevelHtemp, presaccadeN, postsaccadeN, velthres);
+    elseif params.newSac == 1
+        [eyevelH_des_temp, omitCenters] = desaccadeVel3(eyepos, samplerate, presaccadeN, postsaccadeN, velthres);
+    end
+    
     omitH = isnan(eyevelH_des_temp);
     eyevelH_des1 = eyevelH;
     eyevelH_des1(omitH) = NaN;
@@ -194,16 +200,17 @@ for count = 1:nSegs
         else
             plot(time, vars*b,'r', 'LineWidth', .5);
         end
-        
-        plot(time, fit1 + rawThres1(1), ':r', 'LineWidth', .25);
-        plot(time, fit1 + rawThres1(2), ':r', 'LineWidth', .25);
-        
+        if params.newSac == 0
+            plot(time, fit1 + rawThres1(1), ':r', 'LineWidth', .25);
+            plot(time, fit1 + rawThres1(2), ':r', 'LineWidth', .25);
+        end
         % Cosmetics
         xlim([0 length(eyevelH)/1000]);     ylim([-200 200])
         if count == nSegs
             xlabel('Time (s)');    
         end 
         title(datatype)
+        text(0, max(ylim)*1.15, ['@ ' num2str(round(tstart(count), 2)), 's'], 'FontSize', 7)
         
         % Manual y axis b/c matlab is literal garbage
         yticks([min(ylim) 0 max(ylim)])
@@ -218,7 +225,7 @@ for count = 1:nSegs
         text(max(xlim)*.99, min(ylim)*1.1, num2str(round(max(xlim))), 'FontSize', 7)
         text(max(xlim)/2, min(ylim)*1.1, num2str(round(max(xlim)/2)), 'FontSize', 7)
         drawnow;
-        %box off
+        
     end
     
     % --- Write to R.data -------------------------------------------------
