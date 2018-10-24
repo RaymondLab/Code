@@ -50,7 +50,7 @@ function singleAnalysis(params)
     %% Data Prep + Default Sine Analysis
     
     switch params.analysis
-        case {'Default (Sine Only)', 'Amin_Gen', 'Sriram_OKR', 'Sriram_Gen'} 
+        case {'Default (Sine Only)', 'Sriram_OKR', 'Sriram_Gen'} 
             fprintf('Running: Default Sine Analysis\n')
             params = subPlotDim(params);
             params.temp_placement = 1;
@@ -62,6 +62,11 @@ function singleAnalysis(params)
         case 'Dark Rearing + Generalization'
             fprintf('Running: Dark Rearing Generalization Analysis\n')
             VOR_DarkRearingGeneralization(params)
+        case 'Amin_Gen'
+            fprintf('Running: Amin''s Generalization')
+            params = subPlotDim(params);
+            params.temp_placement = 1;
+            params = VOR_Default(params);
     end
 
     %% JENN ANALYSIS (rename)
@@ -88,6 +93,9 @@ function singleAnalysis(params)
             case 'Sriram_Gen'
                 VOR_Summary_Sriram_Gen('eyeHgain', fullfile(params.folder,[params.file '.xlsx']), 1);
                 VOR_Summary_Sriram_Gen('eyeHgain', fullfile(params.folder,[params.file '.xlsx']), 0);
+            case {'Amin_Gen'}
+                %VOR_Summary_Amin_Gen('eyeHgain', fullfile(params.folder,[params.file '.xlsx']), 1);
+                VOR_Summary_Amin_Gen('eyeHgain', fullfile(params.folder,[params.file '.xlsx']), 0);
         end
     end
 
