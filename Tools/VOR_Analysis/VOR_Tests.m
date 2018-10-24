@@ -4,6 +4,7 @@ function VOR_Tests(params)
 
     % Single or Batch Analysis
     if params.count == 1
+        params.folder = params.smr_files(1).folder; % hackish. related to folder selection error
        [~, params.file] = fileparts(params.folder);
        singleAnalysis(params)
 
