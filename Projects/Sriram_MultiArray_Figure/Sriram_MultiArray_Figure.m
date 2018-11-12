@@ -2,10 +2,14 @@
 
 %% Read from Recording Segment
 clear;clc;close all
+cd Z:\1_Maxwell_Gagnon\ProjectData_Sriram\Granule_cell_recording\NR2_F_10_S1
 seg_file_names = dir;
 seg_file_names(~contains({seg_file_names.name}, 'stim_180807_143')) = [];
+seg_file_names(contains({seg_file_names.name}, '.mda')) = [];
 sample_rate = frequency_parameters.amplifier_sample_rate;
 native_chan_names = {amplifier_channels.native_channel_name};
+
+
 
 
 s_to_disp = [0 60];
