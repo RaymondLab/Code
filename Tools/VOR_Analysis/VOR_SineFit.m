@@ -6,33 +6,33 @@
 %   'hepos'
 %   'vepos'
 %   'stim pul'
-% tstart    - time window start times
-% tstop     - time wndow stop times
+% params.segStarts    - time window start times
+% params.segEnds     - time wndow stop times
 % sinefreq  - frequency of stimulus for each segment
 % labels    - label for each segment
 % timepts   - time label for each segment (optional)
-% velthres  - velocity threshold
+% params.saccadeThresh  - velocity threshold
 %
 % Output: R.data structure with data and header
 %
 % Modified 1/20/14 to remove vertical eye calculations
 
 
-function R = VOR_SineFit(data, tstart, tstop, sinefreq, labels, timepts, velthres, ploton, saccadeWindow, params)
+function R = VOR_SineFit(data, sinefreq, labels, timepts, params)
 %% === Create R data Array and other parameters ======================== %%
 
 sp = figure(1);
 set(sp, 'visible', 'off')
 
-% Set up cell structure to hold all R.data
 
+% Set up cell structure to hold all R.data
 fprintf('\n\nGenerating Segment Figures...')
 
 header = {'timept'  'start' 'end'   'eyeHgain' 'eyeHphase'...
     'headamp' 'headangle' 'drumamp' 'drumangle' 'eyeHamp' 'eyeHangle'...
     'saccadeFrac' 'rsquare' 'pval' 'variance','nGoodCycles'};
 
-nSegs = length(tstart);
+nSegs = length(params.segStarts);
 nCols = length(header);
 
 R.data = NaN(nSegs,nCols);
@@ -40,22 +40,22 @@ R.header = header;
 R.labels = labels;
 
 if ~exist('timepts','var')
-    timepts = mean([tstart tstop],2);
+    timepts = mean([params.segStarts params.segEnds],2);
 end
 R.data(:,strcmpi(header,'timept')) = timepts;
 
 % Other parameters
-if ~exist('velthres','var')
-    velthres = .55;
+if ~isfield(params, 'saccadeThresh')
+    params.saccadeThresh = .55;
 end
 
-if ~exist('ploton','var')
-    ploton = 1;
+if ~isfield(params, 'do_individual')
+    params.do_individual = 1;
 end
 
 samplerate = data(1).samplerate;
-presaccadeN = round(saccadeWindow(1)*samplerate);
-postsaccadeN = round(saccadeWindow(2)*samplerate);
+presaccadeN = round(params.saccadePre*samplerate);
+postsaccadeN = round(params.saccadePost*samplerate);
 
 % Gather Screensize information for figure placement
 screensize = get( groot, 'Screensize' );
@@ -68,7 +68,7 @@ for count = 1:nSegs
     %% === Prep Data =================================================== %%
     
     % Skip segments where frequency or start time is NaN
-    if isnan(sinefreq(count)) || isnan(tstart(count))
+    if isnan(sinefreq(count)) || isnan(params.segStarts(count))
         continue
     end
 
@@ -77,11 +77,11 @@ for count = 1:nSegs
     freq = sinefreq(count);
 
     % fill data matrix with file information
-    R.data(count,strcmpi(header,'start')) = tstart(count);
-    R.data(count,strcmpi(header,'end')) = tstop(count);
+    R.data(count,strcmpi(header,'start')) = params.segStarts(count);
+    R.data(count,strcmpi(header,'end')) = params.segEnds(count);
 
     % Segment data to current time segment
-    dataseg = datseg(data, [tstart(count) tstop(count)]);
+    dataseg = datseg(data, [params.segStarts(count) params.segEnds(count)]);
 
     % Import Eye, Chair, and Drum velocity
     headvel = datchandata(dataseg,'hhvel');
@@ -107,23 +107,33 @@ for count = 1:nSegs
     warning off
 
     %% === DESACCADE =================================================== %%
+    % Find saccades in eye movement and blank out an interval on either side
+    
     % First pass remove baseline eye mvmt
     keep = abs(eyevelH) < 5*std(abs(eyevelH)) + mean(abs(eyevelH));        % First pass remove saccades
     b = regress(eyevelH(keep), vars(keep,:));  % Initial fit
     fit1 = vars *b;
-    eyevelHtemp = eyevelH - vars*b;            % Subtract fitted sine
-
-    % Find saccades in eye movement and blank out an interval on either side
+    
+    % OLD VERSION
     if params.newSac == 0
-        [eyevelH_des_temp, omitCenters, rawThres1] = desaccadeVelNew(eyevelHtemp, presaccadeN, postsaccadeN, velthres);
+
+        eyevelHtemp = eyevelH - vars*b;            % Subtract fitted sine
+        
+        [eyevelH_des_temp, omitCenters, rawThres1] = desaccadeVelNew(eyevelHtemp, presaccadeN, postsaccadeN, params.saccadeThresh);
+        omitH = isnan(eyevelH_des_temp);
+        
+    % NEW VERSION
     elseif params.newSac == 1
-        [eyevelH_des_temp, omitCenters] = desaccadeVel3(eyepos, samplerate, presaccadeN, postsaccadeN, velthres);
+        [omitH, omitCenters, eye_pos_filt, eye_vel_pfilt] = desaccadeVel3(eyepos, samplerate, presaccadeN, postsaccadeN, freq, params, fit1);
     end
     
-    omitH = isnan(eyevelH_des_temp);
+    % Use cleaned data for analysis?
+    if params.cleanAnalysis
+        eyevelH = eye_vel_pfilt;
+    end
+    
     eyevelH_des1 = eyevelH;
     eyevelH_des1(omitH) = NaN;
-
     R.data(count,strcmp(header,'saccadeFrac')) = mean(omitH);
 
     %% === FIT SINE FITS BASED ON DESACCADED TRACES ==================== %%
@@ -171,46 +181,47 @@ for count = 1:nSegs
     warning on
     
     % --- Plot full segment, saccades, and fitted sine --------------------
-    if ploton
+    if params.do_individual
 
         subplot(params.sp_Dim(1), params.sp_Dim(2), params.figure_loc{params.temp_placement});
         params.temp_placement = params.temp_placement + 1;
         
         % Filter signal Visual?
-        if params.do_filter
-            N = 3;
-            fc = [params.BPFilterLow params.BPFilterHigh];
-            [bb,aa] = butter(N, fc/samplerate, 'bandpass');
-            eyevelH_plot = filter(bb,aa,eyevelH);
-            eyevelH_des1_plot = eyevelH_plot;
-            eyevelH_des1_plot(omitH) = NaN;
+        if params.cleanPlot
+            eyevel_plot = eye_vel_pfilt;
+            eyevel_des_plot = eye_vel_pfilt;
+            eyevel_des_plot(omitH) = NaN;
         else
-            eyevelH_plot = eyevelH;
-            eyevelH_des1_plot = eyevelH_des1;
+            eyevel_plot = eyevelH;
+            eyevel_des_plot = eyevelH;
+            eyevel_des_plot(omitH) = NaN;
         end
 
         
         % Plot 
-        plot(time, eyevelH_plot, 'k', 'LineWidth', .25); hold on
-        plot(time, eyevelH_des1_plot, 'b', 'LineWidth', .25); 
+        plot(time(1:length(eyevel_plot)), eyevel_plot, 'k', 'LineWidth', .3); hold on
+        plot(time(1:length(eyevel_des_plot)), eyevel_des_plot, 'b', 'LineWidth', .3); 
         
         
-        if params.do_filter
-            plot(time, vars*b,':r', 'LineWidth', .25);
+        if params.cleanPlot
+            plot(time, vars*b,':r', 'LineWidth', .5);
         else
             plot(time, vars*b,'r', 'LineWidth', .5);
         end
+        
+        % plot thresh if using old de-saccading method
         if params.newSac == 0
             plot(time, fit1 + rawThres1(1), ':r', 'LineWidth', .25);
             plot(time, fit1 + rawThres1(2), ':r', 'LineWidth', .25);
         end
+        
         % Cosmetics
-        xlim([0 length(eyevelH)/1000]);     ylim([-200 200])
+        xlim([0 length(eyevelH)/1000]);     ylim([-150 150])
         if count == nSegs
             xlabel('Time (s)');    
         end 
         title(datatype)
-        text(0, max(ylim)*1.15, ['@ ' num2str(round(tstart(count), 2)), 's'], 'FontSize', 7)
+        text(0, max(ylim)*1.15, ['@ ' num2str(round(params.segStarts(count), 2)), 's'], 'FontSize', 7)
         
         % Manual y axis b/c matlab is literal garbage
         yticks([min(ylim) 0 max(ylim)])
@@ -219,7 +230,7 @@ for count = 1:nSegs
         text(0-max(xlim)*.02, 0, num2str(0), 'FontSize', 7) % 0
         text(0-max(xlim)*.02, .9*min(ylim), num2str(min(ylim)), 'FontSize', 7) % bottom
         
-        % Manual x axis
+        % Manual x axis  b/c matlab is literal garbage
         xticks([0 round(max(xlim)/2, 1) max(xlim)])
         xticklabels({})
         text(max(xlim)*.99, min(ylim)*1.1, num2str(round(max(xlim))), 'FontSize', 7)
@@ -269,10 +280,10 @@ for count = 1:nSegs
     omit_All(end,:)      = [];
     DrumVel_All(end,:)  = [];
     
-    eyeVel_AllDesMean   = nanmean(eyeVel_AllDes);
+    eyeVel_AllDesMean   = nanmean(eyeVel_AllDes, 1);
     eyeVel_DesSem       = nanstd(eyeVel_AllDes)./sqrt(sum(~isnan(eyeVel_AllDes)));
-    headVel_AllMean     = nanmean(headVel_All);
-    chairVel_AllMean    = nanmean(DrumVel_All);
+    headVel_AllMean     = nanmean(headVel_All, 1);
+    chairVel_AllMean    = nanmean(DrumVel_All, 1);
 
     badCycles = any(omit_All,2);
     goodCount = sum(~badCycles);
@@ -291,7 +302,7 @@ for count = 1:nSegs
 
     %% === Plot Averages =============================================== %%
     
-    if ploton
+    if params.do_individual
         
         % Prep
         subplot(params.sp_Dim(1), params.sp_Dim(2), params.figure_loc{params.temp_placement});

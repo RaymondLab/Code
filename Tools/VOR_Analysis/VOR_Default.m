@@ -2,7 +2,7 @@ function params = VOR_Default(params)
 %{
 VOR_Default
 
-This script takes information soted inside of an smr file and 
+This script takes information stored inside of an smr file and 
     1) preprocces it
     2) run the default sine analysis script
 
@@ -130,11 +130,11 @@ data(end) = datlowpass(data(end),100);
 veltau = .01;
 hevel = movingslopeCausal(datchandata(data,'hepos'),round(fs*veltau))*fs;
 
-% create and add 'horiontal eye velocity' channel to channel list
+% Create and add 'horiontal eye velocity' channel to channel list
 data(end+1) = dat(hevel,'hevel',[],fs,data(1).tstart,data(1).tend,'deg/s');
 
 %% === Run Sine Analysis for Each Relevant Segment ===================== %%
-result = VOR_SineFit(data, params.segStarts, params.segEnds, frequency, labels, timepts, params.saccadeThresh, params.do_individual, [params.saccadePre, params.saccadePost], params);
+result = VOR_SineFit(data, frequency, labels, timepts, params);
 
 % Append results to Excel
 xlswrite(fullfile(params.folder,[params.file '.xlsx']),result.data(:,4:end),'Sheet1','J2');

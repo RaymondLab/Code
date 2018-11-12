@@ -41,6 +41,9 @@ seg_groups = [1;1;1;1;1;1;
               7;7;7;7;7;7];
 seg_measure = T{:,strcmpi(T.Properties.VariableNames, measure)};
 seg_nGC = T{:,strcmpi(T.Properties.VariableNames, 'nGoodCycles')};
+seg_Percent = T{:,strcmpi(T.Properties.VariableNames, 'saccadeFrac')};
+% temp hack!
+seg_nGC = seg_Percent;
 
 %% norm data if needed
 if norm
@@ -267,5 +270,6 @@ ylabel(['Norm ' measure])
 title(['Norm ' measure ' of Post Test'])
 
 % Save as .pdf & .fig
+save('normGainPost.mat', 'dot2', 'dot5', 'one', 'two', 'three', 'four')
 print(figC,strrep(excel_file, '.xlsx', ['Weighted_Mean_Summary_Norm_' measure '.pdf']),'-dpdf', '-r300');
 savefig(figC, strrep(excel_file, '.xlsx', ['Weighted_Mean_Summary_Norm_' measure '.fig']))

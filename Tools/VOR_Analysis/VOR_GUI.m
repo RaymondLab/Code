@@ -27,7 +27,7 @@ function varargout = VOR_GUI(varargin)
 
     % Edit the above text to modify the response to help VOR_GUI
 
-    % Last Modified by GUIDE v2.5 10-Oct-2018 22:16:24
+    % Last Modified by GUIDE v2.5 01-Nov-2018 13:07:39
 
     % Begin initialization code - DO NOT EDIT
     gui_Singleton = 1;
@@ -86,7 +86,6 @@ function varargout = VOR_GUI_OutputFcn(hObject, eventdata, handles)
     end
 
     % make defaults
-    handles.checkbox1.Value = 1;
     handles.checkbox2.Value = 1;
 
 
@@ -99,16 +98,17 @@ function pushbutton1_Callback(hObject, eventdata, handles)
     params.smr_files = dir([params.folder '\**\*.smr']);
     params.smr_files = params.smr_files(~contains({params.smr_files.name}, '_cali'));
     params.count = length(params.smr_files);
+    params.cleanPlot = handles.radiobutton8.Value;
+    params.cleanAnalysis = handles.radiobutton5.Value;
     
     % Extras Analysis / plotting
     params.newSac = handles.checkbox8.Value;
-    params.do_subplots = handles.checkbox1.Value;
+    params.NoiseAnalysis = handles.checkbox9.Value;
     params.do_individual = handles.checkbox5.Value;
-    params.do_polar_plots = handles.checkbox3.Value;
     params.do_eyeAmp_summary = 1;
     params.do_eyeGain_summary = 1;
     params.do_sineAnalysis = 1; % TODO
-    params.do_filter = handles.checkbox7.Value;
+    params.do_filter = 0;%handles.checkbox7.Value;
     
     % Saccade Parameters
     params.saccadePre = str2double(handles.edit2.String);
@@ -116,8 +116,8 @@ function pushbutton1_Callback(hObject, eventdata, handles)
     params.saccadeThresh = str2double(handles.edit4.String);
     
     % Filtering Parameters
-    params.BPFilterLow = str2double(handles.edit5.String);
-    params.BPFilterHigh = str2double(handles.edit6.String);
+    %params.BPFilterLow = str2double(handles.edit5.String);
+    %params.BPFilterHigh = str2double(handles.edit6.String);
     
     % Meta information
     params.Run_Date = strrep(char(datetime('now')), ':', '-');
@@ -159,16 +159,6 @@ function popupmenu1_Callback(hObject, eventdata, handles)
     %        contents{get(hObject,'Value')} returns selected item from popupmenu1
     % only display the 'polar plots' checkbox when running Dark Rearing
     % Analyis
-    if strcmp(hObject.String{handles.popupmenu1.Value}, 'Dark Rearing')
-        handles.checkbox3.Visible = 'on';
-        handles.checkbox3.Value = 1;
-    elseif strcmp(hObject.String{handles.popupmenu1.Value}, 'Dark Rearing + Generalization')
-        handles.checkbox3.Visible = 'on';
-        handles.checkbox3.Value = 1;
-    else
-        handles.checkbox3.Visible = 'off';
-        handles.checkbox3.Value = 0;
-    end
 
 % --- Executes during object creation, after setting all properties.
 function popupmenu1_CreateFcn(hObject, eventdata, handles)
@@ -391,8 +381,41 @@ end
 
 % --- Executes on button press in checkbox8.
 function checkbox8_Callback(hObject, eventdata, handles)
+    if hObject.Value
+        % pre
+        handles.edit2.String = '.05';
+        % post
+        handles.edit3.String = '.05';
+        % thresh
+        handles.edit4.String = '.02';
+    else
+        % pre
+        handles.edit2.String = '.075';
+        % post
+        handles.edit3.String = '.2';
+        % thresh
+        handles.edit4.String = '.55';
+    end
 % hObject    handle to checkbox8 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox8
+
+
+% --- Executes on button press in checkbox9.
+function checkbox9_Callback(hObject, eventdata, handles)    
+% hObject    handle to checkbox9 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox9
+
+
+% --- Executes on button press in checkbox10.
+function checkbox10_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox10 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox10
