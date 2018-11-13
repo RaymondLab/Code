@@ -300,6 +300,29 @@ for count = 1:nSegs
     R.headMean{count}   = headVel_AllMean;
     R.data(count,strcmp(header,'nGoodCycles')) = goodCount;
 
+    % Save some variables for later 
+    switch params.analysis
+        case 'Dark Rearing'
+            if any(count == [1, 2, 3, 15, 16, 17])
+                if count == 1
+                    q = 1;
+                end
+                
+                segObj(q).headVel = headVel_AllMean;
+                segObj(q).chairVel = chairVel_AllMean;
+                segObj(q).eyeVelDes = eyeVel_AllDesMean;
+                segObj(q).eyeVelGood = eyeVel_GoodCyclesMean;
+                segObj(q).SacFrac = mean(omitH);
+                segObj(q).goodCcount = goodCount;
+                
+                q = q + 1;
+                
+                if q == 7
+                    save('t0_t30.mat', segObj)
+                end
+            end   
+    end
+    
     %% === Plot Averages =============================================== %%
     
     if params.do_individual
@@ -361,6 +384,8 @@ for count = 1:nSegs
         drawnow;
     end
 end
+
+%% === Save Figure ===================================================== %%
 sp.PaperSize = [params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
 sp.PaperPosition = [0 0 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
 fprintf('saving...')
