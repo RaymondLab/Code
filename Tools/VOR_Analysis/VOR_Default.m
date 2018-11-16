@@ -65,6 +65,9 @@ if exist(fullfile(params.folder, [params.file '_calib.mat']), 'file')
 elseif exist(fullfile(params.folder,[params.file '_cali.mat']), 'file')
     params.fileCalib = [params.file '_cali.mat'];
     params.folderCalib = params.folder;
+elseif exist(fullfile(params.folder, 'manual_calib.mat'), 'file')
+    params.fileCalib = 'manual_calib.mat';
+    params.folderCalib = params.folder;
 else
     [params.fileCalib, params.folderCalib] = uigetfile( {'*.mat','Matlab (.mat)'},'Pick a calibration file with scale factors','calib.mat');
 end
