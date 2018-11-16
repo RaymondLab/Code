@@ -52,13 +52,9 @@ function singleAnalysis(params)
     params = subPlotDim(params);
     params.temp_placement = 1;
     switch params.analysis
-        case {'Default (Sine Only)', 'Sriram_OKR', 'Sriram_Gen', 'Amin_Gen'}
+        case {'Default (Sine Only)', 'Sriram_OKR', 'Sriram_Gen', 'Amin_Gen', 'Dark Rearing'}
             fprintf('Running: Default Sine Analysis\n')
             params = VOR_Default(params);
-        case 'Dark Rearing'
-            fprintf('Running: Dark Rearing Analysis\n')
-            runVORm
-            %VOR_DarkRearing(params)
         case 'Dark Rearing + Generalization'
             fprintf('Running: Dark Rearing Generalization Analysis\n')
             VOR_DarkRearingGeneralization(params)
@@ -74,7 +70,7 @@ function singleAnalysis(params)
     %% Polar Plots
     switch params.analysis
         case {'Dark Rearing', 'Dark Rearing + Generalization'}
-            polarPlotVectorsMean2
+            %polarPlotVectorsMean2
     end
 
     %% Summary
@@ -92,6 +88,8 @@ function singleAnalysis(params)
                 VOR_Summary_Sriram_Gen('eyeHgain', fullfile(params.folder,[params.file '.xlsx']), 0);
             case 'Amin_Gen'
                 VOR_Summary_Amin_Gen('eyeHgain', fullfile(params.folder,[params.file '.xlsx']), 0);
+            case 'Dark Rearing'
+                VOR_Summary_Sriram_DR1(params);
         end
     end
 

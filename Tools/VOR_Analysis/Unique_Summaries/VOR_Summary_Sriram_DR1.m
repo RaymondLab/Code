@@ -1,126 +1,191 @@
 function VOR_Summary_Sriram_DR1(params)
 
+%% Prep
+type = 1;% 1 == desaccaded, 2 == good cycles
+
 load('t0_t30.mat')
 
-%% weight each mean by it's saccade %
+%% Calculations
 
 % Desaccaded
 t0_eyeVelDes_Wmean = segObj(1).eyeVelDes * segObj(1).SacFrac + ...
-                     segObj(2).eyeVelDes * segObj(2).SacFrac + ...
-                     segObj(3).eyeVelDes * segObj(3).SacFrac;
-                 
-t0_eyeVelDes_Wmean = t0_eyeVelDes_Wmean / sum(segObj(1).SacFrac, ...
-                                              segObj(2).SacFrac, ...
-                                              segObj(3).SacFrac);  
-                                          
+    segObj(2).eyeVelDes * segObj(2).SacFrac + ...
+    segObj(3).eyeVelDes * segObj(3).SacFrac;
+
+t0_eyeVelDes_Wmean = t0_eyeVelDes_Wmean / sum([segObj(1).SacFrac, ...
+    segObj(2).SacFrac, ...
+    segObj(3).SacFrac]);
+
 t30_eyeVelDes_Wmean = segObj(4).eyeVelDes * segObj(4).SacFrac + ...
-                     segObj(5).eyeVelDes * segObj(5).SacFrac + ...
-                     segObj(6).eyeVelDes * segObj(6).SacFrac;
-                 
-t30_eyeVelDes_Wmean = t30_eyeVelDes_Wmean / sum(segObj(4).SacFrac, ...
-                                              segObj(5).SacFrac, ...
-                                              segObj(6).SacFrac); 
+    segObj(5).eyeVelDes * segObj(5).SacFrac + ...
+    segObj(6).eyeVelDes * segObj(6).SacFrac;
+
+t30_eyeVelDes_Wmean = t30_eyeVelDes_Wmean / sum([segObj(4).SacFrac, ...
+    segObj(5).SacFrac, ...
+    segObj(6).SacFrac]);
 
 % Only Good Cycles
 t0_eyeVelGood_Wmean = segObj(1).eyeVelGood * segObj(1).SacFrac + ...
-                     segObj(2).eyeVelGood * segObj(2).SacFrac + ...
-                     segObj(3).eyeVelGood * segObj(3).SacFrac;
-                 
-t0_eyeVelGood_Wmean = t0_eyeVelGood_Wmean / sum(segObj(1).SacFrac, ...
-                                              segObj(2).SacFrac, ...
-                                              segObj(3).SacFrac);  
-                                          
+    segObj(2).eyeVelGood * segObj(2).SacFrac + ...
+    segObj(3).eyeVelGood * segObj(3).SacFrac;
+
+t0_eyeVelGood_Wmean = t0_eyeVelGood_Wmean / sum([segObj(1).SacFrac, ...
+    segObj(2).SacFrac, ...
+    segObj(3).SacFrac]);
+
 t30_eyeVelGood_Wmean = segObj(4).eyeVelGood * segObj(4).SacFrac + ...
-                     segObj(5).eyeVelGood * segObj(5).SacFrac + ...
-                     segObj(6).eyeVelGood * segObj(6).SacFrac;
-                 
-t30_eyeVelGood_Wmean = t30_eyeVelGood_Wmean / sum(segObj(4).SacFrac, ...
-                                              segObj(5).SacFrac, ...
-                                              segObj(6).SacFrac);                                           
+    segObj(5).eyeVelGood * segObj(5).SacFrac + ...
+    segObj(6).eyeVelGood * segObj(6).SacFrac;
 
+t30_eyeVelGood_Wmean = t30_eyeVelGood_Wmean / sum([segObj(4).SacFrac, ...
+    segObj(5).SacFrac, ...
+    segObj(6).SacFrac]);
 
-% get difference of the means
-BlueDiff = endEyeVelCycleMean - startEyeVelCycleMean;
-GreenDiff = endEyeVelDesMean - startEyeVelDesMean;
+% Misc
+freq = segObj(1).freq;
+sampleRate = segObj(1).sampleRate;
+ttCycle = segObj(1).ttCycle;
 
-% data of plot
-figure(count+1000); clf;
-ttCycle = (1:cycleLength)/samplerate;
-plot(ttCycle, BlueDiff,'b'); hold on
-plot(ttCycle, GreenDiff, 'g');
-diffMeanData = data(1);
-diffMeanData.data = BlueDiff;
-%diffMeanData.chanlabel = 'htvel';
-finalLabel = 'VOR 1Hz';
+% Calc mean head velocity @ t0
+qq = vec2mat([segObj(1:3).headVel], 1000);
+headVelMean_t0 = mean(qq, 1);
+% Calc mean head velocity @ t30
+qq = vec2mat([segObj(4:6).headVel], 1000);
+headVelMean_t30 = mean(qq,1);
 
-%% This is a modified version of the  VORsineFit function that
-% specifically handles the mean waveforms. In order to accomadate
-% this new functionality, there would have to be to many changes to
-% the original function, so a new one was created. See Max Gagnon
-% for more details.
-[eyevelH_offset, eyevelH_rel_phase, eyevelH_amp, eyeHgain] = VORsineFitMaxMod( sinefreq(1), data(1).samplerate, BlueDiff', headVelMean', drumVelMean');
-plot(ttCycle, eyevelH_offset+sin(2*pi*freq*ttCycle + deg2rad(eyevelH_rel_phase+180))*eyevelH_amp,'r')
-plot(ttCycle, headMean, 'k',ttCycle,zeros(size(ttCycle)),'--k');
+% Calc mean drum velocity @ t0
+qq = vec2mat([segObj(1:3).DrumVel], 1000);
+drumVelMean_t0 = mean(qq, 1);
+% Calc mean drum velocity @ 3t0
+qq = vec2mat([segObj(4:6).DrumVel], 1000);
+drumVelMean_t30 = mean(qq,1);
+
+% calc mean idealEye movement @ t0
+qq = vec2mat([segObj(1:6).idealEye], 1000);
+idealEye_all = mean(qq,1);
+
+%% Figure A, Averages
+
+% plot
+qqq = figure('visible','off', 'PaperOrientation', 'landscape');
+ha = tight_subplot(2,2,[.025 .025],[.025 .025],[.025 .025]);
+axes(ha(1))
+if type == 1
+    plot(ttCycle, t0_eyeVelDes_Wmean, 'b'); hold on
+    plot(ttCycle, t30_eyeVelDes_Wmean, 'r');
+    title('Desaccaded')
+else
+    plot(ttCycle, t0_eyeVelGood_Wmean, 'b'); hold on
+    plot(ttCycle, t30_eyeVelGood_Wmean, 'r')
+    title('Only Good Cycles')
+end
+
+plot(ttCycle, headVelMean_t0, 'k')
+plot(ttCycle, headVelMean_t30, 'k')
+%plot(ttCycle, idealEye_all, ':k')
+ylim([-10, 10])
+hline(0, 'k')
+legend('t=0', 't-30')
+%grid on
+box off
+xticklabels([])
+
+%% Figure B, Fits
+
+% Calc
+if type == 1
+    [~, eyevelH_rel_phase_t0, eyevelH_amp_t0, eyeHgain_t0] = VOR_SineFit_Single(freq, sampleRate, t0_eyeVelDes_Wmean, headVelMean_t0, drumVelMean_t0);
+    [~, eyevelH_rel_phase_t30, eyevelH_amp_t30, eyeHgain_t30] = VOR_SineFit_Single(freq, sampleRate, t30_eyeVelDes_Wmean, headVelMean_t30, drumVelMean_t30);
+    titlewords = 'Fits of Desaccaded';
+else
+    [~, eyevelH_rel_phase_t0, eyevelH_amp_t0, eyeHgain_t0] = VOR_SineFit_Single(freq, sampleRate, t0_eyeVelGood_Wmean, headVelMean_t0, drumVelMean_t0);
+    [~, eyevelH_rel_phase_t30, eyevelH_amp_t30, eyeHgain_t30] = VOR_SineFit_Single(freq, sampleRate, t30_eyeVelGood_Wmean, headVelMean_t30, drumVelMean_t30);
+    titlewords = 'Fits of Only Good Cycles';
+end
+
+% Plot
+axes(ha(2))
+plot(ttCycle, sin(2*pi*freq*ttCycle + deg2rad(eyevelH_rel_phase_t0+180))*eyevelH_amp_t0, 'b'); hold on
+plot(ttCycle, sin(2*pi*freq*ttCycle + deg2rad(eyevelH_rel_phase_t30+180))*eyevelH_amp_t30, 'r');
+plot(ttCycle, headVelMean_t0, 'k')
+plot(ttCycle, headVelMean_t30, 'k')
+
+% Cosmetics
+legend('t=0', 't-30')
+title(titlewords)
+ylim([-10, 10])
+hline(0, 'k');
+%grid on
+box off
+xticklabels([])
+yticklabels([])
+
+% temp
+%axes(ha(1))
+%hold on
+%plot(ttCycle, sin(2*pi*freq*ttCycle - deg2rad(eyevelH_rel_phase_t0+180))*eyevelH_amp_t0, ':b');
+%plot(ttCycle, sin(2*pi*freq*ttCycle - deg2rad(eyevelH_rel_phase_t30+180))*eyevelH_amp_t30, ':r');
+
+%% Figure C, Difference of traces + fit
+
+% Calc
+if type == 1
+    DiffOfMeans = t30_eyeVelDes_Wmean - t0_eyeVelDes_Wmean;
+else
+    DiffOfMeans = t30_eyeVelGood_Wmean - t0_eyeVelGood_Wmean;
+end
+[~, eyevelH_rel_phase_diff, eyevelH_amp_diff, eyeHgain_diff] = VOR_SineFit_Single(freq, sampleRate, DiffOfMeans, headVelMean_t0, drumVelMean_t0);
+[~, eyevelH_rel_phase_ideal, eyevelH_amp_ideal, eyeHgain_ideal] = VOR_SineFit_Single(freq, sampleRate, idealEye_all, headVelMean_t0, drumVelMean_t0);
+
+% Plot
+axes(ha(3))
+plot(ttCycle, DiffOfMeans, 'g'); hold on
+plot(ttCycle, sin(2*pi*freq*ttCycle + deg2rad(eyevelH_rel_phase_diff+180))*eyevelH_amp_diff, 'c');
+plot(ttCycle, headVelMean_t0, 'k')
+plot(ttCycle, headVelMean_t30, 'k')
+%plot(ttCycle, idealEye_all, ':k')
+
+% cosmetics
+title('Diff of Means: t_3_0 - t_0')
+ylim([-10, 10])
+hline(0, 'k')
+legend('Diff', 'Diff''s Fit')
+xlabel('Seconds')
+%grid on
 box off
 
-% Cosmetics of plot
-ylim([-30 30]);   xlim([0 max(ttCycle)])
-ylabel('deg/s');  xlabel('Time (s)');
-title(['Delta Hor. Eye Vel: ', datatype(1:8) ' ']);
-%text (.1, 13.5, ['Good cycles: ', num2str(goodCount), '/', num2str(nCycles)],'FontSize',10);
-text (.01, 27, ['Eye amp: ', num2str(eyevelH_amp,3)],'FontSize',10);
-legend({'t_3_0 - t_0 mean: Good Cycles', 't_3_0 - t_0 mean: Good Cycles','Sine fit','Stimulus'},'EdgeColor','w')
-drawnow;
+%% Figure D, Polar Plots
 
-%% plot difference of raw traces
-figure(1067); clf;
-ttCycle = (1:cycleLength)/samplerate;
-plot(ttCycle, startEyeVelCycleMean,'m'); hold on
-plot(ttCycle, endEyeVelCycleMean, 'r'); hold on
-plot(ttCycle, BlueDiff,'b', 'LineWidth', 1);
-plot(ttCycle, headMean, 'k',ttCycle,zeros(size(ttCycle)),'--k'); hold on
+% radians conversion
+phaseT0Rad = deg2rad(eyevelH_rel_phase_t0);
+phaseT30Rad = deg2rad(eyevelH_rel_phase_t30);
+phaseDiffRad = deg2rad(eyevelH_rel_phase_diff);
+phaseIdealRad = deg2rad(eyevelH_rel_phase_ideal);
 
-% Cosmetics of plot
-ylim([-30 30]);   xlim([0 max(ttCycle)])
-ylabel('deg/s');  xlabel('Time (s)');
-title(['Mean t_0, Mean t_3_0, & Delta Hor. Eye Vel: ', datatype(1:8) ' ']);
-legend({'t_0 mean: Good Cycles', 't_3_0 mean: Good Cycles','t_3_0 mean - t_0 mean: Good Cycles','Stimulus','zero'},'EdgeColor','w')
-drawnow;
-
-%% calc Sine fit for startEyeVelCycleMean & endEyeVelCycleMean
-figure(1068); clf;
-[STARTeyevelH_offset, STARTeyevelH_rel_phase, STARTeyevelH_amp, STARTeyeHgain] = VORsineFitMaxMod( sinefreq(1), data(1).samplerate, startEyeVelCycleMean',mean(headVelSegments(1:3,:), 1)', mean(drumVelSegments(1:3,:), 1)');
-[ENDeyevelH_offset, ENDeyevelH_rel_phase, ENDeyevelH_amp, ENDeyeHgain]         = VORsineFitMaxMod( sinefreq(1), data(1).samplerate, endEyeVelCycleMean', mean(headVelSegments(4:end,:), 1)', mean(drumVelSegments(4:end,:), 1)');
-
-% plot differences in sine fits
-plot(ttCycle, STARTeyevelH_offset+sin(2*pi*freq*ttCycle + deg2rad(STARTeyevelH_rel_phase+180))*STARTeyevelH_amp,'m'); hold on
-plot(ttCycle, ENDeyevelH_offset+sin(2*pi*freq*ttCycle + deg2rad(ENDeyevelH_rel_phase+180))*ENDeyevelH_amp,'r'); hold on
-plot(ttCycle, eyevelH_offset+sin(2*pi*freq*ttCycle + deg2rad(eyevelH_rel_phase+180))*eyevelH_amp,'b')
-plot(ttCycle, headMean, 'k',ttCycle,zeros(size(ttCycle)),'--k'); hold on
-
-% Cosmetics of plot
-figure(1068)
-ylim([-30 30]);   xlim([0 max(ttCycle)])
-ylabel('deg/s');  xlabel('Time (s)');
-title(['Sine Fit Comparison: t_3_0, t_0 mean, & Difference  Hor. Eye Vel:', datatype(1:8) ' ']);
-legend({'t_0 mean Sine Fit: Good Cycles', 't_3_0 mean Sine Fit: Good Cycles','t_3_0 mean - t_0 mean Sine Fit: Good Cycles', 'Stimulus','zero'},'EdgeColor','w')
-drawnow;
-
-%% add the new delta data to the results structure
-vec1 = NaN(length(R.header), 1)';
-vec1(4) =  eyeHgain;
-vec1(5) =  eyevelH_rel_phase;
-vec2 = NaN(length(R.header), 1)';
-vec2(4) =  ENDeyeHgain - STARTeyeHgain;
-vec2(5) = ENDeyevelH_rel_phase - STARTeyevelH_rel_phase;
+% text summaries
+message_t030 = sprintf(['t_0 & t_3_0\nGain: ' num2str(eyeHgain_t0), '  &  ', num2str(eyeHgain_t30), ...
+                                '\nPhase: ' num2str(eyevelH_rel_phase_t0), '  &  ', num2str(eyevelH_rel_phase_t30), ...
+                                '\nAmp: ', num2str(eyevelH_amp_t0),'  &  ', num2str(eyevelH_amp_t30)]);
+message_diff = sprintf(['Diff\nGain: ' num2str(eyeHgain_diff), '\nPhase: ' num2str(eyevelH_rel_phase_diff), '\nAmp: ', num2str(eyevelH_amp_diff)]);
 
 
-R.data(trueSegments+1,:) = vec1;
-R.data(trueSegments+2,:) = vec2;
-R.data(trueSegments+3,:) = vec3;
-R.data(trueSegments+4,:) = vec4;
+ha
+subplot(2,4,7)
+T0 = polarplot([0 phaseT0Rad], [0 eyeHgain_t0], 'color', 'b', 'lineWidth', 2); hold on
+T30 = polarplot([0 phaseT30Rad], [0 eyeHgain_t30], 'color', 'r', 'lineWidth', 2);
+%ideal = polarplot([0 phaseIdealRad], [0 eyeHgain_ideal], 'color', 'k', 'lineWidth', 1);
 
+% cosmetics
+title(message_t030, 'FontSize', 8)
+rlim([0 .6])
+subplot(2,4,8)
+Tdiff = polarplot([0 phaseDiffRad], [0 eyeHgain_diff], 'color', 'c', 'lineWidth', 2);
+rlim([0 .6])
+title(message_diff, 'FontSize', 8)
+print('done')
 
-while length(R.labels) < trueSegments+2
-    R.labels = [R.labels; 'Apples'];
-end
+%% Save as pdf and fig
+[~, b] = fileparts(params.folder);
+print(qqq,fullfile(params.folder, [b, '_t30-t0_Summary']),'-fillpage', '-dpdf', '-r300');
+% Save as .fig
+savefig(qqq,fullfile(params.folder, [b, '_t30-t0_Summary.fig']));

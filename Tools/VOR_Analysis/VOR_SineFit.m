@@ -256,7 +256,7 @@ for count = 1:nSegs
 
     cycleLength = round(samplerate/freq);
     startpt = max(1,round(mod(-refH_angle,360)/360 * samplerate/freq));
-
+    [idealEye_All, ~]   = vec2mat(idealEye(startpt:end), cycleLength, NaN);
     [eyeVel_All, ~]     = vec2mat(eyevelH(startpt:end), cycleLength, NaN);
     [eyeVel_AllDes, ~]  = vec2mat(eyevelH_des1(startpt:end), cycleLength, NaN);
     [headVel_All, ~]    = vec2mat(headvel(startpt:end), cycleLength, NaN);
@@ -271,6 +271,7 @@ for count = 1:nSegs
         headVel_All(1:5,:)   = [];
         omit_All(1:5,:)      = [];
         DrumVel_All(1:5,:)  = [];
+        idealEye_All(1:5,:) = [];
     end
     
     
@@ -279,11 +280,13 @@ for count = 1:nSegs
     headVel_All(end,:)   = [];
     omit_All(end,:)      = [];
     DrumVel_All(end,:)  = [];
+    idealEye_All(end,:) = [];
     
     eyeVel_AllDesMean   = nanmean(eyeVel_AllDes, 1);
     eyeVel_DesSem       = nanstd(eyeVel_AllDes)./sqrt(sum(~isnan(eyeVel_AllDes)));
     headVel_AllMean     = nanmean(headVel_All, 1);
-    chairVel_AllMean    = nanmean(DrumVel_All, 1);
+    DrumVel_AllMean     = nanmean(DrumVel_All, 1);
+    idealEye_AllMean    = nanmean(idealEye_All, 1);
 
     badCycles = any(omit_All,2);
     goodCount = sum(~badCycles);
@@ -299,8 +302,9 @@ for count = 1:nSegs
     R.eyevelSem{count}  = eyeVel_DesSem;
     R.headMean{count}   = headVel_AllMean;
     R.data(count,strcmp(header,'nGoodCycles')) = goodCount;
-
-    % Save some variables for later 
+    ttCycle = (1:cycleLength)/samplerate;
+    
+    %% === Save some variables for later =============================== %%
     switch params.analysis
         case 'Dark Rearing'
             if any(count == [1, 2, 3, 15, 16, 17])
@@ -309,20 +313,25 @@ for count = 1:nSegs
                 end
                 
                 segObj(q).headVel = headVel_AllMean;
-                segObj(q).chairVel = chairVel_AllMean;
+                segObj(q).DrumVel = DrumVel_AllMean;
                 segObj(q).eyeVelDes = eyeVel_AllDesMean;
+                segObj(q).eyeVelDesFit = sin(2*pi*freq*ttCycle + deg2rad(eyevelH_rel_phase+180))*eyevelH_amp;
                 segObj(q).eyeVelGood = eyeVel_GoodCyclesMean;
                 segObj(q).SacFrac = mean(omitH);
                 segObj(q).goodCcount = goodCount;
+                segObj(q).ttCycle = ttCycle;
+                segObj(q).freq = freq;
+                segObj(q).sampleRate = samplerate;
+                segObj(q).idealEye = idealEye_AllMean;
                 
                 q = q + 1;
                 
                 if q == 7
-                    save('t0_t30.mat', segObj)
+                    save('t0_t30.mat', 'segObj')
                 end
             end   
     end
-    
+
     %% === Plot Averages =============================================== %%
     
     if params.do_individual
@@ -333,7 +342,7 @@ for count = 1:nSegs
         
         % Choose Stim
         if contains(R.labels{count}, 'OKR')
-            plotStim = chairVel_AllMean;
+            plotStim = DrumVel_AllMean;
             stimType = 'Drum';
         else
             plotStim = headVel_AllMean;
@@ -342,7 +351,7 @@ for count = 1:nSegs
         ylimits = double([floor(min(plotStim)*1.1) ceil(max(plotStim)*1.1)]);
 
         % plot data
-        ttCycle = (1:cycleLength)/samplerate;
+        
         plot(ttCycle, smooth(eyeVel_GoodCyclesMean, 50),'b'); hold on
         plot(ttCycle, smooth(eyeVel_AllDesMean, 50), 'g');
         plot(ttCycle, sin(2*pi*freq*ttCycle + deg2rad(eyevelH_rel_phase+180))*eyevelH_amp,'r');
