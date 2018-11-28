@@ -18,21 +18,9 @@ Max Gagnon 8/6/18
 
 %}
 
-%% === Setup =========================================================== &&
-
-% if nothing was input into the function, use default settings
- if ~exist('params','var')
-     params.do_individual = 1;
-     params.saccadePre = .075;
-     params.saccadePost = .2;
-     params.saccadeThresh = .55;
-     params.folder = cd;
-     [~, params.file] = fileparts(params.folder);
- end
-
 %% === Import start/stop times from .smr file ========================== %%
 
-[params.segStarts, params.segEnds] = extractSegments(params.folder);
+[params.segStarts, params.segEnds] = extractSineSegs(params.folder);
 
 %% === Import Time Segments ============================================ %%
 T = readtable(fullfile(params.folder,[params.file '.xlsx']));
@@ -143,16 +131,5 @@ result = VOR_SineFit(data, frequency, labels, timepts, params);
 xlswrite(fullfile(params.folder,[params.file '.xlsx']),result.data(:,4:end),'Sheet1','J2');
 xlswrite(fullfile(params.folder,[params.file '.xlsx']),result.header(4:end),'Sheet1','J1');
 
-%% ---Run STIM analysis for each relevant segment (aligns on rising pulse of TTL)---
-resultStim = [];
-resultStep = [];
-velthresStim = 80;
-
-if any(STIMmask)
-    resultStim = VORstim(data, params.segStarts, params.segEnds, frequency, labels, timepts,velthresStim, pulseDur, params.do_individual, STIMmask);
-    resultsFilename =  'resultStim';
-    save(fullfile(params.folder, resultsFilename),'resultStim','velthresStim');
-end
-
 %% === Save .mat file of results ======================================= %%
-save(fullfile(params.folder, 'result'), 'result','resultStep','resultStim','T');
+save(fullfile(params.folder, 'result'), 'result','T');
