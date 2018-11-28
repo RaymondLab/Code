@@ -123,7 +123,6 @@ else
     DiffOfMeans = tPost_eyeVelGood_Wmean - tPre_eyeVelGood_Wmean;
 end
 [~, eyevelH_rel_phase_diff, eyevelH_amp_diff, eyeHgain_diff]    = VOR_SineFit_Single(freq, sampleRate, DiffOfMeans, headVelMean_tPre, drumVelMean_tPre);
-%[~, eyevelH_rel_phase_ideal, eyevelH_amp_ideal, eyeHgain_ideal] = VOR_SineFit_Single(freq, sampleRate, idealEye_all, headVelMean_tPre, drumVelMean_tPre);
 
 % Plot
 axes(ha(3))
@@ -161,7 +160,7 @@ subplot(2,4,7)
 polarplot([0 phasetPreRad], [0 eyeHgain_tPre], 'color', 'b', 'lineWidth', 2); hold on
 polarplot([0 phasetPostRad], [0 eyeHgain_tPost], 'color', 'r', 'lineWidth', 2);
 
-% %osmetics
+% Cosmetics
 title(message_tPre30, 'FontSize', 8)
 rlim([0 2.5])
 
