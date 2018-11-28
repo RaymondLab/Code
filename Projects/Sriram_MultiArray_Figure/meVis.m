@@ -2,7 +2,7 @@
 
 clear;clc;close all
 dbstop if error
-cd Z:\1_Maxwell_Gagnon\ProjectData_Sriram\Granule_cell_recording\NR2_F_10_S1
+cd X:\1_Maxwell_Gagnon\ProjectData_Sriram\Sriram_gc_backup
 seg_file_names = dir;
 seg_file_names(~contains({seg_file_names.name}, 'stim_180807_143')) = [];
 seg_file_names(contains({seg_file_names.name}, '.mda')) = [];
@@ -10,7 +10,7 @@ tbefore = 0;
 tafter = 30000; % 30,000 = 1 second
 
 %% debug
-file = 'Z:\1_Maxwell_Gagnon\ProjectData_Sriram\Granule_cell_recording\NR2_F_10_S1';
+file = 'X:\1_Maxwell_Gagnon\ProjectData_Sriram\Sriram_gc_backup';
 
 %% Extract each
 
@@ -19,11 +19,11 @@ tic
 time = NaN(length(seg_file_names),1);
 
 % FOR EACH FILE
-for i = 1%:length(seg_file_names)
+for i = 1:length(seg_file_names)
     
     % open .rhs file
     try
-        read_Intan_RHS2000_file(file, 'test_dat.rhs')
+        read_Intan_RHS2000_file(file, seg_file_names(i).name)
     catch
         warning(['File Error: ', seg_file_names(i).name])
         pause

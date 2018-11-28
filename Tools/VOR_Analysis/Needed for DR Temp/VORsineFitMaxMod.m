@@ -1,4 +1,4 @@
-function [eyevelH_offset, eyevelH_rel_phase, eyevelH_amp, eyeHgain] = VORsineFitMaxMod(freq, sampleRate, eyeVel, headVel, drumVel)
+function [eyevelH_offset, eyevelH_rel_phase, eyevelH_amp, eyeHgain] = VOR_SineFit_Single(freq, sampleRate, eyeVel, headVel, drumVel)
 
 % Segment data to current time segment
 %dataseg = datseg(data, [tstart tstop]);
