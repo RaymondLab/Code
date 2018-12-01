@@ -15,15 +15,15 @@ DO NOT USE FOR EXPERIMENTS WITH STEPS!!
 DO NOT USE FOR EXPERIMENTS WITH STIM-ONLY SEGMENTS!!
 
 %}
-function [startTimes, endTimes] = extractSegments(folder)
-%% new setup
+function [startTimes, endTimes] = extractSineSegs(folder)
+%% setup
 [~, file] = fileparts(folder);
 chanlist = readSpikeFile(fullfile(folder,[file '.smr']),[]);
 chanindsAll = [chanlist.number];
 chaninds = find(      arrayfun(@(x) any(strcmp(x.title,{'Keyboard'})),chanlist)     );
 rawdata = importSpike(fullfile(folder,[file '.smr']),chanindsAll(chaninds));
 
-% find S,s,L samplekeys and their corresponding times
+%% Sine Experiments
 SampleKeys = strcat(rawdata.samplerate(any(rawdata.samplerate == ['S' 's' 'L' 'P'], 2))');
 SampleKeyTimes = rawdata.data(any(rawdata.samplerate == ['S' 's' 'L' 'P'], 2))';
 

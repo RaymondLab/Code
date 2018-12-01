@@ -89,12 +89,6 @@ for count = 1:nSegs
     drumvel = datchandata(dataseg,'htvel');
     eyepos = datchandata(dataseg,'hepos');
 
-    % Filter eye velocity to maintain consistency with eye coil
-%     N = 3;      % Filter order
-%     fc = 100;   % Cutoff frequency
-%     [b,a] = butter(N, fc/samplerate);
-%     eyevelH = filter(b,a,eyevelH);
-
     % define vector of time
     ndatapoints = length(headvel);
     time = (1:ndatapoints)/samplerate;
@@ -145,12 +139,12 @@ for count = 1:nSegs
     warning('off','stats:regress:NoConst') 
 
     % --- CHAIR VELOCITY --------------------------------------------------
-    [b,~,~,~,~] = regress(headvel, vars);
+    b = regress(headvel, vars);
     headH_amp = sqrt(b(1)^2+b(2)^2);
     headH_angle = rad2deg(atan2(b(2), b(1)));
 
     % --- DRUM VELOCITY ---------------------------------------------------
-    [b,~,~,~,~] = regress(drumvel, vars);
+    b = regress(drumvel, vars);
     drumH_amp = sqrt(b(1)^2+b(2)^2);
     drumH_angle = rad2deg(atan2(b(2), b(1)));
 
@@ -330,6 +324,32 @@ for count = 1:nSegs
                     save('t0_t30.mat', 'segObj')
                 end
             end   
+            
+        case 'Sriram_OKR'
+            if any(count == [2, 3, 4, 15, 16, 17, 59, 60, 61])
+                
+                if count == 2
+                    q = 1;
+                end
+                
+                segObj(q).headVel = headVel_AllMean;
+                segObj(q).DrumVel = DrumVel_AllMean;
+                segObj(q).eyeVelDes = eyeVel_AllDesMean;
+                segObj(q).eyeVelDesFit = sin(2*pi*freq*ttCycle + deg2rad(eyevelH_rel_phase+180))*eyevelH_amp;
+                segObj(q).eyeVelGood = eyeVel_GoodCyclesMean;
+                segObj(q).SacFrac = mean(omitH);
+                segObj(q).goodCcount = goodCount;
+                segObj(q).ttCycle = ttCycle;
+                segObj(q).freq = freq;
+                segObj(q).sampleRate = samplerate;
+                segObj(q).idealEye = idealEye_AllMean;
+                
+                q = q + 1;
+                
+                if q == 10
+                    save('t1_t15_t60.mat', 'segObj')
+                end
+            end
     end
 
     %% === Plot Averages =============================================== %%

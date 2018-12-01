@@ -199,7 +199,7 @@ function checkFolderStructure( folder, handles )
     handles.text7.ForegroundColor = [0 0 0];
     
     % Check if Real Folder
-    if ~exist(folder, 'dir')
+    if exist(folder, 'var') && ~exist(folder, 'dir')
         handles.text7.String = 'Invalid Folder';
         handles.text7.ForegroundColor = [1 0 0];
         return

@@ -1,16 +1,6 @@
-function [eyevelH_offset, eyevelH_rel_phase, eyevelH_amp, eyeHgain] = VOR_SineFit_Single(freq, sampleRate, eyeVel, headVel, drumVel)
+function [eyevelH_offset, eyevelH_rel_phase, eyevelH_amp, eyevelH_rel_gain] = VOR_SineFit_Single(freq, sampleRate, eyeVel, headVel, drumVel)
 
-% Segment data to current time segment
-%dataseg = datseg(data, [tstart tstop]);
-
-% Read in data
-%if ~isempty(strfind([dataseg.chanlabel],'htvel'))
-%    drumvel         = datchandata(dataseg,'htvel');
-%else
-%    drumvel = zeros(size(headVel));
-%end
-
-% define vector of time
+%% define vector of time
 ndatapoints = length(headVel);   % number of datapoints in segment
 time = ((1:ndatapoints)-1)/sampleRate;
 
@@ -40,8 +30,10 @@ drumH_angle = rad2deg(atan2(b(2), b(1)));
 % calculate eye gain as VOR or OKR based on head signal
 if headH_amp > 3         % Chair signal
     refH_angle = headH_angle;
+    refH_amp = headH_amp;
 elseif drumH_amp >3      % No chair signal, drum signal
     refH_angle = drumH_angle;
+    refH_amp = drumH_amp;
 else                    % No stimulus
     refH_angle = 0;
 end
@@ -53,7 +45,7 @@ eyevelH_phase = rad2deg(atan2(b(2), b(1)));
 eyevelH_offset = b(3);
 
 % ------------EYE RELATIVE TO CHAIR/DRUM------------
+eyevelH_rel_gain = eyevelH_amp/refH_amp;
 eyevelH_rel_phase = (eyevelH_phase - refH_angle);
 eyevelH_rel_phase = mod(eyevelH_rel_phase,360) - 180;
-eyeHgain = eyevelH_amp / headH_amp;
 

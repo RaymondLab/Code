@@ -43,7 +43,7 @@ seg_measure = T{:,strcmpi(T.Properties.VariableNames, measure)};
 seg_nGC = T{:,strcmpi(T.Properties.VariableNames, 'nGoodCycles')};
 seg_Percent = T{:,strcmpi(T.Properties.VariableNames, 'saccadeFrac')};
 % temp hack!
-seg_nGC = seg_Percent;
+seg_nGC = 1-seg_Percent;
 
 %% norm data if needed
 if norm

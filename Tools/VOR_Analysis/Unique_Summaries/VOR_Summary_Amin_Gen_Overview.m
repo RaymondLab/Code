@@ -43,12 +43,12 @@ for i = 1:length(files)
     % load excel file to get good cycle #
     T = readtable(fullfile(files(i).folder, [mouse{i}, '.xlsx']));
 
-    Hz_p2_goodC(i,:) = table2array(T(strcmp('0.2Hz', T{:,1}), {'saccadeFrac'}));
-    Hz_p5_goodC(i,:) = table2array(T(strcmp('0.5Hz', T{:,1}), {'saccadeFrac'}));
-    Hz_1_goodC(i,:) = table2array(T(strcmp('1.0Hz', T{:,1}), {'saccadeFrac'}));
-    Hz_2_goodC(i,:) = table2array(T(strcmp('2.0Hz', T{:,1}), {'saccadeFrac'}));
-    Hz_3_goodC(i,:) = table2array(T(strcmp('3.0Hz', T{:,1}), {'saccadeFrac'}));
-    Hz_4_goodC(i,:) = table2array(T(strcmp('4.0Hz', T{:,1}), {'saccadeFrac'}));
+    Hz_p2_goodC(i,:) = 1-table2array(T(strcmp('0.2Hz', T{:,1}), {'saccadeFrac'}));
+    Hz_p5_goodC(i,:) = 1-table2array(T(strcmp('0.5Hz', T{:,1}), {'saccadeFrac'}));
+    Hz_1_goodC(i,:) = 1-table2array(T(strcmp('1.0Hz', T{:,1}), {'saccadeFrac'}));
+    Hz_2_goodC(i,:) = 1-table2array(T(strcmp('2.0Hz', T{:,1}), {'saccadeFrac'}));
+    Hz_3_goodC(i,:) = 1-table2array(T(strcmp('3.0Hz', T{:,1}), {'saccadeFrac'}));
+    Hz_4_goodC(i,:) = 1-table2array(T(strcmp('4.0Hz', T{:,1}), {'saccadeFrac'}));
     
     
     Hz_p2_eyeHamp(i,:) = table2array(T(strcmp('0.2Hz', T{:,1}), {'eyeHamp'}));

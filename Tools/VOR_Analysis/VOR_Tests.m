@@ -50,14 +50,17 @@ function singleAnalysis(params)
     params = subPlotDim(params);
     params.temp_placement = 1;
     
-    %% Default Sine Analysis
+    %% Default Analysis
     switch params.analysis
         case 'Dark Rearing + Generalization'
             fprintf('Running: Dark Rearing Generalization Analysis\n')
             VOR_DarkRearingGeneralization(params)
+        case 'Amin_GC_Steps'
+            fprintf('Running: Amin''s Granule Cell Step Analysis\n')
+            VOR_Default_Step(params);
         otherwise
             fprintf('Running: Default Sine Analysis\n')
-            params = VOR_Default(params);
+            %params = VOR_Default(params);
     end
 
     %% Unique Analysis & Summaries
@@ -69,6 +72,9 @@ function singleAnalysis(params)
         case 'Sriram_OKR'
             fprintf('Running: Fit Subtraction Analysis\n')
             VOR_Summary('eyeHphase', expmtExcelFile, 0); 
+            VOR_Summary_Sriram_OKR(params, [7 8 9], [1 2 3], 'T60 - T0')
+            VOR_Summary_Sriram_OKR(params, [4 5 6], [1 2 3], 'T15 - T0')
+            VOR_Summary_Sriram_OKR(params, [7 8 9], [4 5 6], 'T60 - T15')
             % JENN FUNCTION GOES HERE
             
         case 'Dark Rearing'
