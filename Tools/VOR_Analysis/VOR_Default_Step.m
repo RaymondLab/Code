@@ -1,6 +1,10 @@
-function params = VOR_Default(params)
+function params = VOR_Default_Step(params)
 %{
-VOR_Default
+VOR_Default_Step
+
+NOTE: This is very similair to VOR_Default.
+    VOR_Default is for SINE experiments
+    VOR_DEfault_Step is for STEP experiments
 
 This script takes information stored inside of an smr file and 
     1) preprocces it
@@ -19,8 +23,7 @@ Max Gagnon 8/6/18
 %}
 
 %% === Import start/stop times from .smr file ========================== %%
-
-[params.segStarts, params.segEnds] = extractSineSegs(params.folder);
+[params.segStarts, params.segEnds] = extractStepSegs(params.folder);
 
 %% === Import Time Segments ============================================ %%
 T = readtable(fullfile(params.folder,[params.file '.xlsx']));
@@ -52,9 +55,6 @@ if exist(fullfile(params.folder, [params.file '_calib.mat']), 'file')
     params.folderCalib = params.folder;
 elseif exist(fullfile(params.folder,[params.file '_cali.mat']), 'file')
     params.fileCalib = [params.file '_cali.mat'];
-    params.folderCalib = params.folder;
-elseif exist(fullfile(params.folder, 'manual_calib.mat'), 'file')
-    params.fileCalib = 'manual_calib.mat';
     params.folderCalib = params.folder;
 else
     [params.fileCalib, params.folderCalib] = uigetfile( {'*.mat','Matlab (.mat)'},'Pick a calibration file with scale factors','calib.mat');
@@ -124,9 +124,8 @@ hevel = movingslopeCausal(datchandata(data,'hepos'),round(fs*veltau))*fs;
 % Create and add 'horiontal eye velocity' channel to channel list
 data(end+1) = dat(hevel,'hevel',[],fs,data(1).tstart,data(1).tend,'deg/s');
 
-%% === Run Sine Analysis for Each Relevant Segment ===================== %%
-result = VOR_SineFit(data, frequency, labels, timepts, params);
-
+%% === Run Step Analysis for Each Relevant Segment ===================== %%
+result = VOR_StepFit(data, frequency, labels, timepts, params);
 % Append results to Excel
 xlswrite(fullfile(params.folder,[params.file '.xlsx']),result.data(:,4:end),'Sheet1','J2');
 xlswrite(fullfile(params.folder,[params.file '.xlsx']),result.header(4:end),'Sheet1','J1');

@@ -45,64 +45,54 @@ function VOR_Tests(params)
 end
 
 function singleAnalysis(params)
-    %% Move to correct location
+    %% Prep
     cd(params.folder)
-
-    %% Data Prep + Default Sine Analysis
     params = subPlotDim(params);
     params.temp_placement = 1;
+    
+    %% Default Analysis
     switch params.analysis
-        case {'Default (Sine Only)', 'Sriram_OKR', 'Sriram_Gen', 'Amin_Gen'}
-            fprintf('Running: Default Sine Analysis\n')
-            params = VOR_Default(params);
-        case 'Dark Rearing'
-            fprintf('Running: Dark Rearing Analysis\n')
-            runVORm
-            %VOR_DarkRearing(params)
         case 'Dark Rearing + Generalization'
             fprintf('Running: Dark Rearing Generalization Analysis\n')
             VOR_DarkRearingGeneralization(params)
+        case 'Amin_GC_Steps'
+            fprintf('Running: Amin''s Granule Cell Step Analysis\n')
+            VOR_Default_Step(params);
+        otherwise
+            fprintf('Running: Default Sine Analysis\n')
+            %params = VOR_Default(params);
     end
 
-    %% JENN ANALYSIS (rename)
+    %% Unique Analysis & Summaries
+    fprintf('Generating Summary Figures...')
+    warning('off');
+    expmtExcelFile = fullfile(params.folder,[params.file '.xlsx']);
+    
     switch params.analysis
         case 'Sriram_OKR'
             fprintf('Running: Fit Subtraction Analysis\n')
-            % JENN FUNCTION
-    end
-    
-    %% Polar Plots
-    switch params.analysis
-        case {'Dark Rearing', 'Dark Rearing + Generalization'}
-            polarPlotVectorsMean2
-    end
-
-    %% Summary
-    fprintf('Generating Summary Figures...')
-    warning('off');
-    
-    % Eye Gain (Raw, Normalized)
-    if params.do_eyeGain_summary
-        switch params.analysis
-            case 'Default (Sine Only)'
-                VOR_Summary('eyeHgain', fullfile(params.folder,[params.file '.xlsx']), 1);
-                VOR_Summary('eyeHgain', fullfile(params.folder,[params.file '.xlsx']), 0);
-            case 'Sriram_Gen'
-                VOR_Summary_Sriram_Gen('eyeHgain', fullfile(params.folder,[params.file '.xlsx']), 1);
-                VOR_Summary_Sriram_Gen('eyeHgain', fullfile(params.folder,[params.file '.xlsx']), 0);
-            case 'Amin_Gen'
-                VOR_Summary_Amin_Gen('eyeHgain', fullfile(params.folder,[params.file '.xlsx']), 0);
-        end
-    end
-
-    % Eye Amplitude (Raw)
-    if params.do_eyeAmp_summary
-        switch params.analysis
-            case {'Default (Sine Only)', 'Sriram_OKR'}
-                VOR_Summary('eyeHphase', fullfile(params.folder,[params.file '.xlsx']), 0);
-            case 'Sriram_Gen'
-                VOR_Summary_Sriram_Gen('eyeHphase', fullfile(params.folder,[params.file '.xlsx']), 0);
-        end
+            VOR_Summary('eyeHphase', expmtExcelFile, 0); 
+            VOR_Summary_Sriram_OKR(params, [7 8 9], [1 2 3], 'T60 - T0')
+            VOR_Summary_Sriram_OKR(params, [4 5 6], [1 2 3], 'T15 - T0')
+            VOR_Summary_Sriram_OKR(params, [7 8 9], [4 5 6], 'T60 - T15')
+            % JENN FUNCTION GOES HERE
+            
+        case 'Dark Rearing'
+            fprintf('Running: Dark Rearing''s t30 & t0 Analysis\n')
+            VOR_Summary_Sriram_DR1(params);
+            
+        case 'Amin_Gen'
+            VOR_Summary_Amin_Gen('eyeHgain', expmtExcelFile, 0);
+            
+        case 'Sriram_Gen'
+            VOR_Summary_Sriram_Gen('eyeHgain', expmtExcelFile, 1);
+            VOR_Summary_Sriram_Gen('eyeHgain', expmtExcelFile, 0);
+            VOR_Summary_Sriram_Gen('eyeHphase', expmtExcelFile, 0);
+            
+        case 'Default (Sine Only)'
+            VOR_Summary('eyeHgain', expmtExcelFile, 1);
+            VOR_Summary('eyeHgain', expmtExcelFile, 0);
+            VOR_Summary('eyeHphase', expmtExcelFile, 0); 
     end
     
     fprintf('Done!\n')

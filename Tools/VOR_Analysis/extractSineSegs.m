@@ -15,48 +15,47 @@ DO NOT USE FOR EXPERIMENTS WITH STEPS!!
 DO NOT USE FOR EXPERIMENTS WITH STIM-ONLY SEGMENTS!!
 
 %}
-function [startTimes, endTimes] = extractSegments(folder)
-%% new setup
+function [startTimes, endTimes] = extractSineSegs(folder)
+%% setup
 [~, file] = fileparts(folder);
 chanlist = readSpikeFile(fullfile(folder,[file '.smr']),[]);
 chanindsAll = [chanlist.number];
 chaninds = find(      arrayfun(@(x) any(strcmp(x.title,{'Keyboard'})),chanlist)     );
 rawdata = importSpike(fullfile(folder,[file '.smr']),chanindsAll(chaninds));
 
-% find S,s,L samplekeys and their corresponding times
-SampleKeys = strcat(rawdata.samplerate(any(rawdata.samplerate == ['S' 's' 'L'], 2))');
-SampleKeyTimes = rawdata.data(any(rawdata.samplerate == ['S' 's' 'L'], 2))';
+%% Sine Experiments
+SampleKeys = strcat(rawdata.samplerate(any(rawdata.samplerate == ['S' 's' 'L' 'P'], 2))');
+SampleKeyTimes = rawdata.data(any(rawdata.samplerate == ['S' 's' 'L' 'P'], 2))';
 
 % find the correct start/stop patterns
 start_Ss_loc = SampleKeyTimes(strfind(SampleKeys, 'Ss'));
 end_Ss_loc = SampleKeyTimes(strfind(SampleKeys, 'Ss')+1);
 
+% light on training
 start_SLs_loc = SampleKeyTimes(strfind(SampleKeys, 'SLs'));
 start_SLs_loc = [start_SLs_loc SampleKeyTimes(strfind(SampleKeys, 'SLs')+1)];
 end_SLs_loc = SampleKeyTimes(strfind(SampleKeys, 'SLs')+2);
 end_SLs_loc = [end_SLs_loc SampleKeyTimes(strfind(SampleKeys, 'SLs')+1)];
 
-
 start_SLL_loc = SampleKeyTimes(strfind(SampleKeys, 'SLL'));
 start_SLL_loc = [start_SLL_loc SampleKeyTimes(strfind(SampleKeys, 'SLL')+1)];
 end_SLL_loc = SampleKeyTimes(strfind(SampleKeys, 'SLL')+1);
 end_SLL_loc = [end_SLL_loc SampleKeyTimes(strfind(SampleKeys, 'SLL')+2)];
-% 
-% % if a light turning on signals a start of a new segment
-% if ~isempty(start_SL_loc)
-%     start_Ls_loc = SampleKeyTimes(strfind(SampleKeys, 'SLs')+1);
-%     end_Ls_loc = SampleKeyTimes(strfind(SampleKeys, 'SLs')+2);
-%     start_LL_loc = SampleKeyTimes(strfind(SampleKeys, 'LL'));
-%     end_LL_loc = SampleKeyTimes(strfind(SampleKeys, 'LL')+1);
-% else
-%     start_Ls_loc = [];
-%     end_Ls_loc = [];
-%     start_LL_loc = [];
-%     end_LL_loc = [];
-% end
 
-startTimes = sort([start_Ss_loc start_SLs_loc start_SLL_loc])';
-endTimes = sort([end_Ss_loc end_SLs_loc end_SLL_loc ])';
+% Pulse on Training
+start_SPs_loc = SampleKeyTimes(strfind(SampleKeys, 'SPs'));
+start_SPs_loc = [start_SPs_loc SampleKeyTimes(strfind(SampleKeys, 'SPs')+1)];
+end_SPs_loc = SampleKeyTimes(strfind(SampleKeys, 'SPs')+2);
+end_SPs_loc = [end_SPs_loc SampleKeyTimes(strfind(SampleKeys, 'SPs')+1)];
+
+start_SPL_loc = SampleKeyTimes(strfind(SampleKeys, 'SPL'));
+start_SPL_loc = [start_SPL_loc SampleKeyTimes(strfind(SampleKeys, 'SPL')+1)];
+end_SPL_loc = SampleKeyTimes(strfind(SampleKeys, 'SPL')+2);
+end_SPL_loc = [end_SPL_loc SampleKeyTimes(strfind(SampleKeys, 'SPL')+1)];
+
+
+startTimes = sort([start_Ss_loc start_SLs_loc start_SLL_loc start_SPs_loc start_SPL_loc])';
+endTimes = sort([end_Ss_loc end_SLs_loc end_SLL_loc end_SPs_loc end_SPL_loc])';
 
 %% Take the Experiment start time listed in the excel file, and remove incorrect segments
 
