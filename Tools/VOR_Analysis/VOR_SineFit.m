@@ -414,11 +414,8 @@ for count = 1:nSegs
     end
 end
 
-<<<<<<< HEAD
+
 %% === Save Figures ==================================================== %%
-=======
-%% === Save Figure ===================================================== %%
->>>>>>> 8ad501f25d9917c11ebdcc7e660cc02c2258b1ac
 sp.PaperSize = [params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
 sp.PaperPosition = [0 0 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
 fprintf('saving...')
