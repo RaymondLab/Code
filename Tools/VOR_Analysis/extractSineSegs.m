@@ -60,6 +60,10 @@ if SampleKeys(end) == 'S'
     end_special = rawrecData.tend;
     
     print('yes')
+    
+else
+    start_special = [];
+    end_special = [];
 end
 
 %% Combine 
