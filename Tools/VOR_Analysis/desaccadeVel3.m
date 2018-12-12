@@ -67,7 +67,6 @@ if params.NoiseAnalysis
     x = [sac_start; sac_end; sac_end; sac_start];
     y = [-200;-200;200;200];
     y = repmat(y,[1 size(x, 2)]);
-    %patch(x, y, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
     
     %% Plot Basic Visuals
     figure(99)
@@ -91,34 +90,16 @@ if params.NoiseAnalysis
     title('Velocity')
     patch(x, y, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
     ylim([-200 200])
-
     hold off
     
-%     axes(ha(3))
-%     plot(abs(eye_vel_pfilt))
-%     hold on
-%     plot(abs(eye_vel_pfilt2), 'r')
-%     title('Absolute Value of Velocity of Filtered Position')
-%     hline(params.saccadeThresh, '-b')
-%     patch(x, y, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
-%     ylim([0 100])
-%     hold off
-
-
-    %% Plot Alt Second Vel Filter
-    
-    %figure(102);clf
-    %ha = tight_subplot(1,1,[.01 .03],[.1 .01],[.01 .01]);
-    %axes(ha(1))
     axes(ha(3))
     plot((eye_vel_pfilt - fit1).^2, 'k', 'LineWidth', 1.5)
     hline(params.saccadeThresh, 'b')
     patch(x, y.*100, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
     ylim([0 10000])
-    pause
     
     %% Plot frequency spectrum as check on experiment freq
-    do_100 = 0;
+    do_100 = 1 ;
     if do_100
         figure(100)
         L = length(eye_vel_pfilt);
@@ -128,7 +109,6 @@ if params.NoiseAnalysis
         P1(2:end-1) = 2*P1(2:end-1);
         f = samplerate*(0:(L/2))/L;
         plot(f,P1) 
-        xlim([0 5])
         title(num2str(freq))
     end
 
@@ -188,6 +168,56 @@ if params.NoiseAnalysis
         title('Filtered Vel')
     end
     
+    %% Plot Different ways of getting Vel
+    do_102 = 0;
+    if do_102
+        lw = 1;
+        eye_vel01_praw = eye_vel_praw;
+        veltau = .02;
+        eye_vel02_praw = movingslopeCausal(eye_pos_raw,round(samplerate*veltau))*samplerate;
+        veltau = .03;
+        eye_vel03_praw = movingslopeCausal(eye_pos_raw,round(samplerate*veltau))*samplerate;
+        veltau = .04;
+        eye_vel04_praw = movingslopeCausal(eye_pos_raw,round(samplerate*veltau))*samplerate;
+        veltau = .05;
+        eye_vel05_praw = movingslopeCausal(eye_pos_raw,round(samplerate*veltau))*samplerate;
+        
+        A = figure(102);clf
+        ha = tight_subplot(6,1,[.01 .03],[.1 .01],[.04 .01]);
+        
+        axes(ha(1))
+        plot(eye_vel_praw, 'k'); hold on
+        grid on
+         
+        axes(ha(2))
+        plot(eye_vel_praw, 'k'); hold on
+        plot(eye_vel02_praw, 'r', 'LineWidth', lw)
+        grid on
+        
+        axes(ha(3))
+        plot(eye_vel_praw, 'k'); hold on
+        plot(eye_vel03_praw, 'r', 'LineWidth', lw)
+        grid on
+        
+        axes(ha(4))
+        plot(eye_vel_praw, 'k'); hold on
+        plot(eye_vel04_praw, 'r', 'LineWidth', lw)
+        grid on 
+        
+        axes(ha(5))
+        plot(eye_vel_praw, 'k'); hold on
+        plot(eye_vel05_praw, 'r', 'LineWidth', lw)
+        grid on 
+        
+        axes(ha(6))
+        plot(eye_vel_praw, 'k'); hold on
+        plot(eye_vel_pfilt, 'r', 'LineWidth', lw)
+        grid on 
+        
+        linkaxes(ha)
+        A.Color = 'w';
+    end
+    pause
 end
 
 
