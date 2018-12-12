@@ -2,12 +2,15 @@
 
 %% Read from Recording Segment
 clear;clc;close all
-cd Z:\1_Maxwell_Gagnon\ProjectData_Sriram\Granule_cell_recording\NR2_F_10_S1
+%cd Z:\1_Maxwell_Gagnon\ProjectData_Sriram\Granule_cell_recording\NR2_F_10_S1
+cd('C:\Users\maxwellg\Desktop\Sriram Nov CG Recording')
 seg_file_names = dir;
-seg_file_names(~contains({seg_file_names.name}, 'stim_180807_143')) = [];
+seg_file_names(~contains({seg_file_names.name}, 'first_181120_')) = [];
+%seg_file_names(~contains({seg_file_names.name}, 'stim_180807_143')) = [];
 seg_file_names(contains({seg_file_names.name}, '.mda')) = [];
 sample_rate = frequency_parameters.amplifier_sample_rate;
 native_chan_names = {amplifier_channels.native_channel_name};
+read_Intan_RHS2000_file(seg_file_names(1).folder, seg_file_names(1).name)    
 
 
 
@@ -21,7 +24,8 @@ for j = 2%:length(seg_file_names)
     
     % open each segment
     read_Intan_RHS2000_file(seg_file_names(j).folder, seg_file_names(j).name)
-
+    sample_rate = frequency_parameters.amplifier_sample_rate;
+    native_chan_names = {amplifier_channels.native_channel_name};
     % Amp Data Plots (2x2)
     plot4Group(1,   4, s_to_disp, sample_rate, data, t, seg_file_names(j), native_chan_names)
     plot4Group(5,   8, s_to_disp, sample_rate, data, t, seg_file_names(j), native_chan_names)
@@ -42,7 +46,7 @@ end
 function plot4Group(start, stop, s_to_disp, s_r, data, t, seg_file_names, native_chan_names)
 
     % create full screen figure
-    figure('units','normalized','outerposition',[0 0 1 1]).
+    figure('units','normalized','outerposition',[0 0 1 1])
     
     for i = start:stop
 
