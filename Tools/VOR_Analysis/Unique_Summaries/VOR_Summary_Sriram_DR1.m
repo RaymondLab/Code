@@ -47,17 +47,17 @@ sampleRate = segObj(1).sampleRate;
 ttCycle = segObj(1).ttCycle;
 
 % Calc mean head velocity @ t0
-qq = vec2mat([segObj(1:3).headVel], 1000);
+qq = vec2mat([segObj(1:3).headVel], length(ttCycle));
 headVelMean_t0 = mean(qq, 1);
 % Calc mean head velocity @ t30
-qq = vec2mat([segObj(4:6).headVel], 1000);
+qq = vec2mat([segObj(4:6).headVel], length(ttCycle));
 headVelMean_t30 = mean(qq,1);
 
 % Calc mean drum velocity @ t0
-qq = vec2mat([segObj(1:3).DrumVel], 1000);
+qq = vec2mat([segObj(1:3).DrumVel], length(ttCycle));
 drumVelMean_t0 = mean(qq, 1);
 % Calc mean drum velocity @ 3t0
-qq = vec2mat([segObj(4:6).DrumVel], 1000);
+qq = vec2mat([segObj(4:6).DrumVel], length(ttCycle));
 drumVelMean_t30 = mean(qq,1);
 
 %% Figure A, Averages

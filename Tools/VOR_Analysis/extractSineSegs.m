@@ -22,6 +22,7 @@ chanlist = readSpikeFile(fullfile(folder,[file '.smr']),[]);
 chanindsAll = [chanlist.number];
 chaninds = find(      arrayfun(@(x) any(strcmp(x.title,{'Keyboard'})),chanlist)     );
 rawdata = importSpike(fullfile(folder,[file '.smr']),chanindsAll(chaninds));
+rawrecData = importSpike(fullfile(folder,[file '.smr']),chanindsAll(4));
 
 %% Sine Experiments
 SampleKeys = strcat(rawdata.samplerate(any(rawdata.samplerate == ['S' 's' 'L' 'P'], 2))');
@@ -53,9 +54,22 @@ start_SPL_loc = [start_SPL_loc SampleKeyTimes(strfind(SampleKeys, 'SPL')+1)];
 end_SPL_loc = SampleKeyTimes(strfind(SampleKeys, 'SPL')+2);
 end_SPL_loc = [end_SPL_loc SampleKeyTimes(strfind(SampleKeys, 'SPL')+1)];
 
+%% Special Case: The file recording ends before the sine ends (no 's' after 'S')
+if SampleKeys(end) == 'S'
+    start_special = SampleKeyTimes(end);
+    end_special = rawrecData.tend;
+    
+    print('yes')
+    
+else
+    start_special = [];
+    end_special = [];
+end
 
-startTimes = sort([start_Ss_loc start_SLs_loc start_SLL_loc start_SPs_loc start_SPL_loc])';
-endTimes = sort([end_Ss_loc end_SLs_loc end_SLL_loc end_SPs_loc end_SPL_loc])';
+%% Combine 
+startTimes = sort([start_Ss_loc start_SLs_loc start_SLL_loc start_SPs_loc start_SPL_loc start_special])';
+endTimes = sort([end_Ss_loc end_SLs_loc end_SLL_loc end_SPs_loc end_SPL_loc end_special])';
+
 
 %% Take the Experiment start time listed in the excel file, and remove incorrect segments
 
