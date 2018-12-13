@@ -1,10 +1,10 @@
 function VOR_Tests(params)
     % This function takes in the information given to the UI and runs the
     % relavent test(s) on the data
-
+    params.TopFolder = params.folder;
     % Single Analysis
     if params.count == 1
-        params.folder = params.smr_files(1).folder; % hackish. related to folder selection error
+       params.folder = params.smr_files(1).folder; % hackish. related to folder selection error
        [~, params.file] = fileparts(params.folder);
        singleAnalysis(params)
        

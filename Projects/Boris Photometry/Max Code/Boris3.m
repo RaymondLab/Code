@@ -17,20 +17,24 @@ sig = sig(200:end);
 sig = sig(1:end-80);
 
 %% Figure A: Plot signal over time
+
+% Raw signal
 figure(); subplot(2,1,1); plot(sig);
 %ylim([150 170])
 xlim([0 25000])
 
+% Filtering
 N = 2;
 fc = .3;
 [bb,aa] = butter(N, fc/samplerate, 'high');
 sig_filt = filter(bb,aa,sig);
 
+% Filtered Signal
 subplot(2,1,2); plot(sig_filt);
 ylim([-5 5])
 xlim([0 25000])
 
-
+%% Figure B: fft of signal
 figure()
 L = length(sig_filt);
 f = samplerate*(0:(L/2))/L;
@@ -44,7 +48,7 @@ title('Single-Sided Amplitude Spectrum of S(t)')
 xlabel('f (Hz)')
 ylabel('|P1(f)|')
 
-%% Analysis 1: Peak 'height' v Max slope during rise-to-height
+%% Figure C: Peak 'height' v Max slope during rise-to-height
 [Pos_Peaks, Pos_locs] = findpeaks(sig);
 peaks_p = [Pos_locs, Pos_Peaks];
 [Neg_Peaks, Neg_locs] = findpeaks(sig * -1);
@@ -103,55 +107,76 @@ title('Histgram of Negative Raw Peak Fall from Previous Pos Peak')
 %ylim([0, 150])
 %xlim([200 320])
 
-%% plot peak height v max vel during rise-to-peak
+%% Plot Histogram of N peaks and P peaks
 peak_cuttoff = .5;
 sig_deriv = diff(sig);
 sig_deriv = [sig_deriv; NaN];
 
 for i = 1:length(peaks_p)
-    max_slope_p(i) = max(sig_deriv(peaks_n(i,1):peaks_p(i,1)));
-%     figure(44)
-%     subplot(1,2,1)
-%     plot(sig_deriv(peaks_n(i,1):peaks_p(i,1)))
-%     subplot(1,2,2)
-%     plot(sig(peaks_n(i,1):peaks_p(i,1)))
-
+    max_slope_p(i)       = max(sig_deriv(peaks_n(i,1):peaks_p(i,1)));
+    mean_slope_p(i)     = mean(sig_deriv(peaks_n(i,1):peaks_p(i,1)));
+    median_slope_p(i) = median(sig_deriv(peaks_n(i,1):peaks_p(i,1)));
+    var_slope_p(i)  =   var(sig_deriv(peaks_n(i,1):peaks_p(i,1)));
 end
 
 % first neg peak is sample1 == no slope
 for i = 2:length(peaks_p)
-    min_slope_n(i) = min(sig_deriv(peaks_p(i-1,1):peaks_n(i,1)));
-%     figure(45)
-%     subplot(1,2,1)
-%     plot(sig_deriv(peaks_p(i-1,1):peaks_n(i,1)))
-%     subplot(1,2,2)
-%     plot(sig(peaks_p(i-1,1):peaks_n(i,1)))
-%     print('a')
+    min_slope_n(i)       = min(sig_deriv(peaks_p(i-1,1):peaks_n(i,1)));
+    mean_slope_n(i)     = mean(sig_deriv(peaks_p(i-1,1):peaks_n(i,1)));
+    median_slope_n(i) = median(sig_deriv(peaks_p(i-1,1):peaks_n(i,1)));
+    var_slope_n(i)  =   var(sig_deriv(peaks_n(i-1,1):peaks_n(i,1)));
 end
 min_slope_n(1) = NaN;
 
-figure()
-subplot(2,1,1)
-%max_slope_p(max_slope_p > peak_cuttoff) = [];
+figure(); subplot(2,1,1);
 hist(max_slope_p, 250);
+title('P Peak Slope Hist')
 
 subplot(2,1,2)
 min_slope_n = min_slope_n*-1;
-%min_slope_n(min_slope_n > peak_cuttoff) = [];
 hist(min_slope_n,250);
+title('N Peak Slope Hist')
 
-figure()
-% [locs, peakVal, height, maxSlopetopnt]
-peaks_p = [peaks_p max_slope_p'];
-peaks_n = [peaks_n min_slope_n'];
-A = scatter(peaks_p(:,3), peaks_p(:,4), 'filled');
-set(A,'SizeData',4)
-hold on
-%B = scatter(peaks_n(:,3), peaks_n(:,4), 'filled');
-%set(B,'SizeData',4)
-xlabel('Delta from Previous Peak')
+%% plot peak height v max vel during rise-to-peak
+
+% [locs, peakVal, height, maxSlopetopnt, meanSlope, medianSlope, valSlope]
+peaks_p = [peaks_p max_slope_p' mean_slope_p' median_slope_p' var_slope_p'];
+peaks_n = [peaks_n min_slope_n' mean_slope_n' median_slope_n' var_slope_n'];
+
+%Hacky - heatscatter has issues with NaN values. Solution - remove final
+%Peak on both n & p
+
+peaks_p(end,:) = [];
+peaks_n(end,:) = [];
+
+qqq = figure();
+ha = tight_subplot(4,1,[.025 .025],[.025 .025],[.025 .025]);
+
+axes(ha(1))
+heatscatter(peaks_p(:,3), peaks_p(:,4), [], 'apple', '200', '75', '.');
 ylabel('Peak Vel During Change')
-%ylim([0,.5])
+xlim([0 1.5])
+xticks([])
+
+axes(ha(2))
+heatscatter(peaks_p(:,3), peaks_p(:,5), [], 'apple', '200', '75', '.');
+ylabel('Mean Vel During Change')
+xlim([0 1.5])
+xticks([])
+
+axes(ha(3))
+heatscatter(peaks_p(:,3), peaks_p(:,6), [], 'apple', '200', '75', '.');
+ylabel('Median Vel During Change')
+xlim([0 1.5])
+xticks([])
+
+axes(ha(4))
+heatscatter(peaks_p(:,3), peaks_p(:,7), [], 'apple', '200', '75', '.');
+ylabel('Var of Vel During Change')
+xlabel('Delta from Previous Peak')
+xlim([0 1.5])
+
+print('done')
 
 %% Plot dF/F
 %df_f = calc_dF_F(sig(150:end));

@@ -3,7 +3,10 @@ function freqSpec(data, samplerate)
 % channels
 
 plotSize = [8,4];
-ha = tight_subplot(plotSize(1),plotSize(2),[.005 .005],[.005 .005],[.005 .005]);
+
+fs = figure();
+%fs.Visible = 'off';
+ka = tight_subplot(plotSize(1),plotSize(2),[.005 .005],[.005 .005],[.005 .005]);
 
 for i = 1:size(data,1)
     sig = data(i,:);
@@ -17,15 +20,18 @@ for i = 1:size(data,1)
     f = samplerate*(0:(L/2))/L;
     
     % plot
-    axes(ha(i))
-    plot(f,P1) 
+    plot(ka(i),f,P1) 
     
     % cosmetics
     ylim([0 5])
     xlim([0 3500])
     vline(3183.5)
-    set(gca,'xtick',[])
-    set(gca,'xticklabel',[])
-    set(gca,'ytick',[])
-    set(gca,'yticklabel',[])
+    set(ka(i),'xtick',[])
+    set(ka(i),'xticklabel',[])
+    set(ka(i),'ytick',[])
+    set(ka(i),'yticklabel',[])
+    linkaxes(ka)
+    box off
+    
 end
+fs.Visible = 'on';
