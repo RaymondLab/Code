@@ -48,17 +48,17 @@ sampleRate = segObj(1).sampleRate;
 ttCycle = segObj(1).ttCycle;
 
 % Calc mean head velocity @ Pre
-qq = vec2mat([segObj(1:3).headVel], 1000);
+qq = vec2mat([segObj(1:3).headVel], length(ttCycle));
 headVelMean_tPre = mean(qq, 1);
 % Calc mean head velocity @ Post
-qq = vec2mat([segObj(4:6).headVel], 1000);
+qq = vec2mat([segObj(4:6).headVel], length(ttCycle));
 headVelMean_tPost = mean(qq,1);
 
 % Calc mean drum velocity @ Pre
-qq = vec2mat([segObj(1:3).DrumVel], 1000);
+qq = vec2mat([segObj(1:3).DrumVel], length(ttCycle));
 drumVelMean_tPre = mean(qq, 1);
 % Calc mean drum velocity @ Post
-qq = vec2mat([segObj(4:6).DrumVel], 1000);
+qq = vec2mat([segObj(4:6).DrumVel], length(ttCycle));
 drumVelMean_tPost = mean(qq,1);
 
 %% Figure A, Averages
@@ -126,7 +126,7 @@ end
 
 % Plot
 axes(ha(3))
-plot(ttCycle, DiffOfMeans, 'g'); hold on
+plot(ttCycle, DiffOfMeans, 'Color', [0 .5 0]); hold on
 plot(ttCycle, sin(2*pi*freq*ttCycle + deg2rad(eyevelH_rel_phase_diff+180))*eyevelH_amp_diff, 'c');
 plot(ttCycle, drumVelMean_tPre, 'k')
 plot(ttCycle, drumVelMean_tPost, 'k')
