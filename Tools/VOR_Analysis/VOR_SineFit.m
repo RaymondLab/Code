@@ -24,6 +24,7 @@ function R = VOR_SineFit(data, sinefreq, labels, timepts, params)
 sp = figure(1);
 sp2 = figure(2);
 row = 0;
+do_sp2 = 0;
 
 % Set up cell structure to hold all R.data
 fprintf('\n\nGenerating Segment Figures...')
@@ -269,13 +270,14 @@ for count = 1:nSegs
         idealEye_All(1:5,:) = [];
     end
     
-    
+    if 1
     eyeVel_All(end,:)    = []; % TODO Is this needed? Can use this partial cycle? 
     eyeVel_AllDes(end,:) = [];
     headVel_All(end,:)   = [];
     omit_All(end,:)      = [];
     DrumVel_All(end,:)  = [];
     idealEye_All(end,:) = [];
+    end
     
     eyeVel_AllDesMean   = nanmean(eyeVel_AllDes, 1);
     eyeVel_DesSem       = nanstd(eyeVel_AllDes)./sqrt(sum(~isnan(eyeVel_AllDes)));
@@ -355,7 +357,7 @@ for count = 1:nSegs
             end
     end
 
-    %% === Plot Average Traces ========================================= %%
+    %% === Subplot-1: Average Traces =================================== %%
     
     if params.do_individual
         
@@ -415,102 +417,108 @@ for count = 1:nSegs
         drawnow;
     end
     
-    %% === Average Trace sb2 Plotting ================================== %%
+    %% === Subplot-2: Mean Trace Visualization ========================= %%
     
-    % Prep
-    figure(sp2)
-    meanFit = sin(2*pi*freq*ttCycle + deg2rad(eyevelH_rel_phase+180))*eyevelH_amp;
-    if any(~badCycles)
+    if do_sp2
         
-        % all individual Traces GOOD CYCLES ONLY
-        subplot(params.sp_Dim(1), params.sp_Dim(2), (1:3) + row);
-        plot(ttCycle, eyeVel_All(~badCycles,:)', 'b', 'LineWidth', .3); hold on;
-        plot(ttCycle, eyeVel_GoodCyclesMean, 'k', 'LineWidth', 2);
-        hline(0, ':k')
-        
-        % Cosmetics
-        xlim([0 max(ttCycle)]);
-        ylim([-50 50])
-        yticks([min(ylim) 0 max(ylim)])
-        yticklabels({})
-        text(0-max(xlim)*.02, .9*max(ylim), num2str(max(ylim)), 'FontSize', 7) % top
-        text(0-max(xlim)*.02, 0, num2str(0), 'FontSize', 7) % 0
-        text(0-max(xlim)*.02, .9*min(ylim), num2str(min(ylim)), 'FontSize', 7) % bottom
-        xticks([])
-        xticklabels([])
-        ylabel([num2str(goodCount), ' / ', num2str(length(badCycles))])
-        box off
+        % Prep
+        figure(sp2)
+        meanFit = sin(2*pi*freq*ttCycle + deg2rad(eyevelH_rel_phase+180))*eyevelH_amp;
 
-        
-        % Error bears around mean
-        subplot(params.sp_Dim(1), params.sp_Dim(2), (4:6) + row);
-        plot(ttCycle, eyeVel_GoodCyclesMean, 'k', 'LineWidth', 1); hold on
-        plot(ttCycle, eyeVel_GoodCyclesMean + eyeVel_GoodCycles_stdev, ':k', 'LineWidth', .3);
-        plot(ttCycle, eyeVel_GoodCyclesMean - eyeVel_GoodCycles_stdev, ':k', 'LineWidth', .3);
-        plot(ttCycle, meanFit,'r', 'LineWidth', .3);
-        hline(0, ':k')
-        
-        % find + peaks
-        [maxVal, maxLoc] = max(meanFit);
-        maxLoc = maxLoc/length(meanFit);
-        line([maxLoc maxLoc], [0 maxVal], 'color', 'r', 'lineStyle', '--', 'LineWidth', .3);
-        scatter(maxLoc, maxVal, 'r', 'filled', 'SizeData', .2)
-        
-        [maxVal, maxLoc] = max(eyeVel_GoodCyclesMean);
-        maxLoc = maxLoc/length(eyeVel_GoodCyclesMean);
-        line([maxLoc maxLoc], [0 maxVal], 'color', 'k', 'lineStyle', '--', 'LineWidth', .3);
-        scatter(maxLoc, maxVal, 'k', 'filled', 'SizeData', .2)
-        
-        
-        % find - peaks
-        [minVal, minLoc] = min(meanFit);
-        minLoc = minLoc/length(meanFit);
-        line([minLoc minLoc], [0 minVal], 'color', 'r', 'lineStyle', '--', 'LineWidth', .3);
-        scatter(minLoc, minVal, 'r', 'filled', 'SizeData', .2)
-        
-        [minVal, minLoc] = min(eyeVel_GoodCyclesMean);
-        minLoc = minLoc/length(eyeVel_GoodCyclesMean);
-        line([minLoc minLoc], [0 minVal], 'color', 'k', 'lineStyle', '--', 'LineWidth', .3);
-        scatter(minLoc, minVal, 'k', 'filled', 'SizeData', .2)
+        % Skip segments with 0 good cycles
+        if any(~badCycles)
 
-        % Cosmetics
-        title(datatype)
-        xlim([0 max(ttCycle)]);
-        ylim([-50 50])
-        xticklabels([])
-        yticks([])
-        yticklabels([])
-        box off
+            % Figure A) Plot Full-Good Cycles & Mean Trace
+            subplot(params.sp_Dim(1), params.sp_Dim(2), (1:3) + row);
+            plot(ttCycle, eyeVel_All(~badCycles,:)', 'b', 'LineWidth', .3); hold on;
+            plot(ttCycle, eyeVel_GoodCyclesMean, 'k', 'LineWidth', 2);
+            hline(0, ':k')
 
-        % fft of traces    
-        subplot(params.sp_Dim(1), params.sp_Dim(2), (7:9) + row);
+            % Cosmetics
+            xlim([0 max(ttCycle)]);
+            ylim([-50 50])
+            yticks([min(ylim) 0 max(ylim)])
+            yticklabels({})
+            text(0-max(xlim)*.02, .9*max(ylim), num2str(max(ylim)), 'FontSize', 7) % top
+            text(0-max(xlim)*.02, 0, num2str(0), 'FontSize', 7) % 0
+            text(0-max(xlim)*.02, .9*min(ylim), num2str(min(ylim)), 'FontSize', 7) % bottom
+            xticks([])
+            xticklabels([])
+            ylabel([num2str(goodCount), ' / ', num2str(length(badCycles))])
+            box off
 
-        L = length(eyevelH(startpt:end));
-        Y = fft(eyevelH(startpt:end));
-        P2 = abs(Y/L);
-        P1 = P2(1:L/2+1);
-        P1(2:end-1) = 2*P1(2:end-1);
-        f = samplerate*(0:(L/2))/L;
-        plot(f,P1, 'k') 
-        title([num2str(freq), 'Hz'])
 
-        xlim([0 10])
-        ylim([0 40])
-        xticklabels([])
-        yticks([])
-        yticklabels([])
-        box off
+            % Figure B) Error Bars + Mean Trace
+            subplot(params.sp_Dim(1), params.sp_Dim(2), (4:6) + row);
+            plot(ttCycle, eyeVel_GoodCyclesMean, 'k', 'LineWidth', 1); hold on
+            plot(ttCycle, eyeVel_GoodCyclesMean + eyeVel_GoodCycles_stdev, ':k', 'LineWidth', .3);
+            plot(ttCycle, eyeVel_GoodCyclesMean - eyeVel_GoodCycles_stdev, ':k', 'LineWidth', .3);
+            plot(ttCycle, meanFit,'r', 'LineWidth', .3);
+            hline(0, ':k')
 
-        % Text
-        text(10, ylimits(2), ['Good Cycles: ', num2str(goodCount), '/', num2str(length(badCycles))],'FontSize',7);
-        text(10, ylimits(2)-5, ['Rel Gain: ' num2str(eyevelH_rel_gain)], 'Fontsize', 7);
-        text(10, ylimits(2)-10, ['Eye Amp: ', num2str(eyevelH_amp,3)],'FontSize',7);
-        text(10, ylimits(2)-15, ['Rel. Phase: ', num2str(eyevelH_rel_phase,3)],'FontSize',7);
-        text(10, ylimits(2)-20, ['Stim: ', stimType],'FontSize',7);
+            % find (+) peaks for Fit and Mean
+            [maxVal, maxLoc] = max(meanFit);
+            maxLoc = maxLoc/length(meanFit);
+            line([maxLoc maxLoc], [0 maxVal], 'color', 'r', 'lineStyle', '--', 'LineWidth', .3);
+            scatter(maxLoc, maxVal, 'r', 'filled', 'SizeData', .2)
+
+            [maxVal, maxLoc] = max(eyeVel_GoodCyclesMean);
+            maxLoc = maxLoc/length(eyeVel_GoodCyclesMean);
+            line([maxLoc maxLoc], [0 maxVal], 'color', 'k', 'lineStyle', '--', 'LineWidth', .3);
+            scatter(maxLoc, maxVal, 'k', 'filled', 'SizeData', .2)
+
+
+            % find (-) peaks for Fit and Mean
+            [minVal, minLoc] = min(meanFit);
+            minLoc = minLoc/length(meanFit);
+            line([minLoc minLoc], [0 minVal], 'color', 'r', 'lineStyle', '--', 'LineWidth', .3);
+            scatter(minLoc, minVal, 'r', 'filled', 'SizeData', .2)
+
+            [minVal, minLoc] = min(eyeVel_GoodCyclesMean);
+            minLoc = minLoc/length(eyeVel_GoodCyclesMean);
+            line([minLoc minLoc], [0 minVal], 'color', 'k', 'lineStyle', '--', 'LineWidth', .3);
+            scatter(minLoc, minVal, 'k', 'filled', 'SizeData', .2)
+
+            % Cosmetics
+            title(datatype)
+            xlim([0 max(ttCycle)]);
+            ylim([-50 50])
+            xticklabels([])
+            yticks([])
+            yticklabels([])
+            box off
+
+            % Figure C) Power Spectrum of Traces
+            subplot(params.sp_Dim(1), params.sp_Dim(2), (7:9) + row);
+
+            L = length(eyevelH(startpt:end));
+            Y = fft(eyevelH(startpt:end));
+            P2 = abs(Y/L);
+            P1 = P2(1:L/2+1);
+            P1(2:end-1) = 2*P1(2:end-1);
+            f = samplerate*(0:(L/2))/L;
+            plot(f,P1, 'k') 
+            title([num2str(freq), 'Hz'])
+
+            % Cosmetics
+            xlim([0 10])
+            ylim([0 40])
+            xticklabels([])
+            yticks([])
+            yticklabels([])
+            box off
+
+            % Text
+            text(10, ylimits(2), ['Good Cycles: ', num2str(goodCount), '/', num2str(length(badCycles))],'FontSize',7);
+            text(10, ylimits(2)-5, ['Rel Gain: ' num2str(eyevelH_rel_gain)], 'Fontsize', 7);
+            text(10, ylimits(2)-10, ['Eye Amp: ', num2str(eyevelH_amp,3)],'FontSize',7);
+            text(10, ylimits(2)-15, ['Rel. Phase: ', num2str(eyevelH_rel_phase,3)],'FontSize',7);
+            text(10, ylimits(2)-20, ['Stim: ', stimType],'FontSize',7);
+        end
+
+        % Update Row information
+        row = row + 10;
     end
-    % other
-    row = row + 10;
-  
 end
 
 
@@ -520,6 +528,6 @@ sp.PaperPosition = [0 0 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
 sp2.PaperSize = [params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
 sp2.PaperPosition = [0 0 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
 fprintf('saving...')
-%print(sp, '-fillpage',fullfile(params.folder, [params.file '_subplot.pdf']),'-dpdf', '-r300');
-print(sp2, '-fillpage',fullfile(params.folder, [params.file '_subplot2.pdf']),'-dpdf', '-r300');
+print(sp, '-fillpage',fullfile(params.folder, [params.file '_subplot.pdf']),'-dpdf', '-r300');
+%print(sp2, '-fillpage',fullfile(params.folder, [params.file '_subplot2.pdf']),'-dpdf', '-r300');
 fprintf('Done!\n')
