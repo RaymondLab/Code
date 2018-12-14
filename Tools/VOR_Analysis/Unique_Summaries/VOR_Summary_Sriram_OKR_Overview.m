@@ -5,7 +5,7 @@ clear;clc;
 try 
     load('diffData.mat')
 catch
-    warning('No Difference diffData File Found!')
+    warning('No diffData File Found!')
 end
 
 T = readtable('diffData.xlsx');
@@ -34,6 +34,9 @@ for i = 1:length(conditions)
             line([maxLoc maxLoc], [0 maxVal], 'color', color{j}, 'lineStyle', '--');
             scatter(maxLoc, maxVal, color{j}, 'filled')
             
+            diffData(j).rawMaxVal = maxVal;
+            diffData(j).rawMaxLoc = maxLoc;
+            
             subplot(2,1,2)
             plot(diffData(j).ttCycle, diffData(j).diffFit, color{j}); hold on
             
@@ -42,9 +45,8 @@ for i = 1:length(conditions)
             line([maxLoc maxLoc], [0 maxVal], 'color', color{j}, 'lineStyle', '--');
             scatter(maxLoc, maxVal, color{j}, 'filled')
             
-            
-            
-            
+            diffData(j).fitMaxVal = maxVal;
+            diffData(j).fitMaxLoc = maxLoc;
             
         end
     end
@@ -60,8 +62,46 @@ for i = 1:length(conditions)
      title([diffData(1).condition, ' Fit'])
      
      xlabel('Seconds')
-    
      
+    print(A,fullfile(cd, [conditions{i} 'Sriram_OKR_Overview']),'-fillpage', '-dpdf', '-r300');
+    % Save as .fig
+    savefig(A,fullfile(cd, [conditions{i} 'Sriram_OKR_Overview.fig']));
+  
 end
+
+% remove Long Vectors from excel file page 1
+excelVec = diffData;
+for k = 1:length(excelVec)
+    excelVec(k).diffRaw = [];
+    excelVec(k).diffFit = [];
+    excelVec(k).ttCycle = [];
+end
+
+% add long Vecotrs to second page
+fitDat = [{diffData.mouse}; ...
+          {diffData.condition}];% ...
+          %{diffData.diffFit}]';
+
+rawDat = [{diffData.mouse}; ...
+          {diffData.condition}];% ...
+          %{diffData.diffRaw}]';
+         
+for i = 1:length(diffData)
+    rawMatrix(i,:) = diffData(i).diffRaw;
+    fitMatrix(i,:) = diffData(i).diffFit;
+    
+end
+rawMatrix = rawMatrix';
+fitMatrix = fitMatrix';
+ 
+writetable(struct2table(excelVec), 'diffData.xlsx', 'Sheet', 1);
+
+xlswrite('diffData.xlsx', rawDat, 2);
+xlswrite('diffData.xlsx', rawMatrix, 2, 'A3')
+xlswrite('diffData.xlsx', fitDat, 3);
+xlswrite('diffData.xlsx', fitMatrix, 3, 'A3')
+
+
+
 
 
