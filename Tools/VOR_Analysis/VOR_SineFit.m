@@ -21,8 +21,8 @@
 function R = VOR_SineFit(data, sinefreq, labels, timepts, params)
 %% === Create R data Array and other parameters ======================== %%
 
-sp = figure(1);
-sp2 = figure(2);
+sp = figure();
+sp2 = figure();
 row = 0;
 do_sp2 = 0;
 
@@ -419,7 +419,7 @@ for count = 1:nSegs
     
     %% === Subplot-2: Mean Trace Visualization ========================= %%
     
-    if do_sp2
+    if params.do_subplot2
         
         % Prep
         figure(sp2)
@@ -529,5 +529,5 @@ sp2.PaperSize = [params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
 sp2.PaperPosition = [0 0 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
 fprintf('saving...')
 print(sp, '-fillpage',fullfile(params.folder, [params.file '_subplot.pdf']),'-dpdf', '-r300');
-%print(sp2, '-fillpage',fullfile(params.folder, [params.file '_subplot2.pdf']),'-dpdf', '-r300');
+print(sp2, '-fillpage',fullfile(params.folder, [params.file '_subplot2.pdf']),'-dpdf', '-r300');
 fprintf('Done!\n')
