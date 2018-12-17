@@ -27,7 +27,7 @@ function varargout = VOR_GUI(varargin)
 
     % Edit the above text to modify the response to help VOR_GUI
 
-    % Last Modified by GUIDE v2.5 01-Nov-2018 13:07:39
+    % Last Modified by GUIDE v2.5 14-Dec-2018 14:28:35
 
     % Begin initialization code - DO NOT EDIT
     gui_Singleton = 1;
@@ -109,6 +109,7 @@ function pushbutton1_Callback(hObject, eventdata, handles)
     params.do_eyeGain_summary = 1;
     params.do_sineAnalysis = 1; % TODO
     params.do_filter = 0;%handles.checkbox7.Value;
+    params.do_subplot2 = handles.checkbox11.Value;
     
     % Saccade Parameters
     params.saccadePre = str2double(handles.edit2.String);
@@ -419,3 +420,12 @@ function checkbox10_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox10
+
+
+% --- Executes on button press in checkbox11.
+function checkbox11_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox11 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox11
