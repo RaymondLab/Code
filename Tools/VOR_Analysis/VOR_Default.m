@@ -30,13 +30,18 @@ goodRows = ~isnan(table2array(T(:,2)));
 params.segAmt = sum(goodRows);
 T = T(goodRows,:);
 
-VORDmask = ~cellfun(@isempty,regexpi(T.Type,'VORD'));
-STIMmask = ~cellfun(@isempty,regexpi(T.Type,'STIM'));
+% Catch for common excel/start time error
+if params.segStarts ~= params.segAmt
+    clc
+    error(sprintf(['\n\n\nSegment Count Error \n', ...
+           'Segments Listed in Excel File: ', num2str(params.segAmt), '\n', ...
+           'Segments Found After Listed Start Time(', num2str(4), '): ', num2str(length(params.segStarts)), '\n', ...
+           'Listed start time needs to be before the first segment starts\n\n']))
+end
 
 % Pull out start/end times and frequency
 frequency = T.Frequency;
 timepts = T.TimePoint;
-if any((params.segEnds-params.segStarts)<0); error('Make sure end times are after start times'); end
 
 % Create labels for graphs
 timePoints = strrep(cellstr(num2str(T.TimePoint)), ' ', '');

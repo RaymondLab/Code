@@ -57,11 +57,6 @@ samplerate = data(1).samplerate;
 presaccadeN = round(params.saccadePre*samplerate);
 postsaccadeN = round(params.saccadePost*samplerate);
 
-% Gather Screensize information for figure placement
-screensize = get( groot, 'Screensize' );
-leftPos = 5;
-botPos = 50;
-
 %% === Cycle through each segment ====================================== %%
 for count = 1:nSegs
     
