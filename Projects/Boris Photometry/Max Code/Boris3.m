@@ -1,6 +1,6 @@
 clear;clc;%close all
 dbstop if error
-% Z:\1_Maxwell_Gagnon\ProjectData_Amin\Boris Recordings\Experiment 2\drive-download-20180713T210854Z-001\Raymond_071318_LFP_M2\Recording_1
+cd('Z:\1_Maxwell_Gagnon\ProjectData_Amin\Boris Recordings\Experiment 2\drive-download-20180713T210854Z-001\Raymond_071318_LFP_M2\Recording_1')
 savename = 'd\d_100Hz';
 savename=strcat(savename,'.mat');
 load(savename)
@@ -93,17 +93,17 @@ peaks_n = [peaks_n [NaN; deltaTo_n]];
 %height_n(height_n < min_height) = [];
 
 % plot histgrams of heights
-figure()
-subplot(2,1,1)
-hist(deltaTo_p, 500)
-title('Histgram of Positive Raw Peak Rise from Previous Neg Peak ')
+% figure()
+% subplot(2,1,1)
+% hist(deltaTo_p, 500)
+% title('Histgram of Positive Raw Peak Rise from Previous Neg Peak ')
 %ylim([0, 150])
 %xlim([200 320])
 
-
-subplot(2,1,2)
-hist(deltaTo_n, 500)
-title('Histgram of Negative Raw Peak Fall from Previous Pos Peak')
+% 
+% subplot(2,1,2)
+% hist(deltaTo_n, 500)
+% title('Histgram of Negative Raw Peak Fall from Previous Pos Peak')
 %ylim([0, 150])
 %xlim([200 320])
 
@@ -128,14 +128,14 @@ for i = 2:length(peaks_p)
 end
 min_slope_n(1) = NaN;
 
-figure(); subplot(2,1,1);
-hist(max_slope_p, 250);
-title('P Peak Slope Hist')
-
-subplot(2,1,2)
-min_slope_n = min_slope_n*-1;
-hist(min_slope_n,250);
-title('N Peak Slope Hist')
+% figure(); subplot(2,1,1);
+% hist(max_slope_p, 250);
+% title('P Peak Slope Hist')
+% 
+% subplot(2,1,2)
+% min_slope_n = min_slope_n*-1;
+% hist(min_slope_n,250);
+% title('N Peak Slope Hist')
 
 %% plot peak height v max vel during rise-to-peak
 
@@ -153,28 +153,36 @@ qqq = figure();
 ha = tight_subplot(4,1,[.025 .025],[.025 .025],[.025 .025]);
 
 axes(ha(1))
-heatscatter(peaks_p(:,3), peaks_p(:,4), [], 'apple', '200', '75', '.');
-ylabel('Peak Vel During Change')
+%heatscatter(peaks_p(:,3), peaks_p(:,4), [], 'apple', '200', '75', '.');
+scatter(peaks_p(:,3), peaks_p(:,4), 5, 'filled');
+title('Peak Vel During Change')
 xlim([0 1.5])
+ylim([0 .14])
 xticks([])
 
 axes(ha(2))
-heatscatter(peaks_p(:,3), peaks_p(:,5), [], 'apple', '200', '75', '.');
-ylabel('Mean Vel During Change')
+%heatscatter(peaks_p(:,3), peaks_p(:,5), [], 'apple', '200', '75', '.');
+scatter(peaks_p(:,3), peaks_p(:,5), 5, 'filled');
+title('Mean Vel During Change')
 xlim([0 1.5])
+ylim([0 .08])
 xticks([])
 
 axes(ha(3))
-heatscatter(peaks_p(:,3), peaks_p(:,6), [], 'apple', '200', '75', '.');
-ylabel('Median Vel During Change')
+%heatscatter(peaks_p(:,3), peaks_p(:,6), [], 'apple', '200', '75', '.');
+scatter(peaks_p(:,3), peaks_p(:,6), 5, 'filled');
+title('Median Vel During Change')
 xlim([0 1.5])
+ylim([0 .1])
 xticks([])
 
 axes(ha(4))
-heatscatter(peaks_p(:,3), peaks_p(:,7), [], 'apple', '200', '75', '.');
-ylabel('Var of Vel During Change')
-xlabel('Delta from Previous Peak')
+%heatscatter(peaks_p(:,3), peaks_p(:,7), [], 'apple', '200', '75', '.');
+scatter(peaks_p(:,3), peaks_p(:,7), 5, 'filled');
+title('Var of Vel During Change')
+xlabel('Delta from Previous Peak (samples)')
 xlim([0 1.5])
+ylim([0 6*10^-3])
 
 print('done')
 

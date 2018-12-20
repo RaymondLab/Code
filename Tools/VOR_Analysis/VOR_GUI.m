@@ -104,11 +104,11 @@ function pushbutton1_Callback(hObject, eventdata, handles)
     % Extras Analysis / plotting
     params.newSac = handles.checkbox8.Value;
     params.NoiseAnalysis = handles.checkbox9.Value;
-    params.do_individual = handles.checkbox5.Value;
     params.do_eyeAmp_summary = 1;
     params.do_eyeGain_summary = 1;
     params.do_sineAnalysis = 1; % TODO
     params.do_filter = 0;%handles.checkbox7.Value;
+    params.do_subplot1 = handles.checkbox5.Value;
     params.do_subplot2 = handles.checkbox11.Value;
     
     % Saccade Parameters

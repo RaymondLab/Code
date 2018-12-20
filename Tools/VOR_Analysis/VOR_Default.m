@@ -31,7 +31,7 @@ params.segAmt = sum(goodRows);
 T = T(goodRows,:);
 
 % Catch for common excel/start time error
-if params.segStarts ~= params.segAmt
+if length(params.segStarts) ~= params.segAmt
     clc
     error(sprintf(['\n\n\nSegment Count Error \n', ...
            'Segments Listed in Excel File: ', num2str(params.segAmt), '\n', ...

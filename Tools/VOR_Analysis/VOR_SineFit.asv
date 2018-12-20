@@ -496,7 +496,11 @@ sp1.PaperPosition = [0 0 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
 sp2.PaperSize = [params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
 sp2.PaperPosition = [0 0 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
 fprintf('saving...')
-tic; print(sp1, '-fillpage',fullfile(params.folder, [params.file '_subplot.pdf']),'-dpdf', '-r300'); toc
-tic; saveas(sp1,fullfile(params.folder, [params.file '_subplotXX.pdf']), 'pdf'); toc
-tic; print(sp2, '-fillpage',fullfile(params.folder, [params.file '_subplot2.pdf']),'-dpdf', '-r300'); toc
+tic; print(sp1, '-fillpage',fullfile(params.folder, [params.file '_subplot300.pdf']),'-dpdf', '-r300'); toc
+tic; print(sp2, '-fillpage',fullfile(params.folder, [params.file '_subplot2300.pdf']),'-dpdf', '-r300'); toc
 fprintf('Done!\n')
+
+sp1.PaperSize = [params.sp_Dim(2) params.sp_Dim(1)];
+sp1.PaperPosition = [0 0 params.sp_Dim(2) params.sp_Dim(1)];
+tic; print(sp1, '-fillpage',fullfile(params.folder, [params.file '_subplot300.pdf']),'-dpdf', '-r600'); 
+toc

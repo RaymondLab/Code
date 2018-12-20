@@ -44,7 +44,7 @@ tPost_eyeVelGood_Wmean = tPost_eyeVelGood_Wmean / sum([segObj(4).goodCcount, ...
 
 % Misc
 freq = segObj(1).freq;
-sampleRate = segObj(1).sampleRate;
+samplerate = segObj(1).samplerate;
 ttCycle = segObj(1).ttCycle;
 
 % Calc mean head velocity @ Pre

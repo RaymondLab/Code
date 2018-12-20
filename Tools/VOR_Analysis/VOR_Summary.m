@@ -103,37 +103,8 @@ A = gcf;
 for i = 1:length(A.Children(2).Children)
     try
         A.Children(2).Children(i).SizeData = .1;
-        pause(.1);
     catch
     end
 end
 
-%% Other Notes
-%{
-%% SCRAPS FOR GENERALIZATION FIGURES
-
-sumFig.Children(2).XAxis.FontSize = 7;
-sumFig.Children(2).YAxis.FontSize = 7;
-
-groups = {'PreTest - 1'
-          'PreTest - 2'
-          'Train - 1'
-          'Middle Test'
-          'Train - 2'
-          'PostTest - 1'
-          'PostTest - 2'};
-
-
-% spread out the groups
-uniqueGroup = unique(seg_groups);
-index = 1;
-incAmt = .07;
-for i = 1:length(uniqueGroup)
-    for j = 1:length(seg_groups(seg_groups == uniqueGroup(i)))
-        seg_groups(index) = seg_groups(index) + ((incAmt * j) - incAmt);
-        index = index + 1;
-    end
-end
-
-%}
 end
