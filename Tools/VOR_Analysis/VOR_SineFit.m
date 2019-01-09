@@ -106,7 +106,7 @@ for count = 1:nSegs
         
     % NEW VERSION
     elseif params.newSac == 1
-        [omitH, omitCenters, eye_pos_filt, eyeVel_proc] = desaccadeVel3(eyePos, samplerate, presaccadeN, postsaccadeN, freq, params, fit1);
+        [omitH, omitCenters, eyePos_filt, eyeVel_proc] = desaccadeVel3(eyePos, samplerate, presaccadeN, postsaccadeN, freq, params, fit1);
         
         % Store Processed Trace
         eyeVel_proc_des = eyeVel_proc;
@@ -216,11 +216,11 @@ for count = 1:nSegs
     R.data(count,strcmp(header,'nGoodCycles'))  = goodCount;
     
     R.eyeVel_good_cycleMean{count}  = eyeVel_good_cycleMean;
-    R.eyevel_des_cycleMean{count}   = eyeVel_des_cycleMean;
-    R.eyevel_des_Sem{count}         = eyeVel_des_Sem;
-    R.eyevel_des_Sem{count}         = eyeVel_des_cycleFit;
+    R.eyeVel_des_cycleMean{count}   = eyeVel_des_cycleMean;
+    R.eyeVel_des_Sem{count}         = eyeVel_des_Sem;
+    R.eyeVel_des_cycleFit{count}    = eyeVel_des_cycleFit;
     R.headVel_cycleMean{count}      = headVel_cycleMean;
-    R.headVel_cycleMean{count}      = drumVel_cycleMean;
+    R.drumVel_cycleMean{count}      = drumVel_cycleMean;
     R.cycleTime{count}              = cycleTime;
     R.freq{count}                   = freq;
     R.samplerate{count}             = samplerate;
@@ -263,7 +263,7 @@ for count = 1:nSegs
                 segObj(q).headVel = headVel_cycleMean;
                 segObj(q).DrumVel = drumVel_cycleMean;
                 segObj(q).eyeVelDes = eyeVel_des_cycleMean;
-                segObj(q).eyeVelDesFit = eyeVel_des_cycleFit
+                segObj(q).eyeVelDesFit = eyeVel_des_cycleFit;
                 segObj(q).eyeVelGood = eyeVel_good_cycleMean;
                 segObj(q).SacFrac = mean(omitH);
                 segObj(q).goodCcount = goodCount;
@@ -363,7 +363,7 @@ for count = 1:nSegs
             xlabel('Time (s)');    
         end 
         
-        % Add Quick reference text
+        % Add quick reference text
         text(max(cycleTime)*1.05, ylimits(2), ['Good Cycles: ', num2str(goodCount), '/', num2str(length(badCycles))],'FontSize',7);
         text(max(cycleTime)*1.05, ylimits(2)-5, ['Rel Gain: ' num2str(eyeVel_rel_gain)], 'Fontsize', 7);
         text(max(cycleTime)*1.05, ylimits(2)-10, ['Eye Amp: ', num2str(eyeVel_amp,3)],'FontSize',7);
@@ -469,6 +469,7 @@ for count = 1:nSegs
             % Cosmetics
             xlim([0 10])
             ylim([0 40])
+            xticks([1:10])
             xticklabels([])
             yticks([])
             yticklabels([])
@@ -495,8 +496,12 @@ sp1.PaperSize = [params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
 sp1.PaperPosition = [0 0 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
 sp2.PaperSize = [params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
 sp2.PaperPosition = [0 0 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
-fprintf('saving...')
+
+fprintf('\nsaving Subplot 1...')
 tic; print(sp1, '-fillpage',fullfile(params.folder, [params.file '_subplot.pdf']),'-dpdf', '-r300'); toc
-tic; saveas(sp1,fullfile(params.folder, [params.file '_subplotXX.pdf']), 'pdf'); toc
+fprintf('\nsaving Subplot 2...')
 tic; print(sp2, '-fillpage',fullfile(params.folder, [params.file '_subplot2.pdf']),'-dpdf', '-r300'); toc
-fprintf('Done!\n')
+
+%tic; saveas(sp1,fullfile(params.folder, [params.file '_subplotXX']), 'pdf'); toc
+%tic; saveas(sp2,fullfile(params.folder, [params.file '_subplot2XXb']), 'pdf'); toc
+fprintf('\nDone!\n')
