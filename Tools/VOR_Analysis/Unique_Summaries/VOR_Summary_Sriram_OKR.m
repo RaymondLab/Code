@@ -1,7 +1,7 @@
 function VOR_Summary_Sriram_OKR(params, post, pre, Etitle)
 
 %% Prep
-type = 1;% 1 == desaccaded, 2 == good cycles
+type = 1;% 1 == desaccaded, 2 == good cycles SRIRAM
 
 load('t1_t15_t60.mat')
 segObj = segObj([pre, post]);

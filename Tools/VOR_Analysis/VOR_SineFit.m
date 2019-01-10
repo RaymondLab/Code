@@ -281,6 +281,17 @@ for count = 1:nSegs
     end
     
     %% === Subplot-1: Segment and Fit ================================== %%
+    
+    % Choose Stim
+    if contains(R.labels{count}, 'OKR')
+        plotStim = drumVel_cycleMean;
+        stimType = 'Drum';
+    else
+        plotStim = headVel_cycleMean;
+        stimType = 'Chair';
+    end
+    ylimits = double([floor(min(plotStim)*1.1) ceil(max(plotStim)*1.1)]);
+    
     if params.do_subplot1
         
         set(groot, 'CurrentFigure', sp1);
@@ -290,7 +301,7 @@ for count = 1:nSegs
         if params.cleanPlot
             plot(segTime(1:length(eyeVel_proc)), eyeVel_proc, 'k', 'LineWidth', .3); hold on
             plot(segTime(1:length(eyeVel_proc_des)), eyeVel_proc_des, 'b', 'LineWidth', .3);
-            plot(segTime, vars*b,':r', 'LineWidth', .5);
+            plot(segTime, vars*b,'r', 'LineWidth', .5);
         else
             plot(segTime(1:length(eyeVel_raw)), eyeVel, 'k', 'LineWidth', .3); hold on
             plot(segTime(1:length(eyeVel_raw_des)), eyeVel_raw_des, 'b', 'LineWidth', .3);
@@ -333,15 +344,7 @@ for count = 1:nSegs
         % --- Subplot-1: Cycle and Fit ---------------------------------- %
         subplot(params.sp_Dim(1), params.sp_Dim(2), (9:10) + row);
         
-        % Choose Stim
-        if contains(R.labels{count}, 'OKR')
-            plotStim = drumVel_cycleMean;
-            stimType = 'Drum';
-        else
-            plotStim = headVel_cycleMean;
-            stimType = 'Chair';
-        end
-        ylimits = double([floor(min(plotStim)*1.1) ceil(max(plotStim)*1.1)]);
+
 
         % plot
         plot(cycleTime, smooth(eyeVel_good_cycleMean, 50),'b'); hold on
@@ -425,31 +428,32 @@ for count = 1:nSegs
             % find (+) peaks for Fit and Mean
             [maxVal, maxLoc] = max(eyeVel_des_cycleFit);
             maxLoc = maxLoc/length(eyeVel_des_cycleFit);
-            line([maxLoc maxLoc], [0 maxVal], 'color', 'r', 'lineStyle', '--', 'LineWidth', .3);
-            scatter(maxLoc, maxVal, 'r', 'filled', 'SizeData', .2)
+            line([maxLoc maxLoc], [0 maxVal], 'color', 'r', 'LineWidth', .3);
+            %scatter(maxLoc, maxVal, 'r', 'filled', 'SizeData', .2)
 
             [maxVal, maxLoc] = max(eyeVel_good_cycleMean);
             maxLoc = maxLoc/length(eyeVel_good_cycleMean);
-            line([maxLoc maxLoc], [0 maxVal], 'color', 'k', 'lineStyle', '--', 'LineWidth', .3);
-            scatter(maxLoc, maxVal, 'k', 'filled', 'SizeData', .2)
+            line([maxLoc maxLoc], [0 maxVal], 'color', 'k', 'LineWidth', .3);
+            %scatter(maxLoc, maxVal, 'k', 'filled', 'SizeData', .2)
 
 
             % find (-) peaks for Fit and Mean
             [minVal, minLoc] = min(eyeVel_des_cycleFit);
             minLoc = minLoc/length(eyeVel_des_cycleFit);
-            line([minLoc minLoc], [0 minVal], 'color', 'r', 'lineStyle', '--', 'LineWidth', .3);
-            scatter(minLoc, minVal, 'r', 'filled', 'SizeData', .2)
+            line([minLoc minLoc], [0 minVal], 'color', 'r', 'LineWidth', .3);
+            %scatter(minLoc, minVal, 'r', 'filled', 'SizeData', .2)
 
             [minVal, minLoc] = min(eyeVel_good_cycleMean);
             minLoc = minLoc/length(eyeVel_good_cycleMean);
-            line([minLoc minLoc], [0 minVal], 'color', 'k', 'lineStyle', '--', 'LineWidth', .3);
-            scatter(minLoc, minVal, 'k', 'filled', 'SizeData', .2)
+            line([minLoc minLoc], [0 minVal], 'color', 'k', 'LineWidth', .3);
+            %scatter(minLoc, minVal, 'k', 'filled', 'SizeData', .2)
 
             % Cosmetics
             title(datatype)
             xlim([0 max(cycleTime)]);
             ylim([-50 50])
             xticklabels([])
+            
             yticks([])
             yticklabels([])
             box off
@@ -457,19 +461,20 @@ for count = 1:nSegs
             % Figure C) Power Spectrum of Traces
             subplot(params.sp_Dim(1), params.sp_Dim(2), (7:9) + row);
 
-            L = length(eyeVel_des(startpt:end));
-            Y = fft(eyeVel_des(startpt:end));
+            L = length(eyeVel(startpt:end));
+            Y = fft(eyeVel(startpt:end));
             P2 = abs(Y/L);
             P1 = P2(1:floor(L/2+1));
             P1(2:end-1) = 2*P1(2:end-1);
             f = samplerate*(0:(L/2))/L;
             plot(f,P1, 'k') 
             title([num2str(freq), 'Hz'])
-
+            
             % Cosmetics
-            xlim([0 10])
+            xlim([0 15])
             ylim([0 40])
-            xticks([1:10])
+            xticks([1:15])
+            set(gca, 'TickDir', 'out')
             xticklabels([])
             yticks([])
             yticklabels([])
@@ -492,16 +497,13 @@ end
 
 
 %% === Save Figures ==================================================== %%
-sp1.PaperSize = [params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
-sp1.PaperPosition = [0 0 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
-sp2.PaperSize = [params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
-sp2.PaperPosition = [0 0 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
+sp1.PaperSize = [params.sp_Dim(2)*1.8 params.sp_Dim(1)*1.45];
+sp1.PaperPosition = [-2 -11 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
+sp2.PaperSize = [params.sp_Dim(2)*1.8 params.sp_Dim(1)*1.45];
+sp2.PaperPosition = [-2 -11 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
 
-fprintf('\nsaving Subplot 1...')
-tic; print(sp1, '-fillpage',fullfile(params.folder, [params.file '_subplot.pdf']),'-dpdf', '-r300'); toc
-fprintf('\nsaving Subplot 2...')
-tic; print(sp2, '-fillpage',fullfile(params.folder, [params.file '_subplot2.pdf']),'-dpdf', '-r300'); toc
-
-%tic; saveas(sp1,fullfile(params.folder, [params.file '_subplotXX']), 'pdf'); toc
-%tic; saveas(sp2,fullfile(params.folder, [params.file '_subplot2XXb']), 'pdf'); toc
-fprintf('\nDone!\n')
+fprintf('\nSaving Subplot 1...')
+tic; print(sp1, fullfile(params.folder, [params.file '_subplot.pdf']),'-dpdf', '-r250'); toc
+fprintf('Saving Subplot 2...')
+tic; print(sp2, fullfile(params.folder, [params.file '_subplot2.pdf']),'-dpdf', '-r250'); toc
+fprintf('Done!\n')

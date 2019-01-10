@@ -94,7 +94,7 @@ function singleAnalysis(params)
             VOR_Summary('eyeHphase', expmtExcelFile, 0); 
     end
     
-    fprintf('Done!\n')
+    fprintf('\nDone!\n')
 
 end
 
