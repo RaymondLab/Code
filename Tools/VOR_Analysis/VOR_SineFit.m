@@ -126,6 +126,37 @@ for count = 1:nSegs
         eyeVel = eyeVel_raw;
         eyeVel_des = eyeVel_raw_des;
     end
+    
+
+    % remove pieces of the trace that are too small  
+    
+    % 1's are nan locations (artifacts)
+    [nanLocs_all, ~] = find(isnan(eyeVel_des));
+
+    % Find length of all 'good' (non-nan) chunks of data
+    goodChunk_len = nanLocs_all(2:end) - nanLocs_all(1:end-1);
+    goodChunk_len(goodChunk_len == 1) = [];
+
+    % find start times of all 'good' chunks
+    nanEnds_relative = find((nanLocs_all(2:end) - nanLocs_all(1:end-1)) -1);
+    nanEnds_absolute = nanLocs_all(nanEnds_relative);
+    goodChunk_starts = nanEnds_absolute + 1;
+
+    % remove good chunks that are not too small
+    goodChunk_starts(goodChunk_len >= params.minGoodChunk_len) = [];
+    goodChunk_len(goodChunk_len >= params.minGoodChunk_len) = [];
+
+    % All good chunks that are smaller than specified length are nan-ed
+    for ii = 1:length(goodChunk_starts)
+        
+        eyeVel_des(goodChunk_starts(ii):goodChunk_starts(ii)+goodChunk_len(ii)) = NaN;
+
+        if params.cleanPlot
+            eyeVel_proc_des(goodChunk_starts(ii):goodChunk_starts(ii)+goodChunk_len(ii)) = NaN;
+        else
+            eyeVel_raw_des(goodChunk_starts(ii):goodChunk_starts(ii)+goodChunk_len(ii)) = NaN;
+        end    
+    end
 
     %% === Calculate Fits ============================================== %%
     % fit data using a linear regression (data specified by 'keep_'index)

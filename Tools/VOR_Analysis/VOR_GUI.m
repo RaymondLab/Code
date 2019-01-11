@@ -27,7 +27,7 @@ function varargout = VOR_GUI(varargin)
 
     % Edit the above text to modify the response to help VOR_GUI
 
-    % Last Modified by GUIDE v2.5 14-Dec-2018 14:28:35
+    % Last Modified by GUIDE v2.5 11-Jan-2019 13:15:59
 
     % Begin initialization code - DO NOT EDIT
     gui_Singleton = 1;
@@ -110,6 +110,7 @@ function pushbutton1_Callback(hObject, eventdata, handles)
     params.do_filter = 0;%handles.checkbox7.Value;
     params.do_subplot1 = handles.checkbox5.Value;
     params.do_subplot2 = handles.checkbox11.Value;
+    params.minGoodChunk_len = str2double(handles.edit7.String);
     
     % Saccade Parameters
     params.saccadePre = str2double(handles.edit2.String);
@@ -429,3 +430,26 @@ function checkbox11_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox11
+
+
+
+function edit7_Callback(hObject, eventdata, handles)
+% hObject    handle to edit7 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit7 as text
+%        str2double(get(hObject,'String')) returns contents of edit7 as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit7_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit7 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
