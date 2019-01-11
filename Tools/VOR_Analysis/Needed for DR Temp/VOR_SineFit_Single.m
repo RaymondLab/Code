@@ -36,6 +36,7 @@ elseif drumH_amp >3      % No chair signal, drum signal
     refH_amp = drumH_amp;
 else                    % No stimulus
     refH_angle = 0;
+    refH_amp = 1;
 end
 
 % ------------ EYE VELOCITY------------

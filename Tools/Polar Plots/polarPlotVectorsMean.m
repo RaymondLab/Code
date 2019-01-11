@@ -32,7 +32,7 @@ for i = 1:row
             lineW = 1.5;
             L = polarplot([0 phaseRad], [0 gain], 'color', color, 'lineWidth', lineW);
         end
-    
+        
     % Dark Condition?
     elseif contains(array{i, 2}, 'D')
         
@@ -54,7 +54,7 @@ rlim(rLimits)
 hold on
 
 % add legend
-legend([L, LM, D, DM], 'Light Reared', 'Light Reared Mean', 'Dark Reared', 'Dark Reared Mean', 'location', 'northeast')
+legend([L, D], 'Normal Reared', 'Dark Reared', 'location', 'northeast')
 
 
 
