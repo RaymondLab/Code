@@ -22,7 +22,7 @@ end
 
 [pathname, filename2, extension]=fileparts(filename);
 
-fprintf('Reading Spike2 file: %s\n',fullfile(pathname, filename2));
+%fprintf('Reading Spike2 file: %s\n',fullfile(pathname, filename2));
 warning('off','backtrace')
 
 if strcmpi(extension,'.smr')==1 || strcmpi(extension,'.srf')==1
@@ -47,10 +47,10 @@ F=SONFileHeader(fid);
 c=SONChanList(fid);
 
 %% Display all the channels
-for i = 1:length(c)
-    fprintf('%i %s\n',c(i).number,c(i).title);
-end
-disp(' ')
+% for i = 1:length(c)
+%     fprintf('%i %s\n',c(i).number,c(i).title);
+% end
+% disp(' ')
 
 %% Import the data.
 if ~exist('chans','var') || isempty(chans)
@@ -262,7 +262,7 @@ else
             d(index).data = imp;
             d(index).header = hdr;
             
-            fprintf('Channel %g read.\n', chan)
+            %fprintf('Channel %g read.\n', chan)
             
             index = index + 1;
             clear('imp','hdr','data','header');
@@ -271,6 +271,6 @@ else
         
     end
 end
-disp('Spike file read!')
+%disp('Spike file read!')
 fclose(fid);
 

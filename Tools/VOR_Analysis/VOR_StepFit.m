@@ -18,7 +18,7 @@
 % Modified 1/20/14 to remove vertical eye calculations
 
 
-function R = VOR_SineFit(data, sinefreq, labels, timepts, params)
+function R = VOR_StepFit(data, sinefreq, labels, timepts, params)
 %% === Create R data Array and other parameters ======================== %%
 
 set(groot, 'DefaultFigureVisible', 'off');
@@ -50,7 +50,7 @@ if ~isfield(params, 'saccadeThresh')
     params.saccadeThresh = .55;
 end
 
-if ~isfield(params, 'do_individual')
+if ~isfield(params, 'do_individual') % Can delete
     params.do_individual = 1;
 end
 
@@ -80,14 +80,43 @@ for count = 1:nSegs
     drumVel = datchandata(dataseg,'htvel');
     eyeVel = datchandata(dataseg,'hevel');
     eyePos = datchandata(dataseg,'hepos');
-
+    
+    % Import TTL (stim) pulses
+    TTL3_on = datchandata(dataseg, 'TTL3+');
+    TTL3_off = datchandata(dataseg, 'TTL3-');
+    TTL4_on = datchandata(dataseg, 'TTL4+');
+    TTL4_off = datchandata(dataseg, 'TTL4-');
+    
+    % normalize pulse times to start of segment
+    TTL3_on = TTL3_on - params.segStarts(count);
+    TTL3_off = TTL3_off - params.segStarts(count);
+    TTL4_on = TTL4_on - params.segStarts(count);
+    TTL4_off = TTL4_off - params.segStarts(count);
+    
+    % TEMP HACK
+    if length(TTL4_on) ~= length(TTL4_off)
+        TTL4_on = TTL4_on(1:end-1);
+    end
+    
+    % prep for plotting
+    x3 = [TTL3_on'; TTL3_off'; TTL3_off'; TTL3_on'];
+    y3 = [-150;-150;150;150];
+    y3 = repmat(y3,[1 size(x3, 2)]);
+    
+    x4 = [TTL4_on'; TTL4_off'; TTL4_off'; TTL4_on'];
+    y4 = [-150;-150;150;150];
+    y4 = repmat(y4,[1 size(x4, 2)]);
+    
     % define vector of time
     segLength = length(headVel);
     segTime = (1:segLength)/samplerate; 
     cycleLength = round(samplerate/freq);
+    if contains(R.labels{count}, 'rain')
+        cycleLength = cycleLength + 4;
+    end
     cycleTime = (1:cycleLength)/samplerate;
 
-    %% === Desaccade/Process =========================================== %%
+     %% === Desaccade/Process =========================================== %%
     
     % Find Initial Fit --> Not really needed, hope to remove eventually
     y1 = sin(2*pi*freq*segTime(:));
@@ -158,7 +187,7 @@ for count = 1:nSegs
         end    
     end
 
-    %% === Calculate Fits ============================================== %%
+    % === Calculate Fits ============================================== %%
     % fit data using a linear regression (data specified by 'keep_'index)
     % b=coefficients, bint=95% confidence intervals, r=residual, rint=interval
     % stats include 1)R-square, 2)F statistics, 3)p value 4)error variance
@@ -182,22 +211,22 @@ for count = 1:nSegs
     eyeVel_phase = rad2deg(atan2(b(2), b(1)));
 
     % calculate eye gain as VOR or OKR based on head signal
-    % Chair/VOR Stimulus
-    if headVel_amp > 3
-        reference_amp = headVel_amp;
-        referece_angle = headVel_angle;
-        idealEyeVel = drumVel-headVel;
-    % Drum/OKR Stimulus
-    elseif drumVel_amp > 3
-        reference_amp = drumVel_amp;
-        referece_angle = drumVel_angle;
-        idealEyeVel = drumVel;
-    % No Motor Stimulus
-    else
-        reference_amp = 1;
-        referece_angle = 0;
-        idealEyeVel = zeros(1,segLength);
-    end
+     % Chair/VOR Stimulus
+     if headVel_amp > 3
+         reference_amp = headVel_amp;
+         referece_angle = headVel_angle;
+         idealEyeVel = drumVel-headVel;
+     % Drum/OKR Stimulus
+     elseif drumVel_amp > 3
+         reference_amp = drumVel_amp;
+         referece_angle = drumVel_angle;
+         idealEyeVel = drumVel;
+     % No Motor Stimulus
+     else
+         reference_amp = 1;
+         referece_angle = 0;
+         idealEyeVel = zeros(1,segLength);
+     end
 
     % eye calculations relative to drum/chair
     eyeVel_rel_gain = eyeVel_amp/reference_amp;
@@ -207,19 +236,23 @@ for count = 1:nSegs
     warning on
     
     %% === Calculate Average and More ================================== %%
-
     startpt = max(1,round(mod(-referece_angle,360)/360 * samplerate/freq));
+    %startpt = round(cycleLength/8);%max(1,round(mod(-referece_angle,360)/360 * samplerate/freq))
+    stim_loc_seg = zeros(length(eyeVel_des), 1);
+    stim_loc_seg(round(sort([TTL3_on; TTL3_off; TTL4_on; TTL4_off]) * samplerate)) = 1;
     
     [eyeVel_des_mat, eyeVel_des_cycleMean] = VOR_breakTrace(cycleLength, startpt, eyeVel_des);
     [~, headVel_cycleMean]                 = VOR_breakTrace(cycleLength, startpt, headVel);
     [~, drumVel_cycleMean]                 = VOR_breakTrace(cycleLength, startpt, drumVel);
     [omit_mat, ~]                          = VOR_breakTrace(cycleLength, startpt, double(omitCenters));
     [~, idealEye_cycleMean]                = VOR_breakTrace(cycleLength, startpt, idealEyeVel);
+    [stim_loc_mat, ~]                      = VOR_breakTrace(cycleLength, startpt, stim_loc_seg);
 
     % Calculate Extras
     badCycles = any(omit_mat,2);
     goodCount = sum(~badCycles);
-    eyeVel_des_Sem       = nanstd(eyeVel_des_mat)./sqrt(sum(~isnan(eyeVel_des_mat)));
+    eyeVel_des_Sem = nanstd(eyeVel_des_mat)./sqrt(sum(~isnan(eyeVel_des_mat)));
+    stim_loc_cycle = any(stim_loc_mat);
     
     if goodCount > 0
         eyeVel_good_cycleMean = nanmean(eyeVel_des_mat(~badCycles,:), 1);
@@ -314,14 +347,19 @@ for count = 1:nSegs
     %% === Subplot-1: Segment and Fit ================================== %%
     
     % Choose Stim
-    if contains(R.labels{count}, 'OKR')
+    if contains(R.labels{count}, 'OKR') || contains(R.labels{count}, 'rain')
         plotStim = drumVel_cycleMean;
         stimType = 'Drum';
-    else
+        ylimits = double([floor(min(plotStim)*1.1) ceil(max(plotStim)*1.1)]);
+    elseif contains(R.labels{count}, 'VORD')
         plotStim = headVel_cycleMean;
         stimType = 'Chair';
+        ylimits = double([floor(min(plotStim)*1.1) ceil(max(plotStim)*1.1)]);
+    else
+        plotStim = nan(length(headVel_cycleMean),1);
+        stimType = 'Stim';
+        ylimits = double([floor(min(eyeVel_des_cycleMean)*1.1) ceil(max(eyeVel_des_cycleMean)*1.1)]);
     end
-    ylimits = double([floor(min(plotStim)*1.1) ceil(max(plotStim)*1.1)]);
     
     % check for bad or missing stim
     if ylimits(1) == 0
@@ -335,19 +373,32 @@ for count = 1:nSegs
         
         % Plot proc or raw
         if params.cleanPlot
-            plot(segTime(1:length(eyeVel_proc)), eyeVel_proc, 'k', 'LineWidth', .3); hold on
-            plot(segTime(1:length(eyeVel_proc_des)), eyeVel_proc_des, 'b', 'LineWidth', .3);
-            plot(segTime, vars*b,'r', 'LineWidth', .25);
+            plot(segTime(1:length(eyeVel_proc)), eyeVel_proc, 'k', 'LineWidth', .2); hold on
+            plot(segTime(1:length(eyeVel_proc_des)), eyeVel_proc_des, 'b', 'LineWidth', .2);
+            %plot(segTime, vars*b,'r', 'LineWidth', .25);
         else
             plot(segTime(1:length(eyeVel_raw)), eyeVel, 'k', 'LineWidth', .3); hold on
             plot(segTime(1:length(eyeVel_raw_des)), eyeVel_raw_des, 'b', 'LineWidth', .3);
-            plot(segTime, vars*b,'r', 'LineWidth', .5);
+            %plot(segTime, vars*b,'r', 'LineWidth', .5);
         end
         
         % Old de-saccade: Plot Thresh lines
         if params.newSac == 0
             plot(segTime, fit1 + rawThres1(1), ':r', 'LineWidth', .25);
             plot(segTime, fit1 + rawThres1(2), ':r', 'LineWidth', .25);
+        end
+        
+        % if stim exists, plot
+        if any(TTL3_on)
+            patch(x3, y3, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
+            patch(x4, y4, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
+        end
+        
+        % Plot motor steps
+        if contains(R.labels{count}, 'OKR') || contains(R.labels{count}, 'rain')
+            plot(segTime(1:length(drumVel)), drumVel, 'r', 'LineWidth', .2); hold on
+        elseif contains(R.labels{count}, 'VORD')
+            plot(segTime(1:length(headVel)), headVel, 'r', 'LineWidth', .2); hold on
         end
         
         % Cosmetics
@@ -383,11 +434,23 @@ for count = 1:nSegs
 
 
         % plot
-        plot(cycleTime, smooth(eyeVel_good_cycleMean, 50),'b'); hold on
-        plot(cycleTime, smooth(eyeVel_des_cycleMean, 50), 'g');
-        plot(cycleTime, eyeVel_des_cycleFit, 'r');
+        plot(cycleTime, eyeVel_good_cycleMean,'b'); hold on
+        plot(cycleTime, eyeVel_des_cycleMean, 'g');
+        %plot(cycleTime, eyeVel_des_cycleFit, 'r');
         plot(cycleTime, plotStim, 'k');
         hline(0,'--k');
+        
+        % if stim, plot it
+        if any(stim_loc_cycle)
+            xcycle = [find(stim_loc_cycle)/samplerate]';
+            xcycle = [xcycle(1) xcycle(3); xcycle(2), xcycle(4); xcycle(2), xcycle(4); xcycle(1), xcycle(3)];
+            ycycle = [min(ylim);min(ylim);max(ylim);max(ylim)];
+            ycycle = repmat(ycycle,[1 size(xcycle, 2)]);
+            patch(xcycle, ycycle, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
+            R.xcycle{count} = xcycle;
+            R.ycycle{count} = ycycle;
+        end
+        
         
         % Cosmetics
         box off
@@ -533,12 +596,12 @@ end
 
 
 %% === Save Figures ==================================================== %%
-sp1.PaperSize = [params.sp_Dim(2)*1.8 params.sp_Dim(1)*1.45];
-sp1.PaperPosition = [-2 -11 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
-sp2.PaperSize = [params.sp_Dim(2)*1.8 params.sp_Dim(1)*1.45];
-sp2.PaperPosition = [-2 -11 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
+sp1.PaperSize = [params.sp_Dim(2)*2 params.sp_Dim(1)*1.45];
+sp1.PaperPosition = [-2 -2 params.sp_Dim(2)*2 params.sp_Dim(1)*1.5];
+sp1.PaperSize = [params.sp_Dim(2)*2 params.sp_Dim(1)*1.45];
+sp1.PaperPosition = [-2 -2 params.sp_Dim(2)*2 params.sp_Dim(1)*1.5];
 
 fprintf('\nSaving Subplot 1...')
-tic; print(sp1, fullfile(params.folder, [params.file '_subplot.pdf']),'-dpdf', '-r250'); toc
+tic; print(sp1, fullfile(params.folder, [params.file '_subplot_B.pdf']),'-dpdf', '-r300'); toc
 fprintf('Saving Subplot 2...')
-tic; print(sp2, fullfile(params.folder, [params.file '_subplot2.pdf']),'-dpdf', '-r250'); toc
+tic; print(sp2, fullfile(params.folder, [params.file '_subplot2.pdf']),'-dpdf', '-r300'); toc

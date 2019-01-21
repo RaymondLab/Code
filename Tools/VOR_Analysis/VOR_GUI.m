@@ -130,6 +130,7 @@ function pushbutton1_Callback(hObject, eventdata, handles)
     handles.text11.ForegroundColor = [.3, .75, .93];
     handles.text11.String = 'Running...';
     pause(.1)
+    clc
     VOR_Tests(params);
     handles.text11.String = 'Finished!';
     handles.text11.ForegroundColor = [0 .6 .25];
@@ -148,7 +149,7 @@ function pushbutton2_Callback(hObject, eventdata, handles)
     
     
     % Change string of edit box to the selected folder
-    folder = uigetdir(handles.edit1.String, 'Choose Folder that Contains the Data');
+    folder = string(uigetdir(handles.edit1.String, 'Choose Folder that Contains the Data'));
     handles.edit1.String = folder;
     defaultFolder = handles.edit1.String;
     checkFolderStructure(folder, handles);
@@ -201,14 +202,14 @@ function checkFolderStructure( folder, handles )
     handles.text7.ForegroundColor = [0 0 0];
     
     % Check if Real Folder
-    if exist(folder, 'var') && ~exist(folder, 'dir')
+    if ~isfolder(folder)
         handles.text7.String = 'Invalid Folder';
         handles.text7.ForegroundColor = [1 0 0];
         return
     end
     
     % Search for non-calibration smr files
-    smr_files = dir([folder '\**\*.smr']);
+    smr_files = dir([char(folder) '\**\*.smr']);
     smr_files = smr_files(~contains({smr_files.name}, '_cali'));
 
     % How many files were found?

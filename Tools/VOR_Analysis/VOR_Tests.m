@@ -49,6 +49,7 @@ function singleAnalysis(params)
     cd(params.folder)
     params = subPlotDim(params);
     params.temp_placement = 1;
+    fprintf(['\n\nFile: ', params.file, ' \n'])
     
     %% Default Analysis
     switch params.analysis
@@ -64,11 +65,15 @@ function singleAnalysis(params)
     end
 
     %% Unique Analysis & Summaries
-    fprintf('Generating Summary Figures...')
+    fprintf('Generating Summary Figures...'); tic
     warning('off');
     expmtExcelFile = fullfile(params.folder,[params.file '.xlsx']);
     
     switch params.analysis
+        case 'Amin_GC_Steps'
+            fprintf('Running: GC Step Summary')
+            VOR_Summary_Amin_gcStep(params)
+            
         case 'Sriram_OKR'
             fprintf('Running: Fit Subtraction Analysis\n')
             VOR_Summary('eyeHphase', expmtExcelFile, 0); 
@@ -94,7 +99,7 @@ function singleAnalysis(params)
             VOR_Summary('eyeHphase', expmtExcelFile, 0); 
     end
     
-    fprintf('\nDone!\n')
+    toc
 
 end
 

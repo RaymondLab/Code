@@ -126,6 +126,7 @@ data(end+1) = dat(hevel,'hevel',[],fs,data(1).tstart,data(1).tend,'deg/s');
 
 %% === Run Step Analysis for Each Relevant Segment ===================== %%
 result = VOR_StepFit(data, frequency, labels, timepts, params);
+
 % Append results to Excel
 xlswrite(fullfile(params.folder,[params.file '.xlsx']),result.data(:,4:end),'Sheet1','J2');
 xlswrite(fullfile(params.folder,[params.file '.xlsx']),result.header(4:end),'Sheet1','J1');
