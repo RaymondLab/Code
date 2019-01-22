@@ -43,7 +43,7 @@ t30_eyeVelGood_Wmean = t30_eyeVelGood_Wmean / sum([segObj(4).goodCcount, ...
 
 % Misc
 freq = segObj(1).freq;
-sampleRate = segObj(1).sampleRate;
+samplerate = segObj(1).samplerate;
 ttCycle = segObj(1).ttCycle;
 
 % Calc mean head velocity @ t0
@@ -88,12 +88,12 @@ xticklabels([])
 
 % Calc
 if type == 1
-    [~, eyevelH_rel_phase_t0, eyevelH_amp_t0, eyeHgain_t0] = VOR_SineFit_Single(freq, sampleRate, t0_eyeVelDes_Wmean, headVelMean_t0, drumVelMean_t0);
-    [~, eyevelH_rel_phase_t30, eyevelH_amp_t30, eyeHgain_t30] = VOR_SineFit_Single(freq, sampleRate, t30_eyeVelDes_Wmean, headVelMean_t30, drumVelMean_t30);
+    [~, eyevelH_rel_phase_t0, eyevelH_amp_t0, eyeHgain_t0] = VOR_SineFit_Single(freq, samplerate, t0_eyeVelDes_Wmean, headVelMean_t0, drumVelMean_t0);
+    [~, eyevelH_rel_phase_t30, eyevelH_amp_t30, eyeHgain_t30] = VOR_SineFit_Single(freq, samplerate, t30_eyeVelDes_Wmean, headVelMean_t30, drumVelMean_t30);
     titlewords = 'Fits of Desaccaded';
 else
-    [~, eyevelH_rel_phase_t0, eyevelH_amp_t0, eyeHgain_t0] = VOR_SineFit_Single(freq, sampleRate, t0_eyeVelGood_Wmean, headVelMean_t0, drumVelMean_t0);
-    [~, eyevelH_rel_phase_t30, eyevelH_amp_t30, eyeHgain_t30] = VOR_SineFit_Single(freq, sampleRate, t30_eyeVelGood_Wmean, headVelMean_t30, drumVelMean_t30);
+    [~, eyevelH_rel_phase_t0, eyevelH_amp_t0, eyeHgain_t0] = VOR_SineFit_Single(freq, samplerate, t0_eyeVelGood_Wmean, headVelMean_t0, drumVelMean_t0);
+    [~, eyevelH_rel_phase_t30, eyevelH_amp_t30, eyeHgain_t30] = VOR_SineFit_Single(freq, samplerate, t30_eyeVelGood_Wmean, headVelMean_t30, drumVelMean_t30);
     titlewords = 'Fits of Only Good Cycles';
 end
 
@@ -121,7 +121,7 @@ if type == 1
 else
     DiffOfMeans = t30_eyeVelGood_Wmean - t0_eyeVelGood_Wmean;
 end
-[~, eyevelH_rel_phase_diff, eyevelH_amp_diff, eyeHgain_diff] = VOR_SineFit_Single(freq, sampleRate, DiffOfMeans, headVelMean_t0, drumVelMean_t0);
+[~, eyevelH_rel_phase_diff, eyevelH_amp_diff, eyeHgain_diff] = VOR_SineFit_Single(freq, samplerate, DiffOfMeans, headVelMean_t0, drumVelMean_t0);
 
 % Plot
 axes(ha(3))

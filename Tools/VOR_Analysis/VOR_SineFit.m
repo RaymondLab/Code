@@ -508,7 +508,7 @@ for count = 1:nSegs
             
             % Cosmetics
             xlim([0 15])
-            ylim([0 40])
+            ylim([0 30])
             xticks([1:15])
             set(gca, 'TickDir', 'out')
             xticklabels([])
@@ -517,11 +517,11 @@ for count = 1:nSegs
             box off
 
             % Text
-            text(10, ylimits(2), ['Good Cycles: ', num2str(goodCount), '/', num2str(length(badCycles))],'FontSize',7);
-            text(10, ylimits(2)-5, ['Rel Gain: ' num2str(eyeVel_rel_gain)], 'Fontsize', 7);
-            text(10, ylimits(2)-10, ['Eye Amp: ', num2str(eyeVel_amp,3)],'FontSize',7);
-            text(10, ylimits(2)-15, ['Rel. Phase: ', num2str(eyeVel_rel_phase,3)],'FontSize',7);
-            text(10, ylimits(2)-20, ['Stim: ', stimType],'FontSize',7);
+            text(10, max(ylim), ['Good Cycles: ', num2str(goodCount), '/', num2str(length(badCycles))],'FontSize',7);
+            text(10, max(ylim)-5, ['Rel Gain: ' num2str(eyeVel_rel_gain)], 'Fontsize', 7);
+            text(10, max(ylim)-10, ['Eye Amp: ', num2str(eyeVel_amp,3)],'FontSize',7);
+            text(10, max(ylim)-15, ['Rel. Phase: ', num2str(eyeVel_rel_phase,3)],'FontSize',7);
+            text(10, max(ylim)-20, ['Stim: ', stimType],'FontSize',7);
         end
 
     end
@@ -534,9 +534,9 @@ end
 
 %% === Save Figures ==================================================== %%
 sp1.PaperSize = [params.sp_Dim(2)*1.8 params.sp_Dim(1)*1.45];
-sp1.PaperPosition = [-2 -11 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
+sp1.PaperPosition = [-2 -sp1.PaperSize(2)*.125 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
 sp2.PaperSize = [params.sp_Dim(2)*1.8 params.sp_Dim(1)*1.45];
-sp2.PaperPosition = [-2 -11 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
+sp2.PaperPosition = [-2 -sp1.PaperSize(2)*.125 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
 
 fprintf('\nSaving Subplot 1...')
 tic; print(sp1, fullfile(params.folder, [params.file '_subplot.pdf']),'-dpdf', '-r250'); toc
