@@ -248,68 +248,15 @@ for count = 1:nSegs
     
     R.eyeVel_good_cycleMean{count}  = eyeVel_good_cycleMean;
     R.eyeVel_des_cycleMean{count}   = eyeVel_des_cycleMean;
-    R.eyeVel_des_Sem{count}         = eyeVel_des_Sem;
     R.eyeVel_des_cycleFit{count}    = eyeVel_des_cycleFit;
+    R.eyeVel_des_Sem{count}         = eyeVel_des_Sem;
     R.headVel_cycleMean{count}      = headVel_cycleMean;
     R.drumVel_cycleMean{count}      = drumVel_cycleMean;
     R.cycleTime{count}              = cycleTime;
     R.freq{count}                   = freq;
     R.samplerate{count}             = samplerate;
     R.idealEye_cycleMean{count}     = idealEye_cycleMean;
-    
-    %% === Save some variables for later =============================== %%
-    switch params.analysis
-        case 'Dark Rearing'
-            if any(count == [1, 2, 3, 15, 16, 17])
-                if count == 1
-                    q = 1;
-                end
-                
-                segObj(q).headVel = headVel_cycleMean; % saved
-                segObj(q).DrumVel = drumVel_cycleMean; % saved 
-                segObj(q).eyeVelDes = eyeVel_des_cycleMean; % saved 
-                segObj(q).eyeVelDesFit = eyeVel_des_cycleFit; % saved
-                segObj(q).eyeVelGood = eyeVel_good_cycleMean; % saved
-                segObj(q).SacFrac = mean(omitH); % saved
-                segObj(q).goodCcount = goodCount; % saved
-                segObj(q).ttCycle = cycleTime; % saved
-                segObj(q).freq = freq; % saved
-                segObj(q).samplerate = samplerate; % saved
-                segObj(q).idealEye = idealEye_cycleMean; % saved
-                
-                q = q + 1;
-                
-                if q == 7
-                    save('t0_t30.mat', 'segObj')
-                end
-            end   
-            
-        case 'Sriram_OKR'
-            if any(count == [2, 3, 4, 15, 16, 17, 59, 60, 61])
-                
-                if count == 2
-                    q = 1;
-                end
-                
-                segObj(q).headVel = headVel_cycleMean;
-                segObj(q).DrumVel = drumVel_cycleMean;
-                segObj(q).eyeVelDes = eyeVel_des_cycleMean;
-                segObj(q).eyeVelDesFit = eyeVel_des_cycleFit;
-                segObj(q).eyeVelGood = eyeVel_good_cycleMean;
-                segObj(q).SacFrac = mean(omitH);
-                segObj(q).goodCcount = goodCount;
-                segObj(q).ttCycle = cycleTime;
-                segObj(q).freq = freq;
-                segObj(q).samplerate = samplerate;
-                segObj(q).idealEye = idealEye_cycleMean;
-                
-                q = q + 1;
-                
-                if q == 10
-                    save('t1_t15_t60.mat', 'segObj')
-                end
-            end
-    end
+    R.saccadeFrac{count}            = mean(omitH);
     
     %% === Subplot-1: Segment and Fit ================================== %%
     
