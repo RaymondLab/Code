@@ -1,4 +1,4 @@
-function VOR_Summary_Sriram_CycleDiff(params, post, pre, Etitle)
+function VOR_Summary_Sriram_CycleDiff(params, post, pre, Etitle, stim)
 
 %% Prep
 type = 1;% 1 == desaccaded, 2 == good cycles SRIRAM
@@ -72,8 +72,14 @@ else
     title('Only Good Cycles')
 end
 
-plot(ttCycle, drumVel_preMean, 'k')
-plot(ttCycle, drumVel_postMean, 'k')
+if contains(stim, 'drum')
+    plot(ttCycle, drumVel_preMean, 'k')
+    plot(ttCycle, drumVel_postMean, 'k')
+else
+    plot(ttCycle, headVel_preMean, 'k')
+    plot(ttCycle, headVel_postMean, 'k')
+end
+
 ylim([-50, 50])
 hline(0, 'k')
 legend('pre', 'post')
@@ -97,8 +103,14 @@ end
 axes(ha(2))
 plot(ttCycle, sin(2*pi*freq*ttCycle + deg2rad(eyevelH_rel_phase_tPre+180))*eyevelH_amp_tPre, 'b'); hold on
 plot(ttCycle, sin(2*pi*freq*ttCycle + deg2rad(eyevelH_rel_phase_tPost+180))*eyevelH_amp_tPost, 'r');
-plot(ttCycle, drumVel_preMean, 'k')
-plot(ttCycle, drumVel_postMean, 'k')
+
+if contains(stim, 'drum')
+    plot(ttCycle, drumVel_preMean, 'k')
+    plot(ttCycle, drumVel_postMean, 'k')
+else
+    plot(ttCycle, headVel_preMean, 'k')
+    plot(ttCycle, headVel_postMean, 'k')
+end
 
 % Cosmetics
 legend('pre', 'post')
@@ -123,8 +135,14 @@ end
 axes(ha(3))
 plot(ttCycle, DiffOfMeans, 'Color', [0 .5 0]); hold on
 plot(ttCycle, sin(2*pi*freq*ttCycle + deg2rad(eyevelH_rel_phase_diff+180))*eyevelH_amp_diff, 'c');
-plot(ttCycle, drumVel_preMean, 'k')
-plot(ttCycle, drumVel_postMean, 'k')
+
+if contains(stim, 'drum')
+    plot(ttCycle, drumVel_preMean, 'k')
+    plot(ttCycle, drumVel_postMean, 'k')
+else
+    plot(ttCycle, headVel_preMean, 'k')
+    plot(ttCycle, headVel_postMean, 'k')
+end
 
 % cosmetics
 title(['Diff of Means: ', Etitle])

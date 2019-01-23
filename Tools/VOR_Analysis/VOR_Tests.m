@@ -77,14 +77,14 @@ function singleAnalysis(params)
         case 'Sriram_OKR'
             fprintf('Running: Fit Subtraction Analysis\n')
             VOR_Summary('eyeHphase', expmtExcelFile, 0); 
-            VOR_Summary_Sriram_CycleDiff(params, [59, 60, 61], 2, 'T60 - T0')
-            VOR_Summary_Sriram_CycleDiff(params, [15, 16, 17], 2, 'T15 - T0')
-            VOR_Summary_Sriram_CycleDiff(params, [59, 60, 61], [15, 16, 17,], 'T60 - T15')
+            VOR_Summary_Sriram_CycleDiff(params, [59, 60, 61], 2, 'T60 - T0', 'drum')
+            VOR_Summary_Sriram_CycleDiff(params, [15, 16, 17], 2, 'T15 - T0', 'drum')
+            VOR_Summary_Sriram_CycleDiff(params, [59, 60, 61], [15, 16, 17,], 'T60 - T15', 'drum')
             
         case 'Dark Rearing'
             fprintf('Running: Dark Rearing''s t30 & t0 Analysis\n')
-            VOR_Summary_Sriram_CycleDiff(params, [15, 16 17], [1, 2, 3], 'T30 - T0')
-            VOR_Summary_Sriram_CycleDiff(params, 14, 4, 'T27.5 - T2.5')
+            VOR_Summary_Sriram_CycleDiff(params, [15, 16 17], [1, 2, 3], 'T30 - T0', 'head')
+            VOR_Summary_Sriram_CycleDiff(params, 14, 4, 'T27 5 - T2 5', 'head')
             
         case 'Amin_Gen'
             VOR_Summary_Amin_Gen('eyeHgain', expmtExcelFile, 0);
