@@ -1,0 +1,765 @@
+' New mouse-rig script
+' Drew Haven
+' Barbara Nguyen-Vu
+' Soon-Lim Shin
+' Started script: 2008-12-05 
+'  04/06/12 add step light by BN, GZ
+'  07/24/12 updated and debugged by Hannah Payne
+'  10/31/12 Edited to test mag sensor on channel 7 (formerly ephsy)
+
+
+'--------------------------------------------------------------------------------
+' Defining Global variables
+'--------------------------------------------------------------------------------
+'TODO define number of blocks
+var SampleWindow%;
+'var SequencerFile$ := "C:\\Dropbox\\rlab\\code\\SeqHP070915"; 
+var SequencerFile$ := "C:\\Dropbox\\rlab\\code\\SeqHP011217"; 
+var ArbStimFile1$ := "C:\\Dropbox\\rlab\\Code\\stepExpmt\\stepTest_C600_W250.txt";
+var ArbStimFile2$ := "C:\\Dropbox\\rlab\\Code\\stepExpmt\\stepTrain_C600_W250_L250_D50.txt";
+
+' var ArbStimFile1$ := "C:\\Dropbox\\rlab\\Code\\stepExpmt\\stepTest_C600_W250.txt";
+' var ArbStimFile2$ := "C:\\Dropbox\\rlab\\Code\\stepExpmt\\stepTrain_C600_W250_L200_D400.txt";
+
+var MaxVoltage := 10; '*** HP 1/10/14 +-10 V voltage range: check in Edit -> Edit Parameters
+
+var comment$;
+var i%;
+var j%;
+
+' Control experiment parameters
+var nBlocks% := 6;
+var nTests% := 3;
+var expmtMode := 2;
+var stepVel := 15;
+var runExpmt% := 0;
+var currTimeExpmt := 0;
+var testlength;
+var trainlength;
+
+var iBlock% := 1;
+var iTest% := 1;
+var runTestOrTrain% := 1;
+var totalTimeExpmt := 7200000; ' Max of 2 hours
+var initWait := 5; ' How many seconds to wait for chair to reset
+var goalTime;
+' Arbitrary test/train parameters for drum/chair/light
+
+var chs%[3];
+var dataFreq := 1000;
+var nSamples1% := 1;
+var nSamples2% := 1;
+var stimVoltages1[1][3];
+var stimVoltages2[1][3];
+var dataChair1[1];
+var dataLight1[1];
+var dataDrum1[1];
+var dataChair2[1];
+var dataLight2[1];
+var dataDrum2[1];
+
+' Allow scaling of drum/chair amplitude in Spike2
+var dataDrum1Scaled[1];
+var dataChair1Scaled[1];
+var dataLight1Scaled[1];
+var dataDrum2Scaled[1];
+var dataChair2Scaled[1];
+var dataLight2Scaled[1];
+
+' Parameters for offset correction
+var hepos%;       ' calculated eye pos
+var hevel%;       ' calculated eye vel
+var Offset1% := 0;
+var Offset2% := 0;
+var prevTime := 0;
+var currTime := 0;
+var initTime := 0; 
+var currTimeInd% := 0;
+var resetInit% := 1;
+var drumOn% := 0;
+var errPropChair := 0;
+var errPropDrum  := 0;      
+var errIntChair  := 0;
+var errIntDrum   := 0;
+
+
+'Chair converstion factors
+var ChairDegreesPerSecond2Voltage := 0.009323; 'Chair velocity to voltage (Scale)  * Doubled after fixing scaling (10 V MaxVoltage) 1/10/14 HP
+var ChairDegreesPerSecondOffset := -.2;         'Chair velocity to voltage (offset)  *** Input default Chair offset here
+
+'Drum conversion factors
+var DrumDegreesPerSecond2Voltage := 0.01;      'Drum velocity to voltage (Scale)
+var DrumDegreesPerSecondOffset := 0.1;        'Drum velocity to voltage (offset)   *** Input default Drum offset here   * Changed from 0.1 HP 1/12/17;
+
+'Channel 1: Scaling to display the drum COMMAND signal
+var DrumVoltage2Velocity := 100;                'Voltage to Drum Velocity (Scale)
+var DrumVoltage2VelocityC := 0;                 'Voltage to Drum Velocity (offset)
+
+'Channel 2: Scaling to display the chair COMMAND signal 
+var ChairVoltage2Velocity := 1/ChairDegreesPerSecond2Voltage; '107.42869;         'Voltage to Chair Velocity (Scale)     HP 1/10/14
+var ChairVoltage2VelocityC := 0;                'Voltage to Chair Velocity (offset)
+
+'Channel 3: Scaling for drum position readout
+var DrumPosReadoutScale := 20;                   'Drum position readout scale (~100 deg/10V) 1/10/14
+var DrumPosReadoutOffset := 0;                  'Drum position readout offset
+
+'Channel 4: Chair position readout
+var ChairPosReadoutScale := -18.07;              'Voltage to Chair Position (Scale) 
+var ChairPosReadoutOffset := 0;                 'Voltage to Chair Position (offset)
+
+'Channel 5/6: Eye position readout
+var EyeVoltage2Position := 1;                   'Voltage to Eye Position (Scale)  %*** 20 HP 6/3
+var EyeVoltage2PositionC := 0;                  'Voltage to Eye Position (offset)
+
+'Channel 7: Chair velocity readout
+var ChairVelReadoutScale := ChairVoltage2Velocity;             
+var ChairVelReadoutOffset := 0;        
+
+var htvelChan%; 'Channel for getting velocity from drum position
+var hhvelChan%; 'Channel for getting velocity from chair position 
+
+var hevelChan1%; 'Channel for getting eye velocity from magenetic eye position
+var hevelChan2%; 'Channel for getting eye velocity from magenetic sensor eye pos 
+
+'Order of toolbar buttons
+const NewFilePos        := 2;   
+const InitPos           := NewFilePos+1;
+const CommentPos        := InitPos+1;
+const LightPos          := CommentPos+1;
+const WavePos2          := LightPos+1;
+const WavePos1          := WavePos2+1;
+const ExpmtPos          := WavePos1+1;
+const ExpmtConfigPos    := ExpmtPos+1;
+
+' Order of channels
+const HTVELCh% := 1;
+const HHVELCh% := 2;
+const htposCh% := 3;
+const hhposCh% := 4;
+
+'--------------------------------------
+
+'--------------------------------------------------------------------------------
+' MAIN PROGRAM
+'--------------------------------------------------------------------------------
+ToolbarConfig();
+
+'--------------------------------------------------------------------------------
+'Configure the Toolbar
+'--------------------------------------------------------------------------------
+Proc ToolbarConfig()
+ToolbarClear();     'Remove any old buttons   
+
+ToolbarSet(0, "Idle",ToolbarIdle%);
+ToolbarSet(1, "Quit",  ToolbarQuit%);
+ToolbarSet(InitPos, "Init", ToolbarInit%);
+ToolbarSet(LightPos, "Light On", ToolbarLightOn%);
+ToolbarSet(WavePos1,"Play Wave1",ToolbarWaveOn1%);
+ToolbarSet(WavePos2,"Play Wave2",ToolbarWaveOn2%);
+ToolbarSet(ExpmtPos, "Run Expmt", ToolbarRunExpmt%);
+ToolbarSet(ExpmtConfigPos, "Config Expmt", ToolbarConfigExpmt%);
+ToolbarSet(CommentPos, "Comment", ToolbarComment%);
+ToolbarSet(NewFilePos, "New File", ToolbarNew%);
+Toolbar("", 231);  
+
+End
+
+'--------------------------------------------------------------------------------
+' Set up channels and make window
+'--------------------------------------------------------------------------------
+Proc WindowConfig()
+
+SampleClear(); 'Set the sampling configuration to a standard state
+ArbitraryStim(); ' Load any arbitrary waveforms to play
+
+'sequencer setup - returns zero if OK 
+var err%; err% := SampleSequencer( SequencerFile$ ); 
+if err%<0 then
+	Message(Print$("I can't find your Sequencer File:%s",Error$(err%)));
+	halt
+endif
+
+'Channel 1
+SampleWaveform(1,0,1000);  'Channel= 1, port= 0, ideal sampling rate= 1000 Hz
+SampleCalibrate(1,"deg/s", DrumVoltage2Velocity, DrumVoltage2VelocityC);
+SampleTitle$(1,"HTVEL");
+SampleComment$(1, "Velocity Signal sent to drum");
+
+'Channel 2
+SampleWaveform(HHVELCh%,1,1000);
+SampleCalibrate( HHVELCh%, "deg/s", ChairVoltage2Velocity, ChairVoltage2VelocityC);
+SampleTitle$(HHVELCh%,"HHVEL");
+SampleComment$(HHVELCh%, "Velocity Signal sent to chair");
+
+'Channel 3
+SampleWaveform(htposCh%,2,1000);
+SampleCalibrate(htposCh%, "deg", DrumPosReadoutScale, DrumPosReadoutOffset);
+SampleTitle$(htposCh%,"htpos");
+SampleComment$(htposCh%, "Drum Position");
+
+'Channel 4
+SampleWaveform(hhposCh%,3,1000);
+SampleCalibrate(hhposCh%,"deg", ChairPosReadoutScale, ChairPosReadoutOffset);
+SampleTitle$(hhposCh%,"hhpos");
+SampleComment$(hhposCh%, "Chair Position");
+
+'Channel 5
+SampleWaveform(5,4,1000);
+SampleCalibrate(5,"V",EyeVoltage2Position,EyeVoltage2PositionC);
+SampleTitle$(5,"hepos1");
+SampleComment$(5, "Eye Position 1");
+
+'Channel 6
+SampleWaveform(6,5,1000);
+SampleCalibrate(6,"V", EyeVoltage2Position,EyeVoltage2PositionC);
+SampleTitle$(6,"hepos2");
+SampleComment$(6, "Eye Position 2");
+
+' Channel 7
+SampleWaveform(7,6,1000);
+SampleCalibrate(7,"V", 1, 0);
+SampleTitle$(7,"hepos3");
+
+' Channel 8
+SampleWaveform(8,7,1000);
+SampleCalibrate(8,"deg/s", ChairVoltage2Velocity, 0);
+SampleTitle$(8,"hhvel");
+
+'Channel 9
+SampleEvent(9,0,2,1000);     'Func SampleEvent(chan%, port%, type%, rate);
+SampleTitle$(9,"TTL1");
+SampleComment$(9, "TTL1: Shutter"); 
+
+'Channel 10
+SampleEvent(10,1,2,1000);
+SampleTitle$(10,"TTL2");
+SampleComment$(10, "TTL2: IR LED"); 
+
+'Channel 11
+SampleEvent(11,2,2,1000);     
+SampleTitle$(11,"TTL3");
+SampleComment$(11, "TTL3: L laser"); 
+
+'Channel 12
+SampleEvent(12,3,2,1000);
+SampleTitle$(12,"TTL4");
+SampleComment$(12, "TTL4: R laser"); 
+
+'Channel 30
+SampleTextMark(200);
+
+'Set optimise mode (do this last)
+SampleOptimise(1,1,0,2,50);  
+
+'Continuous sampling
+SampleMode(1); 
+
+'Create a spike2 data file and make the new window visible immediately
+SampleWindow% := FileNew(0,1);   
+
+'Channel 3a : hevel: derivative of Channel 3
+'htvelChan% := ChanDuplicate(3);
+'ChanProcessClear(htvelChan%);
+'ChanProcessAdd(htvelChan%, 3, 0.05);
+'ChanShow(htvelChan%);
+'ChanTitle$(htvelChan%,"htvel");    
+'
+'Channel 4a : hevel: derivative of Channel 4
+'hhvelChan% := ChanDuplicate(4);
+'ChanProcessClear(hhvelChan%);
+'ChanProcessAdd(hhvelChan%, 3, 0.05);
+'ChanShow(hhvelChan%);
+'ChanTitle$(hhvelChan%,"hhvel");
+
+'Add smoothing to some channels
+'ChanProcessAdd(13, 1, 0.05);
+
+SetSequencerValues();
+
+'Hide all
+ChanHide(-1);
+
+'Show certain channels in a particular order
+'ChanShow(1,2,3,4,5,6,7,8,9,10,11,12,30,31);
+ChanShow(1, 2,3, 4,5,6,7,8,9,10,11,12,30,31);
+'ChanSelect(13,1);    'Select channel 13
+'ChanOrder(4,1,-3);   'Move selected channels
+'-----------------------------------------
+
+'Channel y-range (channel num, low, high)
+YRange( 1, -10, 10 ); 
+YRange( 2, -10, 10 );  
+YRange( 3, -10, 10 );  
+YRange( 4, -10, 10 );  
+YRange( 5, -10, 10 );  
+YRange( 6, -10, 10 );  
+
+ChanWeight(1,.5);           ' Make command channel smaller
+ChanWeight(2,.5);           ' Make command channel smaller
+
+XRange(0, 20);      ' Set the default X axis time range
+End
+
+'--------------------------------------------------------------------------------
+' Read in arbitrary stimulus
+'--------------------------------------------------------------------------------
+Proc ArbitraryStim()
+
+'---------------ADD ARBITRARY STIM FROM FILE------------------------
+var nChans%;
+var fileHandle;
+
+' Open input file. Uncomment this line and comment out the FileOpen call below to specify 
+' the input file and just open it without the dialog. 
+fileHandle := FileOpen(ArbStimFile1$, 8, 0); ' Specify input file
+'fileHandle := FileOpen("", 8, 0); ' Use dialog
+
+' Read first line: number of samples and frequency and number of columns
+var status% := Read(nSamples1%, dataFreq, nChans%);
+if status% <> 3 then
+    PrintLog("Error - First line of input file should have three (space-separated) values, nSamples freq(in Hz), nChans. Found %d.\n", status%);
+    FileClose();   halt;
+endif
+PrintLog("Will read %d samples. Sampling frequency: %f Hz\n", nSamples1%, dataFreq);
+
+' Init arrays
+var stimSamples1[nSamples1%][nChans%]; ' initialize array with zeros
+
+' Now read velocity samples
+for i% := 0 to nSamples1%-1 do 
+    status% := Read(stimSamples1[i%][]);
+next;
+if status% < 0 then
+    PrintLog("Error in reading data\n");
+    halt;
+endif
+FileClose();
+PrintLog("Done reading input.\n");
+
+' READ TRAIN INPUT
+fileHandle := FileOpen(ArbStimFile2$, 8, 0); ' Specify input file
+'fileHandle := FileOpen("", 8, 0); ' Use dialog
+
+' Read first line: number of samples and frequency and number of columns
+status% := Read(nSamples2%, dataFreq, nChans%);
+if status% <> 3 then
+    PrintLog("Error - First line of input file should have three (space-separated) values, nSamples freq(in Hz), nChans. Found %d.\n", status%);
+    FileClose();   halt;
+endif
+PrintLog("Will read %d samples. Sampling frequency: %f Hz\n", nSamples2%, dataFreq);
+
+' Init arrays
+var stimSamples2[nSamples2%][nChans%]; ' initialize array with zeros
+
+' Now read velocity samples
+for i% := 0 to nSamples2%-1 do 
+    status% := Read(stimSamples2[i%][]);
+next;
+if status% < 0 then
+    PrintLog("Error in reading data\n");
+    halt;
+endif
+FileClose();
+PrintLog("Done reading input.\n");
+
+resize dataDrum1[nSamples1%];     'Global
+resize dataChair1[nSamples1%];    'Global
+resize dataLight1[nSamples1%];    'Global
+
+resize dataDrum2[nSamples2%];     'Global
+resize dataChair2[nSamples2%];    'Global
+resize dataLight2[nSamples2%];    'Global
+
+
+resize dataDrum1Scaled[nSamples1%];     'Global
+resize dataChair1Scaled[nSamples1%];    'Global
+resize dataLight1Scaled[nSamples1%];    'Global
+
+resize dataDrum2Scaled[nSamples2%];     'Global
+resize dataChair2Scaled[nSamples2%];    'Global
+resize dataLight2Scaled[nSamples2%];    'Global
+
+resize stimVoltages1[nSamples1%][3];    
+resize stimVoltages2[nSamples2%][3];    
+
+ArrConst(dataDrum1[], stimSamples1[][0]);
+ArrConst(dataChair1[], stimSamples1[][1]);
+ArrConst(dataLight1[], stimSamples1[][2]);
+
+ArrConst(dataDrum2[], stimSamples2[][0]);
+ArrConst(dataChair2[], stimSamples2[][1]);
+ArrConst(dataLight2[], stimSamples2[][2]);
+
+' Computation here - convert input samples to voltages between -+5v (PlayWave assumes full range is 5 V)
+ArrMul(dataChair1[], .1); 'Input was multiplied by 10.
+ArrMul(dataDrum1[], .1);  'Input was multiplied by 10
+
+ArrMul(dataChair2[], .1); 'Input was multiplied by 10.
+ArrMul(dataDrum2[], .1);  'Input was multiplied by 10
+
+' Computation here - FOR TTL OUTPUT
+ArrMul(dataLight1[], 5);
+ArrMul(dataLight2[], 5);
+
+'Specify which ADC channels to output each column of arbitray signal to
+chs%[0] := 0; 'Drum/R laser
+chs%[1] := 1; 'Chair
+chs%[2] := 3; 'Light flash 
+
+'Add waveforms to DAC output - reserve space
+'layWaveAdd("w", "ArbWave", chs%[], dataFreq,stimVoltages1[][]);
+'PlayWaveAdd("W", "ArbWave", chs%[], dataFreq, stimVoltages2[][]);
+PlayWaveAdd("w", "ArbWave", chs%[], dataFreq, nSamples1%);
+PlayWaveAdd("W", "ArbWave", chs%[], dataFreq, nSamples2%);
+
+
+' Duration of each file in seconds
+testlength := nSamples1%/dataFreq;
+trainlength := nSamples2%/dataFreq;
+
+
+End
+
+
+'--------------------------------------------------------------------------------
+' Toolbar Callbacks
+'--------------------------------------------------------------------------------
+Func ToolbarIdle%()
+
+
+'TODO: edit to run experiment if ongoing
+
+'This function calls repeatedly whenever nothing else is happening
+
+' Check a valid sampling view is running
+if  ViewKind() <> 0 then 
+    return 1;
+endif;
+
+' Current time
+currTime := MaxTime();    
+
+'Check the time. Seconds is the current time - compare it to the goal time of each segment                 
+if  currTime > goalTime and runExpmt% then 
+    
+    ' Check if finished with experiment
+    if  iBlock% = (nBlocks%+1) and runTestOrTrain% = 0 then 'all done                          
+        ToolbarQuitExpmt%();    ' All done
+        Return(1);
+    endif;    
+    
+    docase   
+        
+    case runTestOrTrain% = 0 then             ' RUN TRAINING ONCE                                  
+        goalTime := currTime + trainlength + initWait;                                    
+        ToolbarInit%();                       
+        Yield(initWait);                          ' Wait for chair motion to stop
+        SampleKey("W");
+        runTestOrTrain% := 1;  ' Run Test next
+        iBlock% := iBlock% + 1; ' Increment block count
+        
+    case runTestOrTrain% = 1 then
+        goalTime  := currTime +  testlength + initWait;   
+        ToolbarInit%();                       
+        Yield(initWait);                          ' Wait for chair motion to stop
+        SampleKey("w");
+        
+        if iTest% < nTests% and (iBlock% = 1  or iBlock% = (nBlocks%+1)) then
+            iTest% := iTest% + 1;
+            runTestOrTrain% := 1;  ' Run Test next
+        else
+            iTest% := 1;
+            runTestOrTrain% := 0;  ' Run Train next
+        endif;
+    endcase;
+endif;
+
+
+'var absMax := ChanMeasure(HHVELCh%, 13, currTime-interval, currTime);
+'if absMax<1.5  then motorStill% := 1; endif; 'Abs max in last x seconds near zero
+'
+'if  (currTime > (prevTime + 12)) and (motorStill% or runExpmt%) then 'Check every x seconds    
+'    errPropChair := ChanMeasure(hhposCh%,2,currTime-interval, currTime) - goalPosChair;
+'    errPropDrum  := ChanMeasure(htposCh%,2,currTime-interval, currTime) - goalPosDrum;      
+'    errIntChair  := errIntChair + errPropChair;
+'    errIntDrum   := errIntDrum + errPropDrum;
+'       
+'    ChairDegreesPerSecondOffset :=   -errPropChair/20 - errIntChair/60;  ' try getting rid of velocity component
+'    DrumDegreesPerSecondOffset  :=   -errPropDrum/20  - errIntDrum/60;       
+'           
+'    ' Set limits  - max 1 deg/s velocity offset  
+'    ChairDegreesPerSecondOffset := min(max(ChairDegreesPerSecondOffset,-1),1);
+'    DrumDegreesPerSecondOffset  := min(max(DrumDegreesPerSecondOffset,-1),1);
+'    
+'    prevTime := currTime;    
+'        
+'    SetSequencerValues();    
+'    
+'    ' Update playwave waveform with new offset
+'    var stimVoltages[nSamples%][4];    
+'    var dataDrum2[nSamples%];
+'    var dataChair2[nSamples%]; 
+'    ArrConst(dataDrum2[], dataDrum[]);
+'    ArrConst(dataChair2[], dataChair[]);
+'    ArrAdd(dataChair2[], ChairDegreesPerSecondOffset);
+'    ArrAdd(dataDrum2[], DrumDegreesPerSecondOffset);
+'    ArrMul(dataChair2[], ChairDegreesPerSecond2Voltage/2); ' Need to divide by 2, not sure why
+'    ArrMul(dataDrum2[], DrumDegreesPerSecond2Voltage/2); 
+'           
+'    ' Select channels
+'    if drumOn% then     ' Drum moving!
+'        ArrConst(stimVoltages[][0], dataDrum2[]);  
+'        ArrConst(stimVoltages[][1], dataChair2[]);
+'        ArrConst(stimVoltages[][3], dataLight2[]);    
+'    else
+'        ArrConst(stimVoltages[][1], dataChair2[]);
+'        ArrConst(stimVoltages[][3], dataLight[]);
+'    endif;
+'    
+'    'Add waveforms to DAC output
+'    PlayWaveCopy("W", stimVoltages[][]); 
+'    PlayWaveCycles("W",nReps%); ' repeat 5 times
+'
+'endif;
+Return(1);
+End
+
+
+
+
+'--------------------------------------------------------------------------------
+'Configure expmt settings window
+'--------------------------------------------------------------------------------
+Func ToolbarConfigExpmt%()
+DlgCreate("Experiment settings");  'Start new dialog
+DlgInteger(1,"Number of run-test blocks",0,100,0,0,1);    
+DlgInteger(2,"Number of tests at beginning and end",1,100,0,0,1);
+DlgList(3,"Expmt mode", "habit|x0|x2");    
+DlgInteger(4,"Chair/drum step velocity",0,100,0,0,1);
+var ok%;
+ok% := DlgShow(nBlocks%, nTests%,  expmtMode, stepVel); 
+
+if ok% = 1 then
+    ArrConst(dataDrum1Scaled[],  dataDrum1[]);
+    ArrConst(dataChair1Scaled[], dataChair1[]);
+    ArrConst(dataLight1Scaled[], dataLight1[]);
+    ArrConst(dataDrum2Scaled[],  dataDrum2[]);
+    ArrConst(dataChair2Scaled[], dataChair2[]);
+    ArrConst(dataLight2Scaled[], dataLight2[]);
+    
+    ' Scale the velocities as desired
+    ArrMul(dataDrum1Scaled[],stepVel);
+    ArrMul(dataChair1Scaled[],stepVel);
+    ArrMul(dataDrum2Scaled[],stepVel);
+    ArrMul(dataChair2Scaled[],stepVel);
+    
+    ' Change the drum according to expmt typ
+    docase                 
+    case expmtMode = 0 then     'habit
+        ArrMul(dataDrum2Scaled[],0);
+        ArrMul(dataLight2Scaled[],0);
+    case expmtMode = 1 then     'x0
+        ArrMul(dataDrum2Scaled[],1);
+    case expmtMode = 2 then     'x2
+        ArrMul(dataDrum2Scaled[],-1);
+    endcase;
+    
+    ' Convert to volts
+    ArrAdd(dataChair1Scaled[], ChairDegreesPerSecondOffset);
+    ArrAdd(dataDrum1Scaled[], DrumDegreesPerSecondOffset);
+    ArrMul(dataChair1Scaled[], ChairDegreesPerSecond2Voltage/2); ' Need to divide by 2, not sure why
+    ArrMul(dataDrum1Scaled[], DrumDegreesPerSecond2Voltage/2); 
+    
+    ArrAdd(dataChair2Scaled[], ChairDegreesPerSecondOffset);
+    ArrAdd(dataDrum2Scaled[], DrumDegreesPerSecondOffset);
+    ArrMul(dataChair2Scaled[], ChairDegreesPerSecond2Voltage/2); ' Need to divide by 2, not sure why
+    ArrMul(dataDrum2Scaled[], DrumDegreesPerSecond2Voltage/2); 
+    
+    ' Combine in a matrix with 3 columns
+    ArrConst(stimVoltages1[][0], dataDrum1Scaled[]);  
+    ArrConst(stimVoltages1[][1], dataChair1Scaled[]);
+    ArrConst(stimVoltages1[][2], dataLight1Scaled);  
+    
+    ArrConst(stimVoltages2[][0], dataDrum2Scaled[]);  
+    ArrConst(stimVoltages2[][1], dataChair2Scaled[]);
+    ArrConst(stimVoltages2[][2], dataLight2Scaled);  
+    
+    ' Copy actual data in to waveform
+    PlayWaveCopy("w", stimVoltages1[][]);
+    PlayWaveCopy("W", stimVoltages2[][]);
+    
+endif;
+Return 1;
+End
+' End ToolbarConfigExpmt
+'--------------------------------------------------------------------------------
+
+
+
+
+
+Func ToolbarRunExpmt%()
+
+'TODO: edit to run test first
+
+runExpmt% := 1;
+iBlock% := 1;
+iTest% := 1;
+
+'SampleKey( "w" ); ' Play wave
+'errIntChair := 0;
+'errIntDrum := 0;
+runTestOrTrain% := 1;
+initTime := MaxTime();
+goalTime := initTime;
+ToolbarSet(ExpmtPos, "Quit Expmt",ToolbarQuitExpmt%);
+Return(1);
+End
+
+Func ToolbarQuitExpmt%()
+ToolbarInit%();
+ToolbarSet(ExpmtPos, "Run Expmt",ToolbarRunExpmt%);
+runExpmt% := 0;
+Return(1)
+end
+
+'--------------------------------------------------------------------------------
+'Turn waveform on and off
+'--------------------------------------------------------------------------------
+Func ToolbarWaveOn1%()
+SampleKey( "w" );
+ToolbarSet(WavePos1, "Wave 1 off",ToolbarWaveOff1%);
+Return( 1 );
+end
+
+Func ToolbarWaveOff1%()
+ToolbarInit%();
+ToolbarSet(WavePos1, "Wave 1 On",ToolbarWaveOn1%);
+Return( 1 );
+End
+
+'--------------------------------------------------------------------------------
+'Turn waveform on and off
+'--------------------------------------------------------------------------------
+Func ToolbarWaveOn2%()
+SampleKey( "W" );
+ToolbarSet(WavePos2, "Wave 2 off",ToolbarWaveOff2%);
+Return( 1 );
+end
+
+Func ToolbarWaveOff2%()
+ToolbarInit%();
+ToolbarSet(WavePos2, "Wave 2 On",ToolbarWaveOn2%);
+Return( 1 );
+End
+
+'--------------------------------------------------------------------------------
+' Quit the data collection
+'--------------------------------------------------------------------------------
+Func ToolbarQuit%()
+SampleKey( "O" );
+Return( 0 );
+End
+
+'--------------------------------------------------------------------------------
+' Initialize chair and drum (bring back to zero position)
+'--------------------------------------------------------------------------------
+Func ToolbarInit%()
+PlayWaveStop(); 'In case any wave playing
+prevTime := 0;  ' Reset prev time so sine offset code continues running in a new file
+ToolbarLightOff%(); 
+SampleKey( "I" );
+errIntChair := 0;
+errIntDrum := 0;
+Return( 1 );
+End
+
+
+'--------------------------------------------------------------------------------
+'Comment
+'--------------------------------------------------------------------------------
+Func ToolbarComment%()
+DlgCreate("Comment"); 'Start new dialog for entering comments
+DlgString(1,"Comment",200);
+DlgShow(comment$);
+SampleText(comment$);
+Return(1);
+End
+
+
+'--------------------------------------------------------------------------------
+'Turn light on/off
+'--------------------------------------------------------------------------------
+Func ToolbarLightOn%()
+SampleKey( "L" );
+Toolbarset(LightPos,"Light Off", ToolbarLightOff%);
+Return( 1 );
+end
+
+Func ToolbarLightOff%()
+SampleKey( "l" );
+Toolbarset(LightPos,"Light On", ToolbarLightOn%);
+Return( 1 );
+end
+
+
+'--------------------------------------------------------------------------------
+'New file
+'--------------------------------------------------------------------------------
+Func ToolbarNew%()
+initTime := 0;
+WindowConfig();
+Return (1);
+End
+
+Proc SetSequencerValues()
+'Chair parameters
+SampleSeqVar( 23, ChairAmp2Int32%( ChairDegreesPerSecondOffset ) );
+'Drum parameters
+SampleSeqVar( 22, DrumAmp2Int32%( DrumDegreesPerSecondOffset ) );
+
+End	
+
+'--------------------------------------------------------------------------------
+' Conversion functions
+'--------------------------------------------------------------------------------
+
+' Angles in the range [-180,180] should span [-2147483648.0,2147483647.0]
+Func Angle2Int32%( angle )
+Return( angle * 2147483647.0 / 180 );
+End
+
+' Rates are calculated in degrees per sequencer step, with one degree being 11930465.
+Func Hz2Int32%( hz )
+' This assumes a sequencer rate of 1 kHz.
+Return( hz * 11930465 * 360 / 1000 );
+End
+
+' Amplitudes must be converted such that [ 0, 32768 ] spans the positive range of the dac, e.g. [0, 5 ]
+' We have to include the dac maximum and the degrees-per-second-to-voltage conversion factor. Does not include offset.
+Func ChairAmp2Int16%( amp )
+Return( amp * ChairDegreesPerSecond2Voltage * 32768 / MaxVoltage  ) ;
+End
+
+Func DrumAmp2Int16%( amp )
+Return( amp * DrumDegreesPerSecond2Voltage * 32768 / MaxVoltage  )  ;
+End
+
+Func ChairAmp2Int32%( amp )
+Return( amp * ChairDegreesPerSecond2Voltage * 2147483647 / MaxVoltage  ) ;
+End
+
+Func DrumAmp2Int32%( amp )
+Return( amp * DrumDegreesPerSecond2Voltage * 2147483647 / MaxVoltage  )  ;
+End
+
+
+' Command velocities must be converted such that [ 0, 2147483647 ] spans the positive range of the dac, e.g. [0, 5 ]
+' We have to include the dac maximum and the degrees-per-second-to-voltage conversion factor.
+Func ChairVel2Int32%( amp )
+Return(  (amp + ChairDegreesPerSecondOffset) * ChairDegreesPerSecond2Voltage* 2147483647 / MaxVoltage  );
+End
+
+Func DrumVel2Int32%( amp )
+Return( (amp + DrumDegreesPerSecondOffset) * DrumDegreesPerSecond2Voltage * 2147483647 / MaxVoltage  );
+End
