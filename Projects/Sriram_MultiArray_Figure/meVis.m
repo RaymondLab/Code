@@ -1,48 +1,43 @@
-%% Load file
-
+%% Setup
 clear;clc;close all
 dbstop if error
-%cd X:\1_Maxwell_Gagnon\ProjectData_Sriram\Sriram_gc_backup
-cd('C:\Users\maxwellg\Desktop\Sriram Nov CG Recording')
+
+% Load file
+folder = 'C:\Users\maxwellg\Desktop\290119-selected (2) - Copy';
+
+% Remove everything that is not an .rhs file
+cd(folder)
 seg_file_names = dir;
-%seg_file_names(~contains({seg_file_names.name}, 'stim_180807_143')) = [];
-seg_file_names(~contains({seg_file_names.name}, 'first_181120_')) = [];
-seg_file_names(contains({seg_file_names.name}, '.mda')) = [];
+seg_file_names(~contains({seg_file_names.name}, '.rhs')) = [];
+
+% Window around Stim Artifcats to remove
 tbefore = 0;
 tafter = 30000; % 30,000 = 1 second
 
-%% debug
-%file = 'X:\1_Maxwell_Gagnon\ProjectData_Sriram\Sriram_gc_backup';
-file = 'C:\Users\maxwellg\Desktop\Sriram Nov CG Recording';
-
-%% Extract each
-
-% time each segment
-tic
-time = NaN(length(seg_file_names),1);
-
-% FOR EACH FILE
-for i = 1:length(seg_file_names)
+%% Go through each file found in directory
+for i = 1:length(seg_file_names) 
     
     % open .rhs file
     try
-        read_Intan_RHS2000_file(file, seg_file_names(i).name)
+        clear amplifier_data
+        read_Intan_RHS2000_file(folder, seg_file_names(i).name)
     catch
         warning(['File Error: ', seg_file_names(i).name])
-         pause
         continue
     end
     
-    q = figure();
-    q.Visible = 'off';
-    ha = tight_subplot(16,1,[0 0],[0 0],[0 0]);
+    % set up figure
+    q = figure('units','normalized','outerposition',[-0.0042 0.0267 1.0083 0.9800]);
+    %q.Visible = 'off';
+    ha = tight_subplot(16,2,[0 0],[0 0],[0 0]);
+    data_filt = ones(size(amplifier_data));
     
-    % Find Stim 
+    % Find Stim locations
     stimAll = find(stim_data(any(stim_data,2),:) ~= 0);
     stimStarts = stimAll(1:6:end);
     
-    % FOR EACH CHANNEL IN FILE
-    for j = 1:16
+    % Plot each Channel
+    for j = 1:32       
         % If Stim Artifacts, replace with mean(data)
         if ~isempty(stimStarts)
             meanVal = mean(amplifier_data(j,:));
@@ -50,25 +45,51 @@ for i = 1:length(seg_file_names)
                 amplifier_data(j,stimStarts(k)-tbefore:stimStarts(k)+tafter) = meanVal;
             end          
         end
+
+        %% Filtering
+        samplerate = 30000;
         
-        % Plot
-        plot(ha(j), amplifier_data(j,:), 'k')
+        % Bandpass 250 - 3000
+        N = 5;
+        fc = [250 3000];
+        [bb,aa] = butter(N, fc/(samplerate/2), 'bandpass');
+        data_filt(j,:) = filtfilt(bb,aa,amplifier_data(j,:));
+        
+        % OPTIONAL - to remove 60Hz noise (plus harmonics) VERY SLOW!
+        % Bandstop 60, 120, 180, 240, 300, etc...
+%         for k = 240:60:2400
+%             N = 2;
+%             fc = [k-2 k+2]; 
+%             [bb,aa] = butter(N, fc/(samplerate/2), 'stop');
+%             data_filt(j,:) = filtfilt(bb,aa,data_filt(j,:));
+%         end
+
+        %% Plot
+        hold on
+        plot(ha(j), t,amplifier_data(j,:), 'k',t, data_filt(j, :));
         
         % Cosmetics
-        set(ha(j),'xtick',[])
+        set(ha(j),'xtick',[min(t):1:max(t)])
         set(ha(j),'xticklabel',[])
-        set(ha(j),'ytick',[])
-        set(ha(j),'yticklabel',[])
-        xlim([0 length(amplifier_data(j,:))])
-        minVal = min(min(amplifier_data(j,:)));
-        maxVal = max(max(amplifier_data(j,:)));
-        ylim([minVal maxVal])
-        box off
+        minVal = min(min(amplifier_data));
+        maxVal = max(max(amplifier_data));
+        set(ha(j), 'TickDir', 'in')
+        box(ha(j),'off')
+        ha(j).FontSize = 6;        
     end 
     
-    freqSpec(amplifier_data, 30000)
+    % more Cosmetics
     q.Visible = 'on';
     linkaxes(ha)
-    close all 
+    xlim([min(t) max(t)])
+    disp(seg_file_names(i).name)
+    
+    % OPTIONAL Power Spectrum
+    %freqSpec(amplifier_data, 30000)
+    %freqSpec(data_filt, 30000)
+    
+    %pause
+    close all
+    
     
 end

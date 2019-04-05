@@ -3,9 +3,10 @@
 %% Read from Recording Segment
 clear;clc;close all
 %cd Z:\1_Maxwell_Gagnon\ProjectData_Sriram\Granule_cell_recording\NR2_F_10_S1
-cd('C:\Users\maxwellg\Desktop\Sriram Nov CG Recording')
+%cd('C:\Users\maxwellg\Desktop\Sriram Nov CG Recording')
+cd('C:\Users\maxwellg\Desktop\290119-selected COPY')
 seg_file_names = dir;
-seg_file_names(~contains({seg_file_names.name}, 'first_181120_')) = [];
+%seg_file_names(~contains({seg_file_names.name}, 'first_181120_')) = [];
 %seg_file_names(~contains({seg_file_names.name}, 'stim_180807_143')) = [];
 seg_file_names(contains({seg_file_names.name}, '.mda')) = [];
 sample_rate = frequency_parameters.amplifier_sample_rate;
