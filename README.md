@@ -1,12 +1,12 @@
-File Organization - 
-  Projects: Contains unique code used in specific projects
+# File Organization #
+  ## Projects: Contains unique code used in specific projects
     Amin GCaMP
     Boris Photometry
     Calibration Investigation
     Innovation Award Video Presentation
     Ruth Analysis
     Siriram_MultiArray_Figure
-  Tools: Contains general use tools that can be used across projects
+  ## Tools: Contains general use tools that can be used across projects
     Matlab Color Styles
     Plotting
     Polar Plots
