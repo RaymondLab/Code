@@ -1,11 +1,12 @@
 # File Organization #
   ## Projects: Contains unique code used in specific projects
-    Amin GCaMP
-    Boris Photometry
+    Amin - GCaMP
+    Boris - Photometry
+      - Pastry Tray Experiments
     Calibration Investigation
     Innovation Award Video Presentation
-    Ruth Analysis
-    Siriram_MultiArray_Figure
+    Ruth - Photometry Analysis
+    Siriram - MultiElectrode Analysis
   ## Tools: Contains general use tools that can be used across projects
     Matlab Color Styles
     Plotting
