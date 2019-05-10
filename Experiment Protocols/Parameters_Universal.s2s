@@ -76,7 +76,6 @@ var testrep% := 0;
 var goalTime := 1000000000;    'maximum time the motor is allowed to run for
 var flashon% := 1;
 var waitLength := 300;
-var testStim := 0;
 var prevTime := 0;
 
 
@@ -94,7 +93,7 @@ var MaxVoltage := 10;
 var driftFix := 1;
 var sinOnCorChair := 0;
 var sinOnCorDrum := 0;
-var zeroPause := 1;
+var testStim := 0;
 
 '--------------------------------------------------------------------------------
 ' TOOLBAR PARAMETERS
@@ -554,7 +553,7 @@ Proc WindowConfig()
   XRange( 0, 20);      ' Set the default X axis time range
 
   ' Channel order
-  ChanOrder(0, -1, "31, 30, 12, 11, 10, 9, 3, 4, 6, 5, 13, 1");
+  ChanOrder(0, -1, "5, 4, 8, 13, 3, 2, 1, 12, 11, 10, 9, 30, 31");
   ' Background Colour'
   ViewColour(0,5);
   ' Font

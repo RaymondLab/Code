@@ -11,7 +11,7 @@
 ' Universal Parameters File Location
 '--------------------------------------------------------------------------------
 #include "C:\\Users\\amins\\Documents\\RL_Code\\Experiment Protocols\\Parameters_Universal.s2s"
-
+var ExpPart := 1;
 
 '--------------------------------------------------------------------------------
 ' MAIN PROGRAM
@@ -155,20 +155,37 @@ Func ToolbarIdle%()
               goalTime := MaxTime() + runLength;
 
               if rep% < (nBlocks%+1) then
-                  docase
-                  case expmtMode = 3 or expmtMode = 4 then          '3 = ipsi, 4 = contra
-                      ToolbarStimOn%();
-                  case expmtMode = 1 or expmtMode = 2 then          '1 = x0, 2 = x2
-                      ToolbarLightOn%();
-                  endcase;
+                  if ExpPart = 1 then
+                    docase
+                    case expmtMode = 0 or expmtMode = 1 then 'Gain Up and Gain Down
+                        ToolbarLightOn%();
+                    case expmtMode = 2 then 'Vestibular Only
+
+                    case expmtMode = 3 then 'Dark Resting
+                        ToolbarSineStop%();
+                    endcase;
+                  else
+                    ToolbarLightOn%();
+                  endif
               else
                   ToolbarSineStop%();
               endif;
 
               if rep% = nBlocks% then
-                  test% := 0;
+                test% := 0;
+
+                if ExpPart = 1 then
+                  rep% := 0;
+                  testrep% := 0;
+                  ExpPart := 2;
+                  sinPhDrum := -90;
+                  sinPhChair := 90;
+                  sinAmpDrum := 10;
+                  sinAmpChair := 10;
+                endif
+
               else
-                  test% := 1;
+                test% := 1;
               endif;
               testrep% := 0;
 
@@ -190,36 +207,29 @@ Func ToolbarConfigExpmt%()
   DlgInteger(2,"Number of tests per block",1,100,0,0,1);    'set to 0 if not using Chair
   DlgReal(3,"Run length (s)",0,5000);
   DlgReal(4,"Test length (s)",0,5000);
-  DlgList(5,"Expmt mode", "habit|x0|x2|ipsi|contra|steps");
+  DlgList(5,"Expmt mode", "x0|x2|Vestibular|Dark Resting");
   DlgInteger(6,"Light flash on?)",0,1,0,0,"0|1");
   DlgReal(7,"Test stim and bilat (0 or 1)",0,1);
 
   DlgShow(nBlocks%, nTestreps%, runLength, testLength, expmtMode, flashon%,testStim);
 
   docase
-  case expmtMode = 0 then     'habit
-      sinPhDrum := 90;
-      sinPhChair := 90;
-      sinAmpChair := 10;
-      sinAmpDrum := 0;
-  case expmtMode = 1 then     'x0
-      sinPhDrum := 90;
-      sinPhChair := 90;
-      sinAmpChair := 10;
-      sinAmpDrum := 10;
-  case expmtMode = 2 then     'x2
-      sinPhDrum := -90;
-      sinPhChair := 90;
-      sinAmpChair := 10;
-      sinAmpDrum := 10;
-  case expmtMode = 3  then     'ipsi
-      sinPhChair := -90;'D019:-90, D253:90'
-      sinAmpDrum := 0;
-  case expmtMode = 4 then      'contra
-      sinPhChair := 90; 'D019:90, D253:-90'
-      sinAmpDrum := 0;
-  case expmtMode = 5 then      'steps
-      ToolbarStepConfig%();
+    case expmtMode = 0 then     'x0
+        sinPhDrum := 90;
+        sinPhChair := 90;
+        sinAmpChair := 10;
+        sinAmpDrum := 10;
+    case expmtMode = 1 then     'x2
+        sinPhDrum := -90;
+        sinPhChair := 90;
+        sinAmpChair := 10;
+        sinAmpDrum := 10;
+    case expmtMode = 2  then     'Vestibular
+        sinPhChair := -90;
+        sinAmpDrum := 10;
+    case expmtMode = 3 then      'Dark Resting
+        sinPhChair := -90;
+        sinAmpDrum := 10;
   endcase;
 
 

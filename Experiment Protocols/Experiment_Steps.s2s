@@ -97,6 +97,8 @@ Func ToolbarIdle%()
 
       'Check the time. Seconds is the current time - compare it to the goal time of each segment
       if  MaxTime() > goalTime then
+
+        ' Show experiment Config menues before experiment starts'
         if checkConfig = 1 then
           checkConfig := 0;
   		    ToolbarConfigExpmt%();
@@ -104,7 +106,6 @@ Func ToolbarIdle%()
           ToolbarStepConfig%();
           Yield(.2);
           ToolbarPulseConfig%();
-
         endif
 
         docase
@@ -128,7 +129,7 @@ Func ToolbarIdle%()
           Yield(5);
           runflash();
           ToolbarInit%();
-          'Yield(2);
+
           ' Go to Pre/Post or Train/Test Section
           if expmtLoc% = 2 then
               test% := 2;
@@ -261,6 +262,7 @@ Func ToolbarIdle%()
           endcase;
 
         endcase;
+
       endif;
   endif;
 
