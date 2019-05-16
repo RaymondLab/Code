@@ -1,17 +1,12 @@
 %% 
 function varargout = eyecam(vid, eyetrack, nframes)
-% Preview mode:  eyecam(vid)
-% Eye track mode: eyeresults = eyecam(vid, 1, filepathname)
-
 if ~exist('eyetrack','var')
     eyetrack = 0;
 end
 
 if ~exist('nframes','var')
-    %     nframes = 1200;
     nframes = 180*30;
 end
-
 
 himg1 = [];
 himg2 = [];
@@ -19,11 +14,7 @@ time1 = [];
 time2 = [];
 
 start(vid(1));
-%pause(.5) 
 start(vid(2));
-
-% try
-
 fhandle = figure(1);
 
 % Add a figure to begin recording
@@ -37,14 +28,13 @@ if eyetrack
     trigger(vid)
     img1 = getdata(vid(1),1)';
     img2 = getdata(vid(2),1)';
-    %img1_all = uint8(zeros(size(img1,1),size(img1,2),nframes)); %hannah
-    %img2_all = uint8(zeros(size(img1,1),size(img1,2),nframes)); %hannah
-    img1_all = uint8(zeros(size(img1,2),size(img1,1),nframes));  %hobin
-    img2_all = uint8(zeros(size(img1,2),size(img1,1),nframes));  %hobin
+    %img1_all = uint8(zeros(size(img1,1),size(img1,2),nframes)); %D253
+    %img2_all = uint8(zeros(size(img1,1),size(img1,2),nframes)); %D253
+    img1_all = uint8(zeros(size(img1,2),size(img1,1),nframes));  %D019
+    img2_all = uint8(zeros(size(img1,2),size(img1,1),nframes));  %D019
 else
     set(gcf, 'Position', get(0,'Screensize')); % Maximize figure.
 end
-
 i = 0;
 
 %% collect images until user closes  window
@@ -80,8 +70,8 @@ while ishandle(fhandle)
     img2 = rot90(img2,-1); % maybe unrotating them will give me an error later on
     img2 = rot90(img2,-1);
     if i > 0     % Store images in large 3D matrix  
-        i %hobin
-        img1_all(:,:,i) = img1; % :,:,i
+        i % counter
+        img1_all(:,:,i) = img1;
         img2_all(:,:,i) = img2;  
     end
     
@@ -129,7 +119,6 @@ if nargout==1
 elseif nargout==2
     varargout = {img1 img2};
 end
-
 
 %% Save images if running an expmt
 if eyetrack
