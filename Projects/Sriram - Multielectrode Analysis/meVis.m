@@ -1,3 +1,5 @@
+% 1_190129_150035.rhs IS THE IN VIVO FILE
+
 %% Setup
 clear;clc;close all
 dbstop if error
@@ -8,7 +10,7 @@ folder = 'C:\Users\maxwellg\Desktop\290119-selected (2) - Copy';
 % Remove everything that is not an .rhs file
 cd(folder)
 seg_file_names = dir;
-seg_file_names(~contains({seg_file_names.name}, '.rhs')) = [];
+seg_file_names(~contains({seg_file_names.name}, '190129_150035.rhs')) = [];
 
 % Window around Stim Artifcats to remove
 tbefore = 0;
@@ -55,16 +57,16 @@ for i = 1:length(seg_file_names)
         
         % Bandpass 250 - 3000
         N = 5;
-        fc = 2000;
-        [bb,aa] = butter(N, fc/(samplerate/2), 'low');
+        fc = [140 2000];
+        [bb,aa] = butter(N, fc/(samplerate/2), 'bandpass');
         data_filt(j,:) = filtfilt(bb,aa,amplifier_data(j,:));
         
         % Comb Filter
-%         fo = 60;  
-%         q = 35; 
-%         bw = (fo/(samplerate/2))/q;
-%         [b,a] = iircomb(samplerate/fo,bw,'notch');
-%         data_filt(j,:) = filtfilt(b,a,data_filt(j,:));
+        fo = 60;  
+        q = 35; 
+        bw = (fo/(samplerate/2))/q;
+        [b,a] = iircomb(samplerate/fo,bw,'notch');
+        data_filt(j,:) = filtfilt(b,a,data_filt(j,:));
         
         % OPTIONAL - to remove 60Hz noise (plus harmonics) VERY SLOW!
         % Bandstop 60, 120, 180, 240, 300, etc...

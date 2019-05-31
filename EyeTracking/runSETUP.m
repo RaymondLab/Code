@@ -14,7 +14,7 @@
 % - If frame rate is < 30 fps, go into Logitech Quick cam, uncheck
 % RightLight, go advanced settings, uncheck all "autos"
 
-%% Set up video cams
+%% Setup Cameras
 close all; imaqreset; delete(imaqfind); % warning off
 addpath('C:\Users\Raymond Lab\Desktop\eyetrack_D253');
 
@@ -22,13 +22,13 @@ addpath('C:\Users\Raymond Lab\Desktop\eyetrack_D253');
 type = 'ELP'; % {'logitech','ELP')
 switch type
   case 'ELP'
-        % Camera resolution
+        % Camera Resolution
         res  = [1280 1024];
-        % l and w of the square during initial view. (a crop of the res)
+        % Length and Width of the square during initial view. (a crop of the resolution)
         boxsize = 500;
-        % vertical offset (pixels) from the top of the res
+        % Vertical Offset (pixels) from the top of the res
         boxoffset = -90;
-        % there are 4 parameters to this vector. [Xoffest, Yoffset, width, length]
+        % [x_offest, y_offset, width, length]
         roiinitial = [(res-boxsize)/2 boxsize boxsize]+[boxoffset 0 0 0];
         % Set the camera specific parameters. (frame rate, exposure, etc...)
         vid = setupvideo_new2019(roiinitial); pause(.1)
