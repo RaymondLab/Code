@@ -24,7 +24,7 @@ end
 %% Horizontal
 d1 =  results.pupil1(:,1) - results.cr1a(:,1);
 d2 = -results.pupil2(:,1) + results.cr2b(:,1);
-d1 = d1*12;
+%d1 = d1*12;
 % cr2b = results.cr2b(:,1);
 % pupil2 = results.pupil2(:,1);
 % save('cr2b.mat', 'cr2b');

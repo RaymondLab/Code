@@ -11,17 +11,17 @@ function saveastiff(data, path, options)
 %       'adobe' : lossless Adobe-style
 % options.message
 %   : true or FALSE.
-%     If this is false, all messages are skipped. 
+%     If this is false, all messages are skipped.
 % options.ask
 %   : true or FALSE. If this is false, always overwrite an existing file.
 % options.append
 %   : true or FALSE
 %     If path is exist, the data is appended to an existing file.
 %     If path is not exist, this options is ignored.
-% options.big 
-%   : true or FALSE, 
+% options.big
+%   : true or FALSE,
 %     Use 64 bit addressing and allows for files > 4GB
-% 
+%
 % Defalut value of 'options' is
 %     options.color   = false;
 %     options.comp    = 'no';
@@ -29,33 +29,33 @@ function saveastiff(data, path, options)
 %     options.ask     = false;
 %     options.append  = false;
 %     options.big     = false;
-% 
+%
 % Copyright (c) 2012, YoonOh Tak
 % All rights reserved.
-% 
-% Redistribution and use in source and binary forms, with or without 
-% modification, are permitted provided that the following conditions are 
+%
+% Redistribution and use in source and binary forms, with or without
+% modification, are permitted provided that the following conditions are
 % met:
-% 
-%     * Redistributions of source code must retain the above copyright 
+%
+%     * Redistributions of source code must retain the above copyright
 %       notice, this list of conditions and the following disclaimer.
-%     * Redistributions in binary form must reproduce the above copyright 
-%       notice, this list of conditions and the following disclaimer in 
+%     * Redistributions in binary form must reproduce the above copyright
+%       notice, this list of conditions and the following disclaimer in
 %       the documentation and/or other materials provided with the distribution
-%     * Neither the name of the Gwangju Institute of Science and Technology (GIST), Republic of Korea nor the names 
-%       of its contributors may be used to endorse or promote products derived 
+%     * Neither the name of the Gwangju Institute of Science and Technology (GIST), Republic of Korea nor the names
+%       of its contributors may be used to endorse or promote products derived
 %       from this software without specific prior written permission.
-%       
-% THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
-% AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-% IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-% ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-% LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-% CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-% SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-% INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-% CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-% ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+%
+% THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+% AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+% IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+% ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+% LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+% CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+% SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+% INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+% CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+% ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 % POSSIBILITY OF SUCH DAMAGE.
 
 errcode = -1;
@@ -66,7 +66,7 @@ end
 if nargin < 3
     options.color = false;
     options.comp = 'no';
-    options.message = false;
+    options.message = true;
     options.ask = false;
     options.append = false;
 end
@@ -89,8 +89,8 @@ if (options.color == false && ndims(data) > 3) ...
     || (options.color == true && ndims(data) > 4)
     errcode = 10; assert(false);
 end
-if isfield(options, 'big') == 0 
-    options.big = false; 
+if isfield(options, 'big') == 0
+    options.big = false;
 end
 
 [pathstr, fname, fext] = fileparts(which(path));
@@ -213,16 +213,16 @@ end
 
 tStart = tic;
 if ~options.append
-    if ispc
-        tempfile = '~$temporal.tif';
-    else
+    if ispc % Max 8 28 swapped these two temp files. windows version error
         tempfile = '._temporal.tif';
+    else
+        tempfile = '~$temporal.tif';
     end
-    s=whos('data'); 
-    if s.bytes > 2^32-1 || options.big 
-        t = Tiff(tempfile, 'w8'); 
-    else 
-        t = Tiff(tempfile, 'w'); 
+    s=whos('data');
+    if s.bytes > 2^32-1 || options.big
+        t = Tiff(tempfile, 'w8');
+    else
+        t = Tiff(tempfile, 'w');
     end
     if ispc
         fileattrib(tempfile, '+h +w', '', 's');
@@ -252,7 +252,7 @@ else
     while ~tappend.lastDirectory();
         tappend.nextDirectory();
     end
-    
+
     try
         tappend.writeDirectory();
         for d = 1:depth
@@ -283,7 +283,7 @@ catch exception
         if exist('tappend', 'var'), tappend.close(); end
         delete(tempfile);
     end
-    
+
     if options.message
         switch errcode
             case 0

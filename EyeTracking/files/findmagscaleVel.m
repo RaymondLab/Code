@@ -2,7 +2,7 @@ function  findmagscaleVel
 % Updated 2/23/15 HP
 % Simplest version of calibration: fit sine wave to VOR stimulus for both
 % video and magnet channels, scale so the gains are the same.
-close all; 
+close all;
 magthresh = 5; % 15
 vidthresh = 100; % 100
 
@@ -20,14 +20,13 @@ magnet = importSpike(fullfilename,[4 5 6 10]);%** left eye
 A=load(fullfile(pathname, 'videoresults.mat'));
 results = A.results;
 [vidH, vidV, ~] = calceyeangle(results);
-%save('vidH.mat', 'vidH');
 % tvid = (results.time1+results.time2)/2;
 % tvid = results.time1;
 tvid = results.time2;
 
 % tvid = results.time3;
 tvid = tvid-tvid(1);
-% 
+%
 function vidAmp = vidTimeFcn(tvid,vidH,freq,tscale)
 varsTemp = [sin(2*pi*freq*tvid(:)/tscale) cos(2*pi*freq*tvid(:)/tscale) ones(size(tvid(:)))];
 yTemp = [0; diff(vidH)]/mean(diff(tvid));
@@ -59,37 +58,37 @@ magnetSeg(1).data = smooth([diff(smooth(magnetSeg(1).data,25)); 0]*samplerateM,2
 magnetSeg(1).units = 'deg/s'; magnetSeg(1).chanlabel = 'hhvel';
 
 % filter with 100 Hz low pass filter
-mag1 = datlowpass(magnetSeg(2),100); 
+mag1 = datlowpass(magnetSeg(2),100);
 mag2 = datlowpass(magnetSeg(3),100);
 tmag = dattime(mag1);
 
 mag1Vel = [diff(mag1.data); 0]*samplerateM;
-mag1_saccademask = ~isnan(desaccade(mag1Vel,samplerateM,magthresh,0)); 
-mag1Velplot = smooth(mag1Vel,50);  
+mag1_saccademask = ~isnan(desaccade(mag1Vel,samplerateM,magthresh,0));
+mag1Velplot = smooth(mag1Vel,50);
 h = 1:3;
-figure(h(1)); clf; title('Magnet 1 desaccading'); hold on;  
-plot(tmag, mag1Velplot,'k'); mag1Velplot(~mag1_saccademask) = NaN; 
-plot(tmag, mag1Velplot,'r'); ylim([-5 5]); 
+figure(h(1)); clf; title('Magnet 1 desaccading'); hold on;
+plot(tmag, mag1Velplot,'k'); mag1Velplot(~mag1_saccademask) = NaN;
+plot(tmag, mag1Velplot,'r'); ylim([-5 5]);
 
 mag2Vel = [diff(mag2.data); 0]*samplerateM;
 mag2_saccademask = ~isnan(desaccade(mag2Vel,samplerateM,magthresh,0));
-mag2Velplot = smooth(mag2Vel,50); 
-figure(h(2)); clf; title('Magnet 2 desaccading'); hold on; 
+mag2Velplot = smooth(mag2Vel,50);
+figure(h(2)); clf; title('Magnet 2 desaccading'); hold on;
 plot(tmag, mag2Velplot,'k');  mag2Velplot(~mag2_saccademask) = NaN;
-plot(tmag, mag2Velplot,'r');  ylim([-5 5]); 
+plot(tmag, mag2Velplot,'r');  ylim([-5 5]);
 
 
 %% Desaccade video
 vidH_upsample = interp1(tvid,vidH,tmag(:),'linear');
 vidH_upsample = inpaint_nans(vidH_upsample);
 vidVel = [diff(vidH_upsample); 0]*samplerateM;
-vid_saccademask = ~isnan(desaccade(vidVel,samplerateM,vidthresh,0)); 
+vid_saccademask = ~isnan(desaccade(vidVel,samplerateM,vidthresh,0));
 
-vidVelplot = smooth(inpaint_nans(vidVel),50,'moving'); 
+vidVelplot = smooth(inpaint_nans(vidVel),50,'moving');
 
 figure(h(3)); clf; title('Video desaccading'); hold on
 plot(tmag, vidVelplot,'k');  vidVelplot(~vid_saccademask) = NaN;
-plot(tmag, vidVelplot,'r');  ylim([-50 50]); 
+plot(tmag, vidVelplot,'r');  ylim([-50 50]);
 
 
 %% Do sine fit on magnet and video sine waves
@@ -109,17 +108,35 @@ mag1Amp = sqrt(bMag1(1)^2+bMag1(2)^2)
 mag1Phase = mod((rad2deg(atan2(bMag1(2),bMag1(1))) - headPhase),360)-180;
 r2mag1 = stat(1);
 
+Mag1Fit = vars*bMag1;
+figure()
+plot(mag1Vel)
+hold on
+plot(Mag1Fit)
+
 % ------------ MAGNET 2------------
 [bMag2,bint,r,rint,stat] = regress(mag2Vel(mag2_saccademask), vars(mag2_saccademask,:));
 mag2Amp = sqrt(bMag2(1)^2+bMag2(2)^2)
 mag2Phase = mod((rad2deg(atan2(bMag2(2),bMag2(1))) - headPhase),360)-180;
 r2mag2 = stat(1);
 
+Mag2Fit = vars*bMag1;
+figure()
+plot(mag2Vel)
+hold on
+plot(Mag2Fit)
+
 % ------------ VIDEO ------------
 [bVid,bint,r,rint,stat] = regress(vidVel(vid_saccademask), vars(vid_saccademask,:));
 vidAmp = sqrt(bVid(1)^2+bVid(2)^2)
 vidPhase = rad2deg(atan2(bVid(2), bVid(1)));
 r2vid = stat(1);
+
+VidFit = vars*bVid;
+figure()
+plot(vidVel)
+hold on
+plot(VidFit)
 
 %% save scale factor
 % Add term for 180 deg phase - negate?
