@@ -11,7 +11,7 @@ prevsettings = 1;
 % Shouldn't need to change unless setup changes drastically
 edgeThresh1 = 35; % Initial gradient threshold of pupil edge detection for cam 1
 edgeThresh2 = 35; % Initial gradient threshold of pupil edge detection for cam 2
-plotall= 1;
+plotall = 1;
 debugOn = 0;
 
 %% Load results time file
@@ -48,8 +48,7 @@ for i = 1:n
     if mod(i,30) ==0
         
         waitbar(i/n,h,sprintf('%.0f %% analyzed',i/n*100));
-        
-%         fprintf('.');
+       
 
         % Store results
         results.pupil1 = pupil1;

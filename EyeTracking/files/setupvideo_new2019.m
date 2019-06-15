@@ -29,8 +29,7 @@ function vid = setupvideo_new2019(pos)
   % If the user inputted a region of interest, set that region of interest for each video input
   if exist('pos','var')
      pos1 = pos;
-     pos2 = pos;
      set(vid(1), 'ROIPosition',pos1);
-     set(vid(2), 'ROIPosition',pos2);
+     set(vid(2), 'ROIPosition',pos1);
      %set(vid, 'ROIPosition', pos);
   end
