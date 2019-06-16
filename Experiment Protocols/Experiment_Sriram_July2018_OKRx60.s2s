@@ -12,6 +12,12 @@
 '--------------------------------------------------------------------------------
 #include "C:\\Users\\Raymond Lab\\Documents\\Code\\Experiment Protocols\\Parameters_Universal.s2s"
 
+'--------------------------------------------------------------------------------
+' MISC PARAMETERS
+'--------------------------------------------------------------------------------
+nBlocks% := 10;
+testLength := 10;
+runLength := 10;
 
 '--------------------------------------------------------------------------------
 ' MAIN PROGRAM
@@ -91,71 +97,69 @@ if runExpmt% = 1 then
 
       docase
 
-      'Pause
-      case test% = 0 then             ' Run Stim test and bilat test
-        SampleKey("0");
-        goalTime := MaxTime() + 10;
-
-        'Turn off the light and stop the sin waves
-        ToolbarStimoff%();
-        Yield();
-        ToolbarLightOff%();
-        Yield();
-        ToolbarSineStop%();
-        Yield();
-        ToolbarStepOff%();
-
-        ' Pause inbetwen segments
-        ToolbarInit%();
-        Yield(5);
-        runflash();
-        ToolbarInit%();
-        Yield(2);
-        ' Go to Pre/Post or Train/Test Section
-        if expmtLoc% = 2 then
-            test% := 2;
-            ' If you have already done the test/train blocks, quit instead.
-            if trainAmount = nBlocks%  then
+        ' MISC GAP
+        case test% = 0 then
+            SampleKey("0");
+            goalTime := MaxTime() + 10;
+            ToolbarSineStop%(); Yield();
+            ToolbarLightOff%(); Yield();
+            ToolbarInit%(); Yield();
+            if prePostNum = 3 then
               ToolbarQuitExpmt%();
               Return(1);
             endif
-        endif
+            Yield(5);
+            runFlash();
+            test% := 4;
 
-        if expmtLoc% = 1 then
-            test% := 1;
-        endif
+        ' MISC TEST
+        case test% = 4 then
+            SampleKey("4");
+            goalTime := MaxTime() + testLength;
+            sinAmpChair := 20;
+            SetSequencerValues();
+            docase
+              case prePostNum = 1 then
+                prePostNum := prePostNum + 1;
+                test% := 1;
+              case prePostNum = 2 then
+                prePostNum := prePostNum + 1;
+                test% := 0;
 
-      ' Pre and Post testing
-      case test% = 1 then
-        SampleKey("1");
-        goalTime := MaxTime() + testLength;
-        expmtLoc% := 2;
-        sinAmpChair := 10;
-        sinAmpDrum := 10;
-        Yield();
-        SetSequencerValues();
-        Yield();
-        ToolbarSineStart%();
-        test% := 0
+            endcase
+            ToolbarSineStart%();
 
-      ' test blocks
-      case test% = 2 then
-        SampleKey("2");
-        goalTime := MaxTime() + runLength;
-        test% := 0;
-        trainAmount := trainAmount + 1;
-        ToolbarInit%();
-        Yield(.1);
-        sinAmpChair := 0;
-        SetSequencerValues();
-        Yield();
-        ToolbarLightOn%();
-        Yield();
-        ToolbarSineStart%();
+        ' BLOCK: GAP
+        case test% = 1 then
+            SampleKey("1");
+            goalTime  := MaxTime() +  10;
+            ToolbarSineStop%(); Yield();
+            ToolbarLightOff%(); Yield();
+            ToolbarInit%(); Yield();
+            Yield(5);
+            runFlash();
+            test% := 3;
 
-        if trainAmount = nBlocks% then
-          expmtLoc% := 1;
-        endif
+        ' BLOCK: TRAIN
+        case test% = 3 then
+            SampleKey("3");
+            goalTime := MaxTime() + runLength;
+            sinAmpChair := 0;
+            SetSequencerValues();
+            ToolbarSineStart%(); Yield();
+            rep% := rep% + 1;
+
+            if rep% < (nBlocks%+1) then
+            else
+                ToolbarLightOn%();
+                ToolbarSineStop%();
+            endif;
+
+            if rep% = nBlocks% then
+                test% := 0;
+            else
+                test% := 1;
+            endif;
 
       endcase;
     endif;
