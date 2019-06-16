@@ -3,7 +3,7 @@
 '--------------------------------------------------------------------------------
 ' SEQUENCER FILE LOCATION
 '--------------------------------------------------------------------------------
-var SequencerFile$ := "C:\\Users\\amins\\Documents\\RL_Code\\Experiment Protocols\\Sequencer_D019";
+var SequencerFile$ := "C:\\Users\\Raymond Lab\\Documents\\Code\\Experiment Protocols\\Sequencer_D019.pls";
 
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS

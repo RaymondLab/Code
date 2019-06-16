@@ -16,7 +16,7 @@
 
 %% Setup Cameras
 close all; imaqreset; delete(imaqfind); % warning off
-addpath('C:\Users\Raymond Lab\Desktop\eyetrack_D253');
+%addpath('C:\Users\Raymond Lab\Desktop\eyetrack_D253');
 
 % Make video objects
 type = 'ELP'; % {'logitech','ELP')
