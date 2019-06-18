@@ -497,21 +497,6 @@ Proc WindowConfig()
   'Channel 30
   SampleTextMark(200);
 
-  ' OPTIONAL D019 CHANNELS???
-  'Channel 3a : hevel: derivative of Channel 3
-  'htvelChan% := ChanDuplicate(3);
-  'ChanProcessClear(htvelChan%);
-  'ChanProcessAdd(htvelChan%, 3, 0.05);
-  'ChanShow(htvelChan%);
-  'ChanTitle$(htvelChan%,"htvel");
-
-  'Channel 4a : hevel: derivative of Channel 4
-  'hhvelChan% := ChanDuplicate(4);
-  'ChanProcessClear(hhvelChan%);
-  'ChanProcessAdd(hhvelChan%, 3, 0.05);
-  'ChanShow(hhvelChan%);
-  'ChanTitle$(hhvelChan%,"hhvel");
-
   'Set optimise mode (do this last)
   SampleOptimise(1,1,0,2,50);
 

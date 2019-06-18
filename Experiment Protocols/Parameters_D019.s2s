@@ -11,10 +11,6 @@ var SequencerFile$ := "C:\\Users\\Raymond Lab\\Documents\\Code\\Experiment Proto
 var sinAmpChair := 20;
 var sinAmpDrum := 20;
 
-' OPTIONAL D019 CHANNELS???
-var htvelChan%; 'Channel for getting velocity from drum position
-var hhvelChan%; 'Channel for getting velocity from chair position
-
 '--------------------------------------------------------------------------------
 ' MOTOR CALIBRATION PARAMETERS
 '--------------------------------------------------------------------------------
@@ -36,12 +32,12 @@ var ChairVoltage2Velocity := 1/ChairDegreesPerSecond2Voltage; '107.42869;       
 var ChairVoltage2VelocityC := 0;                'Voltage to Chair Velocity (offset)
 
 'Chair velocity readout
-var ChairVelReadoutScale := 1;             '
-var ChairVelReadoutOffset := 0;
+var ChairVelReadoutScale := -99.905;             '
+var ChairVelReadoutOffset := -.03213;
 
 'Chair position readout
-var ChairPosReadoutScale := -18.07;              'Voltage to Chair Position (Scale)
-var ChairPosReadoutOffset := 0;                 'Voltage to Chair Position (offset)
+var ChairPosReadoutScale := -18.0145;              'Voltage to Chair Position (Scale)
+var ChairPosReadoutOffset := .03016;                 'Voltage to Chair Position (offset)
 
 'Drum velocity readout - NOT USED FOR D019
 var DrumVelReadoutScale := 1;

@@ -15,9 +15,9 @@
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS
 '--------------------------------------------------------------------------------
-nBlocks% := 10;
-testLength := 10;
-runLength := 10;
+nBlocks% := 60;
+testLength := 50;
+runLength := 50;
 
 '--------------------------------------------------------------------------------
 ' MAIN PROGRAM
@@ -80,7 +80,7 @@ Func ToolbarIdle%()
         'DrumDegreesPerSecondOffset :=  -(-htposSlope/4 - htposPos/4) + .246;
 
         'D019
-        ChairDegreesPerSecondOffset :=  -hhposSlope/4  - hhposPos/4;'' + .06;
+        ChairDegreesPerSecondOffset :=  -hhposSlope/4  - hhposPos/4 - .2;'' + .06;
         DrumDegreesPerSecondOffset :=  -htposSlope/4 - htposPos/4;'' + .246;
         SetSequencerValues();
         'SampleKey( "A" );
@@ -147,13 +147,13 @@ if runExpmt% = 1 then
             sinAmpChair := 0;
             SetSequencerValues();
             ToolbarSineStart%(); Yield();
+            ToolbarLightOn%();
             rep% := rep% + 1;
 
-            if rep% < (nBlocks%+1) then
-            else
-                ToolbarLightOn%();
-                ToolbarSineStop%();
-            endif;
+            'if rep% < (nBlocks%+1) then
+            'else
+            ''    ToolbarSineStop%();
+            'endif;
 
             if rep% = nBlocks% then
                 test% := 0;
