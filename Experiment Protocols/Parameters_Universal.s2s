@@ -666,6 +666,46 @@ Proc SetSequencerValues()
   SampleSeqVar( 52, pulsePeriod);
 End
 
+Func driftFix%()
+
+  ' When the sinewave is ON
+  if sineOn% = 1 or vidOn = 1 then
+
+    if sinPhChair > 0 then
+      sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair) * -1; ' * -1 for D253'
+    else
+      sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair); ' * -1 for D019'
+    endif
+
+    if sinPhDrum < 0 then
+      sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum) * -1 ; ' * -1 for D253'
+    else
+      sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum); ' * -1 for D019'
+    endif
+
+  else
+    sinOnCorChair := 0;
+    sinOnCorDrum := 0;
+  endif
+
+  ' original anti-drift code'
+  prevTime := MaxTime();
+  ' Measure slope from last 1 cycle of chair/drum position feedback
+  var hhposSlope := ChanValue(hhposCh%, prevTime) - ChanValue(hhposCh%, prevTime-(1/sinHzChair));
+  var htposSlope := ChanValue(htposCh%, prevTime) - ChanValue(htposCh%, prevTime-(1/sinHzDrum));
+  var hhposPos := ChanMeasure(hhposCh%, 2, prevTime-(1/sinHzChair), prevTime) + (sinOnCorChair);
+  var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime) - (sinOnCorDrum);
+
+  ' D253
+  ChairDegreesPerSecondOffset :=  hhposSlope/4 + hhposPos/4 - .06;
+  DrumDegreesPerSecondOffset  :=  htposSlope/4 + htposPos/4 - .246;
+
+  'D019
+  'ChairDegreesPerSecondOffset :=  -hhposSlope/4 - hhposPos/4;'' + .06;
+  'DrumDegreesPerSecondOffset  :=  -htposSlope/4 - htposPos/4;'' + .246;
+
+  SetSequencerValues();
+End
 '--------------------------------------------------------------------------------
 ' CONVERSION FUNCTIONS
 '--------------------------------------------------------------------------------

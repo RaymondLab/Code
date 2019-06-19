@@ -27,57 +27,17 @@ Func ToolbarIdle%()
   'if runExmpt=1, it is used to run a full expmt automatically.  -HP
   'expmtMode: 0=habit, 1=0x, 2=2x, 3=ipsi stim, 4=contra stim
   'test: 0=wait, 1=test, 2=train
+
       ' Check a valid sampling view is running
       var currView := ViewKind();
       if  currView <> 0 then
           return 1;
       endif;
 
-
   ' Keep sine wave from drifting!!!
   if MaxTime() > (prevTime + 1/sinHzChair) then
-
-      ' If sine wave is on, do not return to the 0 point, stay where you are
-      ' This is a hack on a hack. Someone (probably me) should rewrite the
-      ' anti-drift code from scratch to take this into account. - Max Gagnon 7-30-18
   if driftFix = 1 then
-        if sineOn% = 1 or vidOn = 1 then
-
-          if sinPhChair > 0 then
-            sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair) ; ' * -1 for D253'
-          else
-            sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair) * -1; ' * -1 for D019'
-          endif
-
-          if sinPhDrum < 0 then
-            sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum)  ; ' * -1 for D253'
-          else
-            sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum) * -1; ' * -1 for D019'
-          endif
-
-        else
-          sinOnCorChair := 0;
-          sinOnCorDrum := 0;
-        endif
-
-        ' original anti-drift code'
-        prevTime := MaxTime();
-        ' Measure slope from last 1 cycle of chair/drum position feedback
-        var hhposSlope := ChanValue(hhposCh%, prevTime) - ChanValue(hhposCh%, prevTime-(1/sinHzChair));
-        var htposSlope := ChanValue(htposCh%, prevTime) - ChanValue(htposCh%, prevTime-(1/sinHzDrum));
-        var hhposPos := ChanMeasure(hhposCh%, 2, prevTime-(1/sinHzChair), prevTime) + (sinOnCorChair);
-        var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime) - (sinOnCorDrum);
-
-        'DrumDegreesPerSecondOffset := DrumDegreesPerSecondOffset - htposSlope/4;
-        ' D253
-        'ChairDegreesPerSecondOffset :=  -(-hhposSlope/4  - hhposPos/4) + .06;
-        'DrumDegreesPerSecondOffset :=  -(-htposSlope/4 - htposPos/4) + .246;
-
-        'D019
-        ChairDegreesPerSecondOffset :=  -hhposSlope/4  - hhposPos/4;'' + .06;
-        DrumDegreesPerSecondOffset :=  -htposSlope/4 - htposPos/4;'' + .246;
-        SetSequencerValues();
-        'SampleKey( "A" );
+      driftFix%();
     endif;
   endif;
 
