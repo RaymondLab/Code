@@ -34,44 +34,65 @@ for i = 1:length(matchMotors)
     files = dir(matchMotors(i,:));
     Efiles = dir(matchEphys(i,:));
     for j = 1:length(files) 
-        fullFileName = fullfile(files(j).folder, files(j).name)
-        EfullfileName = fullfile(Efiles(j).folder, Efiles(j).name)
+        fullFileName = fullfile(files(j).folder, files(j).name);
+        EfullfileName = fullfile(Efiles(j).folder, Efiles(j).name);
         if ~contains(fullFileName, '\.')
-            behavior = readcxdata(fullFileName, 0, 6);
-            ephys = openmaestro(EfullfileName);
             
-            % Using Parameters from Hannah's "opensingle.m"
-            figure(1)
+            % Extract recording Data
+            beh = opensingle(fullFileName, 1, EfullfileName);
             
-            subplot(4,2,1)
-            plot(behavior.data(1,:)*12.5 * dt)
-            title('hgpos')
+            % Plot Everything
+            figure(1); clf
+            ha = tight_subplot(8,1,[.03 .03],[.03 .03],[.03 .03]);
             
-            subplot(4,2,2)
-            plot(behavior.data(2,:)*12.5 * dt)
-            title('vepos')
-            
-            subplot(4,2,3)
-            plot(behavior.data(3,:)*0.09189)  
-            title('hevel 25Hz')
-            
-            subplot(4,2,4)
-            plot(behavior.data(4,:)*12.5 * dt)
-            title('htpos')
-            
-            subplot(4,2,5)
-            plot(behavior.data(5,:)*0.09189 * 1.15)
-            title('hhvel')
-            
-            subplot(4,2,6)
-            plot(behavior.data(6,:)*0.09189 * 3.1805)
-            title('hevel 100Hz')
-            
-            subplot(4,2,7)
-            plot(ephys)
-            title('ephys')
-            disp('a')
+            for q = 1:8
+                
+                axes(ha(q))
+                fs = beh(q).samplerate;
+
+                
+                if q ~= 8
+                    timeVec = beh(q).tstart:(1/fs):beh(q).tend;
+                else
+                    timeVec = 0:(1/fs):(length(beh(q).data) * (1/fs));
+                    timeVec = timeVec(1:end-1);
+                end
+                
+                plot(timeVec, beh(q).data)
+                title(beh(q).chanlabel)
+                
+                
+                % Channel Specific changes    
+                if q == 1
+                    %ylim([-200 200])
+                elseif q == 2
+                    %ylim([-200 200])
+                elseif q == 3
+                    %ylim([-40 40])
+                elseif q == 4
+                    %ylim([-40 40])
+                elseif q == 5
+                    %ylim([-40 40])
+                elseif q == 6
+
+                end
+                
+                % only show Tick labels on 6
+                if q ~= 8
+                    xlimMax = max(timeVec);
+                    xticks([]);
+                    xticklabels([]);
+                end
+            end
+            linkaxes(ha, 'x')
+            xlim([0 xlimMax])
+            disp(length(beh(end).data) / length(beh(1).data))
         end
+        
     end
 end
+
+%% Testing with Hannah's Script
+testFile = 'C:\Users\maxga\Desktop\D1_1995\da0301\da0301.0000';
+
 
