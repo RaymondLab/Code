@@ -1,4 +1,4 @@
-%% runSETUP
+%% runEyeCalibration
 % Run a mouse video eye tracking calibration session
 %
 % Hannah Payne
