@@ -6,7 +6,8 @@ clear;clc;close all
 
 %% Setup
 % Location of Lisberger Data
-directory = dir('C:\Users\maxga\Desktop\D1_1995');
+%directory = dir('C:\Users\maxga\Desktop\D1_1995');
+directory = dir('C:\Users\maxwellg\Desktop\testing');
 
 % Seperate the folders into motor recordings and ephys recordings
 motorFolders = directory(contains({directory(:).name}, 'da'));
@@ -34,12 +35,12 @@ for i = 1:length(matchMotors)
     files = dir(matchMotors(i,:));
     Efiles = dir(matchEphys(i,:));
     for j = 1:length(files) 
-        fullFileName = fullfile(files(j).folder, files(j).name);
-        EfullfileName = fullfile(Efiles(j).folder, Efiles(j).name);
+        fullFileName = fullfile(files(j).folder, files(j).name)
+        EfullfileName = fullfile(Efiles(j).folder, Efiles(j).name)
         if ~contains(fullFileName, '\.')
             
             % Extract recording Data
-            beh = opensingle(fullFileName, 1, EfullfileName);
+            beh = opensingleMAXEDIT(fullFileName, 1, EfullfileName);
             
             % Plot Everything
             figure(1); clf
@@ -48,46 +49,33 @@ for i = 1:length(matchMotors)
             for q = 1:8
                 
                 axes(ha(q))
+                
+                % Get Samplerate
                 fs = beh(q).samplerate;
 
-                
-                if q ~= 8
-                    timeVec = beh(q).tstart:(1/fs):beh(q).tend;
-                else
-                    timeVec = 0:(1/fs):(length(beh(q).data) * (1/fs));
-                    timeVec = timeVec(1:end-1);
-                end
-                
+                % Get Time Vector
+                timeVec = beh(q).tstart:(1/fs):beh(q).tend;
+ 
+                % Plot 
                 plot(timeVec, beh(q).data)
                 title(beh(q).chanlabel)
-                
-                
-                % Channel Specific changes    
-                if q == 1
-                    %ylim([-200 200])
-                elseif q == 2
-                    %ylim([-200 200])
-                elseif q == 3
-                    %ylim([-40 40])
-                elseif q == 4
-                    %ylim([-40 40])
-                elseif q == 5
-                    %ylim([-40 40])
-                elseif q == 6
-
-                end
-                
+                               
                 % only show Tick labels on 6
                 if q ~= 8
                     xlimMax = max(timeVec);
                     xticks([]);
                     xticklabels([]);
+                else
+                    vline(beh(end-1).data(1:20));
                 end
             end
+            
             linkaxes(ha, 'x')
-            xlim([0 xlimMax])
-            disp(length(beh(end).data) / length(beh(1).data))
+            disp(length(beh(8).data) / length(beh(1).data))
+            disp('a')      
+            
         end
+        clc
         
     end
 end
