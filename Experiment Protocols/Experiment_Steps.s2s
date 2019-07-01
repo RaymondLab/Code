@@ -54,15 +54,15 @@ Func ToolbarIdle%()
         if sineOn% = 1 or vidOn = 1 then
 
           if sinPhChair > 0 then
-            sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair) ; ' * -1 for D253'
+            sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair) * ChairDefaultDirection; ' * default -1 for D253, 1 for D019'
           else
-            sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair) * -1; ' * -1 for D019'
+            sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair) * ChairDefaultDirection * -1; ' * negate direction from above'
           endif
 
           if sinPhDrum < 0 then
-            sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum)  ; ' * -1 for D253'
+            sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum) * DrumDefaultDirection; ' * default -1 for D253, 1 for D019'
           else
-            sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum) * -1; ' * -1 for D019'
+            sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum) * DrumDefaultDirection * -1; ' * negate direction from above'
           endif
 
         else
@@ -78,14 +78,9 @@ Func ToolbarIdle%()
         var hhposPos := ChanMeasure(hhposCh%, 2, prevTime-(1/sinHzChair), prevTime) + (sinOnCorChair);
         var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime) - (sinOnCorDrum);
 
-        'DrumDegreesPerSecondOffset := DrumDegreesPerSecondOffset - htposSlope/4;
-        ' D253
-        'ChairDegreesPerSecondOffset :=  -(-hhposSlope/4  - hhposPos/4) + .06;
-        'DrumDegreesPerSecondOffset :=  -(-htposSlope/4 - htposPos/4) + .246;
-
-        'D019
-        ChairDegreesPerSecondOffset :=  -hhposSlope/4  - hhposPos/4;'' + .06;
-        DrumDegreesPerSecondOffset :=  -htposSlope/4 - htposPos/4;'' + .246;
+        ' Scales *1 for D253, *-1 for D019 -- check if ChairDegreesPerSecondOffsetDefault should always be added
+        ChairDegreesPerSecondOffset :=  (hhposSlope/4 + hhposPos/4 - ChairDegreesPerSecondOffsetDefault) * -1 * ChairDefaultDirection;
+        DrumDegreesPerSecondOffset  :=  (htposSlope/4 + htposPos/4 - DrumDegreesPerSecondOffsetDefault) * -1 * ChairDefaultDirection;
         SetSequencerValues();
         'SampleKey( "A" );
     endif;

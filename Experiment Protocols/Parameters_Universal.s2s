@@ -94,6 +94,7 @@ var driftFix := 1;
 var sinOnCorChair := 0;
 var sinOnCorDrum := 0;
 var testStim := 0;
+var rotationVelocity := 0.02;
 
 '--------------------------------------------------------------------------------
 ' TOOLBAR PARAMETERS
@@ -634,12 +635,14 @@ Proc SetSequencerValues()
   SampleSeqVar( 27, ChairAmp2Int16%( sinAmpChair ) );
   SampleSeqVar( 28, Angle2Int32%( actualChairPh ) );
   SampleSeqVar( 29, Hz2Int32%( sinHzChair ) );
+  SampleSeqVar( 55, ChairDefaultDirection); 'this should be the rotation direction for the chair passed in'
 
   'Drum parameters
   SampleSeqVar( 22, DrumAmp2Int32%( DrumDegreesPerSecondOffset ) );
   SampleSeqVar( 24, DrumAmp2Int16%( sinAmpDrum ) );
   SampleSeqVar( 25, Angle2Int32%( actualDrumPh ) );
   SampleSeqVar( 26, Hz2Int32%( sinHzDrum ) );
+  SampleSeqVar( 56, DrumDefaultDirection); 'this should be the rotation direction for the drum passed in'
 
   'Pulse parameters
   SampleSeqVar( 33, pWait );
@@ -664,6 +667,9 @@ Proc SetSequencerValues()
   SampleSeqVar( 50, pulseDurationV);
   SampleSeqVar( 51, pulseWaitV);
   SampleSeqVar( 52, pulsePeriod);
+
+  'Rotation Parameters
+  SampleSeqVar( 54, rotationVelocity); 'This is a relative value - I don't know which is clockwise or counterclockwise
 End
 
 Func driftFix%()
@@ -672,15 +678,15 @@ Func driftFix%()
   if sineOn% = 1 or vidOn = 1 then
 
     if sinPhChair > 0 then
-      sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair) * -1; ' * -1 for D253'
+      sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair) * ChairDefaultDirection; ' * default -1 for D253, 1 for D019'
     else
-      sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair); ' * -1 for D019'
+      sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair) * ChairDefaultDirection * -1; ' * negate direction from above'
     endif
 
     if sinPhDrum < 0 then
-      sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum) * -1 ; ' * -1 for D253'
+      sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum) * DrumDefaultDirection; ' * default -1 for D253, 1 for D019'
     else
-      sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum); ' * -1 for D019'
+      sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum) * DrumDefaultDirection * -1; ' * negate direction from above'
     endif
 
   else
@@ -696,14 +702,9 @@ Func driftFix%()
   var hhposPos := ChanMeasure(hhposCh%, 2, prevTime-(1/sinHzChair), prevTime) + (sinOnCorChair);
   var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime) - (sinOnCorDrum);
 
-  ' D253
-  ChairDegreesPerSecondOffset :=  hhposSlope/4 + hhposPos/4 - .06;
-  DrumDegreesPerSecondOffset  :=  htposSlope/4 + htposPos/4 - .246;
-
-  'D019
-  'ChairDegreesPerSecondOffset :=  -hhposSlope/4 - hhposPos/4;'' + .06;
-  'DrumDegreesPerSecondOffset  :=  -htposSlope/4 - htposPos/4;'' + .246;
-
+  ' Scales *1 for D253, *-1 for D019 -- check if ChairDegreesPerSecondOffsetDefault should always be added
+  ChairDegreesPerSecondOffset :=  (hhposSlope/4 + hhposPos/4 - ChairDegreesPerSecondOffsetDefault) * -1 * ChairDefaultDirection;
+  DrumDegreesPerSecondOffset  :=  (htposSlope/4 + htposPos/4 - DrumDegreesPerSecondOffsetDefault) * -1 * ChairDefaultDirection;
   SetSequencerValues();
 End
 '--------------------------------------------------------------------------------

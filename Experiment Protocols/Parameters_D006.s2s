@@ -3,7 +3,7 @@
 '--------------------------------------------------------------------------------
 ' SEQUENCER FILE LOCATION
 '--------------------------------------------------------------------------------
-var SequencerFile$ := "C:\\Users\\maxga\\Documents\\GitHub\\Code\\Experiment Protocols\\Sequencer_D019";
+var SequencerFile$ := "C:\\Users\\maxga\\Documents\\GitHub\\Code\\Experiment Protocols\\Sequencer_Universal";
 
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS
@@ -17,12 +17,14 @@ var sinAmpDrum := 10;
 
 'Chair converstion factors
 var ChairDegreesPerSecond2Voltage := -0.01;       'Chair velocity to voltage (Scale)
-var ChairDegreesPerSecondOffset :=  -.15;         'Chair velocity to voltage (offset)  *** Input default Chair offset here
+var ChairDegreesPerSecondOffsetDefault :=  -.15;         'Chair velocity to voltage (offset)  *** Input default Chair offset here
+var ChairDegreesPerSecondOffset :=  -.15;         'Starting value, is updated repeatedly
+
 
 'Drum conversion factors
 var DrumDegreesPerSecond2Voltage := 0.5;    'Drum velocity to voltage (Scale)
-var DrumDegreesPerSecondOffset := 0;        'Drum velocity to voltage (offset)   *** Input default Drum offset here
-
+var DrumDegreesPerSecondOffsetDefault := 0;        'Drum velocity to voltage (offset)   *** Input default Drum offset here
+var DrumDegreesPerSecondOffset := 0;        'Starting value, is updated repeatedly
 
 
 'Channel 1: Scaling to display the drum COMMAND signal
@@ -32,7 +34,6 @@ var DrumVoltage2VelocityC := 0;                 'Voltage to Drum Velocity (offse
 'Channel 2: Scaling to display the chair COMMAND signal
 var ChairVoltage2Velocity := ChairDegreesPerSecond2Voltage; '107.42869;         'Voltage to Chair Velocity (Scale)
 var ChairVoltage2VelocityC := 0;                'Voltage to Chair Velocity (offset)
-
 
 
 'Chair velocity readout
@@ -54,3 +55,7 @@ var DrumPosReadoutOffset := .719269;                  'Drum position readout off
 'Channel 5/6: Eye position readout
 var EyeVoltage2Position := 1;                   'Voltage to Eye Position (Scale)
 var EyeVoltage2PositionC := 0;                  'Voltage to Eye Position (offset)
+
+'Default servo direction for chair and drum -- 1 or -1'
+var ChairDefaultDirection := 1;                 'Not sure about default direction - setting both as 1 to avoid errors'
+var DrumDefaultDirection := 1;
