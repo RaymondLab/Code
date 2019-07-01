@@ -1,0 +1,192 @@
+'--------------------------------------------------------------------------------
+' Rig-Specific parameters file Location
+'--------------------------------------------------------------------------------
+'D019
+#include "C:\\Users\\RaymondLab\\Documents\\Code\\Experiment Protocols\\Parameters_D253_Ella.s2s"
+
+'D253
+'#include "C:\\Users\\amins\\Documents\\RL_Code\\Experiment Protocols\\Parameters_D253.s2s"
+
+'--------------------------------------------------------------------------------
+' Universal Parameters File Location
+'--------------------------------------------------------------------------------
+#include "C:\\Users\\RaymondLab\\Documents\\Code\\Experiment Protocols\\Parameters_Ella.s2s"
+
+
+'--------------------------------------------------------------------------------
+' MAIN PROGRAM
+'--------------------------------------------------------------------------------
+ToolbarConfig();
+
+
+'--------------------------------------------------------------------------------
+' Toolbar Callbacks
+'--------------------------------------------------------------------------------
+Func ToolbarIdle%()
+  'This function calls repeatedly whenever nothing else is happening
+  'if runExmpt=1, it is used to run a full expmt automatically.  -HP
+  'expmtMode: 0=habit, 1=0x, 2=2x, 3=ipsi stim, 4=contra stim
+  'test: 0=wait, 1=test, 2=train
+
+      ' Check a valid sampling view is running
+      var currView := ViewKind();
+      if  currView <> 0 then
+          return 1;
+      endif;
+
+  ' Keep sine wave from drifting!!!
+  if MaxTime() > (prevTime + 1/sinHzChair) then
+  if driftFix = 1 then
+      driftFix%();
+    endif;
+  endif;
+
+
+  'If an experiment is running:
+  if runExpmt% = 1 then
+
+      'Check the time. Seconds is the current time - compare it to the goal time of each segment
+      if  MaxTime() > goalTime then
+
+          if   rep% = (nBlocks%+2) then 'all done
+              ToolbarQuitExpmt%();    ' All done
+              Return(1);
+          endif;
+
+          docase
+
+
+
+          ' MISC GAP
+          case test% = 0 then
+              SampleKey("0");
+              goalTime := MaxTime() + 10;
+              ToolbarSineStop%(); Yield();
+              ToolbarLightOff%(); Yield();
+              ToolbarInit%(); Yield();
+              Yield(5);
+              runFlash();
+              test% := 4;
+
+          ' MISC TEST
+          case test% = 4 then
+              SampleKey("4");
+              goalTime := MaxTime() + testLength;
+
+              if prePostNum = 1 then
+                test% := 0;
+                prePostNum := prePostNum + 1;
+              else
+                test% := 1;
+              endif
+
+              ToolbarSineStart%();
+
+
+          ' BLOCK: GAP
+          case test% = 1 then               '
+              SampleKey("1");
+              prePostNum := 1;
+              goalTime  := MaxTime() +  10;    'wait 10 seconds for init
+              ToolbarSineStop%(); Yield();
+              ToolbarLightOff%(); Yield();
+              ToolbarInit%(); Yield();
+              Yield(5);
+              runFlash();
+              test% := 2;
+
+          ' BLOCK: TEST
+          case test% = 2 then               'FINISHED WAITING, TEST NOW
+              SampleKey("2");
+              goalTime := MaxTime() + testLength;
+              ToolbarSineStart%(); Yield();
+              testrep% := testrep% + 1;
+
+              if testrep% = nTestreps% then
+                  test% := 3;
+                  rep% := rep% + 1;
+              else
+                  test% := 1;
+              endif;
+
+          ' BLOCK: TRAIN -- THIS IS GOING TO BE WHERE I WANT TO EDIT THINGS
+          case test% = 3 then                  'Finished test, run training
+              SampleKey("3");
+              goalTime := MaxTime() + runLength;
+
+              if rep% < (nBlocks%+1) then
+                  docase
+                  case expmtMode = 3 or expmtMode = 4 then          '3 = ipsi, 4 = contra
+                      ToolbarStimOn%();
+                  case expmtMode = 1 or expmtMode = 2 then          '1 = x0, 2 = x2
+                      ToolbarLightOn%();
+                  endcase;
+              else
+                  ToolbarSineStop%();
+              endif;
+
+              if rep% = nBlocks% then
+                  test% := 0;
+              else
+                  test% := 1;
+              endif;
+              testrep% := 0;
+
+          endcase;
+
+      endif;
+  endif;
+
+
+  Return(1);
+End
+
+'--------------------------------------------------------------------------------
+'Configure expmt settings window
+'--------------------------------------------------------------------------------
+Func ToolbarConfigExpmt%()
+  DlgCreate("Experiment settings");  'Start new dialog
+  DlgInteger(1,"Number of run-test blocks",0,100,0,0,1);
+  DlgInteger(2,"Number of tests per block",1,100,0,0,1);    'set to 0 if not using Chair
+  DlgReal(3,"Run length (s)",0,5000);
+  DlgReal(4,"Test length (s)",0,5000);
+  DlgList(5,"Expmt mode", "habit|x0|x2|ipsi|contra|steps");
+  DlgInteger(6,"Light flash on?)",0,1,0,0,"0|1");
+  DlgReal(7,"Test stim and bilat (0 or 1)",0,1);
+
+  DlgShow(nBlocks%, nTestreps%, runLength, testLength, expmtMode, flashon%,testStim);
+
+  docase
+  case expmtMode = 0 then     'habit
+      sinPhDrum := 90;
+      sinPhChair := 90;
+      sinAmpChair := 10;
+      sinAmpDrum := 0;
+  case expmtMode = 1 then     'x0
+      sinPhDrum := 90;
+      sinPhChair := 90;
+      sinAmpChair := 10;
+      sinAmpDrum := 10;
+  case expmtMode = 2 then     'x2
+      sinPhDrum := -90;
+      sinPhChair := 90;
+      sinAmpChair := 10;
+      sinAmpDrum := 10;
+  case expmtMode = 3  then     'ipsi
+      sinPhChair := -90;'D019:-90, D253:90'
+      sinAmpDrum := 0;
+  case expmtMode = 4 then      'contra
+      sinPhChair := 90; 'D019:90, D253:-90'
+      sinAmpDrum := 0;
+  case expmtMode = 5 then      'steps
+      ToolbarStepConfig%();
+  endcase;
+
+
+  if testStim > 0 then
+      ToolbarPulseConfig%()
+  endif;
+
+  SetSequencerValues();
+  Return(1);
+End
