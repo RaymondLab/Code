@@ -50,7 +50,7 @@
 
             VAR    V54,RotationVel=0.02   ; velocity to rotate chair and drum
             VAR    V55,DrumDef=1    ; default direction for drum to move
-            VAR    V56,ChairDef=1   ; default direction for chair to move
+            VAR    V65,ChairDef=1   ; default direction for chair to move
 
 ;-----------------------------------------------------------------------------
 ; LOOP: our idle loop.
@@ -131,11 +131,11 @@ KDRUM2:     BLE    V8,vdac16(0.01),KDRUMEX
                                     ;check if we're within our epsilon
                                     ;if so, exit
             BNE    V9,0,KDRUM3     ;check if position was negative
-            MUL    V54,V56         ;make vel scaled by default direction
+            MUL    V54,V65         ;make vel scaled by default direction
             DAC    0,V54           ;vel for positive pos
             JUMP   KDRUM1
 
-KDRUM3:     MUL    V54,V56        ;make vel scaled by default direction
+KDRUM3:     MUL    V54,V65        ;make vel scaled by default direction
             NEG    V54,V54        ;get negative of default direction
             DAC    0,V54          ;vel for negative position
             JUMP   KDRUM1
