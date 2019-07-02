@@ -36,7 +36,7 @@ Func ToolbarIdle%()
 
   ' Keep sine wave from drifting!!!
   if MaxTime() > (prevTime + 1/sinHzChair) then
-  if driftFix = 1 then
+    if driftFix = 1 then
       driftFix%();
     endif;
   endif;
@@ -54,7 +54,6 @@ Func ToolbarIdle%()
           endif;
 
           docase
-
 
 
           ' MISC GAP
@@ -120,6 +119,14 @@ Func ToolbarIdle%()
                       ToolbarStimOn%();
                   case expmtMode = 1 or expmtMode = 2 then          '1 = x0, 2 = x2
                       ToolbarLightOn%();
+                  case expmtMode = 6 then
+                    'should this be called differently?'
+                    'i think this needs to call a different test case altogether, repeatedly call TrackEye'
+                    if MaxTime() > (prevTime + delta) then
+                      if TrackEye = 1 then
+                        TrackEye();
+                      endif;
+                    endif;
                   endcase;
               else
                   ToolbarSineStop%();

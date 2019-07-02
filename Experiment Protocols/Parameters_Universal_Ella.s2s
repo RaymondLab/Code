@@ -96,6 +96,7 @@ var sinOnCorDrum := 0;
 var testStim := 0;
 var rotationVelocity := 0.02;
 var delta := .01;
+var saccadeThreshold = 1; 'THIS IS A TEMPORARY VALUE'
 
 '--------------------------------------------------------------------------------
 ' TOOLBAR PARAMETERS
@@ -396,50 +397,18 @@ Func TrackEye()
   prevTime = MaxTime();
   var eye1Position := ChanValue(heposCh1%, prevTime);
   var prevEye1Position := ChanValue(heposCh1%, prevTime-delta);
-  'think i don't need to do ChanMeasure to figure out new mean bc no mean exists? -- pls confirm'
   var eye2Position := ChanValue(heposCh2%, prevTime);
   var prevEye2Position := ChanValue(heposCh2%, prevTime-delta);
 
-  var eyePosChangeAvg = (eye1Position-prevEye1Position + eye2Position-prevEye2Position) / 2;
+  'here do we want a slope (aka divide by delta) or just a difference?'
+  'currently averaging two eye channels, could try to do something to find the best eye channel'
+  var eyePosChangeAvg = (eye1Position-prevEye1Position + eye2Position-prevEye2Position) / 2 / delta;
 
-  if eyePosChangeAvg > SaccadeThreshold then
-    DrumDegreesPerSecondOffset  :=  htposSlope/4 + htposPos/4 - .246; 'THIS LAST NUMBER SHOULD EITHER BE A CONSTANT .246 WHICH NEEDS TO BE SPECIFIC TO THE RIG, OR SHOULD BE THE PREVIOUS DrumDegreesPerSecondOffset'
-    'NEED TO CONFIRM WITH MAX WHICH IS WHICH'
+  if eyePosChangeAvg > saccadeThreshold then 'need to find real value for threshold'
+    DrumDegreesPerSecondOffset  :=  (eyePosChangeAvg - DrumDegreesPerSecondOffsetDefault) * -1 * DrumDefaultDirection; 'this has to be changed to reflect the correct math for the eye tracking'
   else
     DrumDegreesPerSecondOffset := 0; 'is this how we say don't change position/stay constant??
   endif
-
-
-  'DETERMINE SOME THRESHOLD FOR WHAT IS A BIG ENOUGH SACCADE TO FOLLOW THE POSITION OF'
-  'IF IT HASN'T REACHED THAT THRESHOLD, SET VELOCITY TO 0 AND DO ANTI-DRIFT STUFF (??)'
-
-  ' When the sinewave is ON
-
-  if sineOn% = 1 or vidOn = 1 then
-
-    if sinPhDrum < 0 then
-      sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum) * DrumDefaultDirection; ' * default -1 for D253, 1 for D019'
-    else
-      sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum) * DrumDefaultDirection * -1; ' * negate direction from above'
-    endif
-
-  else
-    sinOnCorChair := 0;
-    sinOnCorDrum := 0;
-  endif
-
-  ' original anti-drift code'
-  prevTime := MaxTime();
-  ' Measure slope from last 1 cycle of chair/drum position feedback
-  var htposSlope := ChanValue(htposCh%, prevTime) - ChanValue(htposCh%, prevTime-(1/sinHzDrum));
-  var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime) - (sinOnCorDrum);
-
-  ' D253
-  DrumDegreesPerSecondOffset  :=  htposSlope/4 + htposPos/4 - .246;
-
-  'D019
-  'DrumDegreesPerSecondOffset  :=  -htposSlope/4 - htposPos/4;'' + .246;
-
   SetSequencerValues();
 End
 
@@ -760,9 +729,9 @@ Func driftFix%()
   var hhposPos := ChanMeasure(hhposCh%, 2, prevTime-(1/sinHzChair), prevTime) + (sinOnCorChair);
   var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime) - (sinOnCorDrum);
 
-  ' Scales *1 for D253, *-1 for D019 -- check if ChairDegreesPerSecondOffsetDefault should always be added
-  ChairDegreesPerSecondOffset :=  (hhposSlope/4 + hhposPos/4 - ChairDegreesPerSecondOffsetDefault) * -1 * ChairDefaultDirection;
-  DrumDegreesPerSecondOffset  :=  (htposSlope/4 + htposPos/4 - DrumDegreesPerSecondOffsetDefault) * -1 * ChairDefaultDirection;
+  ' Scales *1 for D253, *-1 for D019 -- switched from previous version to make math simpler
+  ChairDegreesPerSecondOffset :=  (ChairDegreesPerSecondOffsetDefault - hhposSlope/4 - hhposPos/4) * ChairDefaultDirection;
+  DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - htposSlope/4 - htposPos/4) * DrumDefaultDirection;
   SetSequencerValues();
 End
 '--------------------------------------------------------------------------------
