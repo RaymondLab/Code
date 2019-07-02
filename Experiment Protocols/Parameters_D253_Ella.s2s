@@ -3,7 +3,7 @@
 '--------------------------------------------------------------------------------
 ' SEQUENCER FILE LOCATION
 '--------------------------------------------------------------------------------
-var SequencerFile$ := "C:\\Users\\amins\\Documents\\RL_Code\\Experiment Protocols\\Sequencer_D253_Ella";
+var SequencerFile$ := "C:\\Users\\ellatl\\Documents\\Code\\Experiment Protocols\\Sequencer_Universal_Ella";
 
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS
@@ -17,10 +17,12 @@ var sinAmpDrum := 10;
 
 'Chair converstion factors
 var ChairDegreesPerSecond2Voltage := 0.0098255; 'Chair velocity to voltage (Scale)  * Doubled after fixing scaling (10 V MaxVoltage) 12/10/15 HP
+var ChairDegreesPerSecondOffsetDefault :=  .06;         'Chair velocity to voltage (offset)  *** Input default Chair offset here
 var ChairDegreesPerSecondOffset :=  .06;         'Chair velocity to voltage (offset)  *** Input default Chair offset here
 
 'Drum conversion factors
 var DrumDegreesPerSecond2Voltage := 0.005;      'Drum velocity to voltage (Scale)
+var DrumDegreesPerSecondOffsetDefault := .246;        'Drum velocity to voltage (offset)   *** Input default Drum offset here
 var DrumDegreesPerSecondOffset := .246;        'Drum velocity to voltage (offset)   *** Input default Drum offset here
 
 'Channel 1: Scaling to display the drum COMMAND signal
