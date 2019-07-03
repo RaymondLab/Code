@@ -34,7 +34,7 @@ Func ToolbarIdle%()
           return 1;
       endif;
 
-  ' Keep sine wave from drifting!!!
+  ' Keep sine wave from drifting!!! - cam take this out because it just applies when using a sine wave
   if MaxTime() > (prevTime + 1/sinHzChair) then
     if driftFix = 1 then
       driftFix%();
@@ -42,108 +42,102 @@ Func ToolbarIdle%()
   endif;
 
 
-  'If an experiment is running:
+  'If an experiment is running: - need to update parametes (ex. testLength, runLength) to reflect protocol we want to follow
   if runExpmt% = 1 then
 
       'Check the time. Seconds is the current time - compare it to the goal time of each segment
       if  MaxTime() > goalTime then
 
-          if   rep% = (nBlocks%+2) then 'all done
-              ToolbarQuitExpmt%();    ' All done
-              Return(1);
-          endif;
+        docase
 
-          docase
-
-
-          ' MISC GAP
+          ' MISC GAP A - does this include posttesting?
           case test% = 0 then
               SampleKey("0");
-              goalTime := MaxTime() + 10;
-              ToolbarSineStop%(); Yield();
+              goalTime := MaxTime() + 5;
+              SampleKey("x");
+              'ToolbarSineStop%(); Yield();
               ToolbarLightOff%(); Yield();
               ToolbarInit%(); Yield();
-              Yield(5);
+
+              if prePostNum = 3 then
+                ToolbarQuitExpmt%();
+                Return(1);
+              endif
+
+              test% := 7;
+
+          ' MISC GAP B - flash before test
+          case test% = 7 then
+              SampleKey("7");
+              goalTime := MaxTime() + 5;
               runFlash();
               test% := 4;
 
-          ' MISC TEST
+          ' MISC TEST - pretesting
           case test% = 4 then
               SampleKey("4");
               goalTime := MaxTime() + testLength;
 
-              if prePostNum = 1 then
-                test% := 0;
-                prePostNum := prePostNum + 1;
-              else
-                test% := 1;
-              endif
+              'FIGURE OUT WHAT HAPPENS IN TESTING FOR THIS PROTOCOL AND PUT IT HERE'
 
-              ToolbarSineStart%();
+              'sinAmpChair := 20;
+              'SetSequencerValues(); Yield();
 
+              docase 'prePostNum starts at 1, so 1st case is continuing experiment, second is ending experiment'
+                case prePostNum = 1 then
+                  prePostNum := prePostNum + 1;
+                  test% := 1;
+                case prePostNum = 2 then
+                  prePostNum := prePostNum + 1;
+                  test% := 0;
+              endcase
+              SampleKey("X");
+              'ToolbarSineStart%(); Yield();
 
-          ' BLOCK: GAP
-          case test% = 1 then               '
+          ' BLOCK: GAP A
+          case test% = 1 then
               SampleKey("1");
-              prePostNum := 1;
-              goalTime  := MaxTime() +  10;    'wait 10 seconds for init
-              ToolbarSineStop%(); Yield();
+              goalTime := MaxTime() + 5;
+              SampleKey("x"); 'do i need this?'
+              'ToolbarSineStop%(); Yield();
               ToolbarLightOff%(); Yield();
               ToolbarInit%(); Yield();
-              Yield(5);
+              test% := 6;
+
+          ' BLOCK: GAP B - flash before training
+          case test% = 6 then
+              SampleKey("6");
+              goalTime := MaxTime() + 5;
               runFlash();
-              test% := 2;
+              test% := 3;
 
-          ' BLOCK: TEST
-          case test% = 2 then               'FINISHED WAITING, TEST NOW
-              SampleKey("2");
-              goalTime := MaxTime() + testLength;
-              ToolbarSineStart%(); Yield();
-              testrep% := testrep% + 1;
-
-              if testrep% = nTestreps% then
-                  test% := 3;
-                  rep% := rep% + 1;
-              else
-                  test% := 1;
-              endif;
-
-          ' BLOCK: TRAIN -- THIS IS GOING TO BE WHERE I WANT TO EDIT THINGS
-          case test% = 3 then                  'Finished test, run training
+          ' BLOCK: TRAIN
+          case test% = 3 then
               SampleKey("3");
               goalTime := MaxTime() + runLength;
 
-              if rep% < (nBlocks%+1) then
-                  docase
-                  case expmtMode = 3 or expmtMode = 4 then          '3 = ipsi, 4 = contra
-                      ToolbarStimOn%();
-                  case expmtMode = 1 or expmtMode = 2 then          '1 = x0, 2 = x2
-                      ToolbarLightOn%();
-                  case expmtMode = 6 then
-                    'should this be called differently?'
-                    'i think this needs to call a different test case altogether, repeatedly call TrackEye'
-                    if MaxTime() > (prevTime + delta) then
-                      if trackEye% = 1 then
-                        TrackEye();
-                      endif;
-                    endif;
-                  endcase;
-              else
-                  ToolbarSineStop%();
-              endif;
+              'set drum back to 0? or just make it stop moving?'
+              ' NO DRUM - turn off drum
+              sAmpDrum := DrumVel2Int32%( 0 );   ' Amp drum
+              sAmpDrumN := 0-sAmpDrum;                      ' Amp drum (opposite direction)
+              SetSequencerValues();
 
+              rep% := rep% + 1;
               if rep% = nBlocks% then
                   test% := 0;
               else
                   test% := 1;
               endif;
-              testrep% := 0;
+              SampleKey("X");
+              ToolbarLightOn%(); Yield(.1);
+              'ToolbarSineStart%(); Yield(.1);
 
-          endcase;
+              'FIGURE OUT WHAT HAPPENS IN TRAINING AND DO HERE - maybe comes after test cases?'
+              TrackEye();
 
+        endcase;
       endif;
   endif;
-
 
   Return(1);
 End

@@ -91,7 +91,7 @@ var stepOn% := 0;
 var fullPulse := 0;
 'Voltage Range: check in Edit -> Edit Parameters
 var MaxVoltage := 10;
-var driftFix := 1;
+var driftFix := 0;
 var sinOnCorChair := 0;
 var sinOnCorDrum := 0;
 var testStim := 0;
