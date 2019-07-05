@@ -54,6 +54,7 @@ var pulsePhase := 0 ;
 var stepLight := 0;
 var lightDur := 500;
 var lightStart := 0;
+var everyNCycles := 1;
 
 
 '--------------------------------------------------------------------------------
@@ -227,7 +228,8 @@ Func ToolbarPulseConfig%()
   DlgReal(2,"Pulse duration (ms)",0,5000);
   DlgReal(3,"Interpulse interval (ms)",0,5000);
   DlgReal(4,"Pulse phase (deg)",0,360);
-  DlgShow(pNumber, pulseDuration, pulseInterval,pulsePhase);
+  DlgReal(5, "Pulses Occur Every X Cycles?", 1, 10000);
+  DlgShow(pNumber, pulseDuration, pulseInterval,pulsePhase, everyNCycles);
   SetPulseSettings%();
   Return( 1 );
 End
@@ -664,6 +666,7 @@ Proc SetSequencerValues()
   SampleSeqVar( 50, pulseDurationV);
   SampleSeqVar( 51, pulseWaitV);
   SampleSeqVar( 52, pulsePeriod);
+  SampleSeqVar( 54, everyNCycles);
 End
 
 Func driftFix%()
