@@ -2,7 +2,7 @@
 ' Rig-Specific parameters file Location
 '--------------------------------------------------------------------------------
 'D019
-#include "C:\\Users\\amins\\Documents\\RL_Code\\Experiment Protocols\\Parameters_D019.s2s"
+#include "C:\\Users\\ellatl\\Documents\\Code\\Experiment Protocols\\Parameters_D019.s2s"
 
 'D253
 '#include "C:\\Users\\amins\\Documents\\RL_Code\\Experiment Protocols\\Parameters_D253.s2s"
@@ -10,7 +10,7 @@
 '--------------------------------------------------------------------------------
 ' Universal Parameters File Location
 '--------------------------------------------------------------------------------
-#include "C:\\Users\\amins\\Documents\\RL_Code\\Experiment Protocols\\Parameters_Universal.s2s"
+#include "C:\\Users\\ellatl\\Documents\\Code\\Experiment Protocols\\Parameters_Universal.s2s"
 
 
 '--------------------------------------------------------------------------------

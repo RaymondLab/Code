@@ -11,6 +11,7 @@ var sinPhDrum := 90;
 var actualDrumPh;
 var sineOn% := 0;
 
+
 '--------------------------------------------------------------------------------
 ' STEP PARAMETERS
 '--------------------------------------------------------------------------------
@@ -93,8 +94,11 @@ var MaxVoltage := 10;
 var driftFix := 1;
 var sinOnCorChair := 0;
 var sinOnCorDrum := 0;
+var sinOnCorChairDefault := 0;
+var sinOnCorDrumDefault := 0;
 var testStim := 0;
 var rotationVelocity := 0.02;
+var radianConversion := 57.295779513; 'divide a value in degrees by this number to convert to radians - from Spike2 manual'
 
 '--------------------------------------------------------------------------------
 ' TOOLBAR PARAMETERS
@@ -155,6 +159,9 @@ Func ToolbarSineConfig%()
   SetPulseSettings%();
 
   SetSequencerValues();
+
+  SetSinOnCorValues%();
+
   Return(1);
 End
 
@@ -673,39 +680,40 @@ Proc SetSequencerValues()
 End
 
 Func driftFix%()
-
+  'do i need to check if sine wave is on? or should this go in SetSinOnCorValues?'
   ' When the sinewave is ON
   if sineOn% = 1 or vidOn = 1 then
-
-    if sinPhChair > 0 then
-      sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair) * ChairDefaultDirection; ' * default -1 for D253, 1 for D019'
-    else
-      sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair) * ChairDefaultDirection * -1; ' * negate direction from above'
-    endif
-
-    if sinPhDrum < 0 then
-      sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum) * DrumDefaultDirection; ' * default -1 for D253, 1 for D019'
-    else
-      sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum) * DrumDefaultDirection * -1; ' * negate direction from above'
-    endif
-
+    sinOnCorChair := sinOnCorChairDefault;
+    sinOnCorDrum := sinOnCorDrumDefault;
   else
     sinOnCorChair := 0;
     sinOnCorDrum := 0;
   endif
 
-  ' original anti-drift code'
   prevTime := MaxTime();
   ' Measure slope from last 1 cycle of chair/drum position feedback
   var hhposSlope := ChanValue(hhposCh%, prevTime) - ChanValue(hhposCh%, prevTime-(1/sinHzChair));
   var htposSlope := ChanValue(htposCh%, prevTime) - ChanValue(htposCh%, prevTime-(1/sinHzDrum));
   var hhposPos := ChanMeasure(hhposCh%, 2, prevTime-(1/sinHzChair), prevTime) + (sinOnCorChair);
-  var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime) - (sinOnCorDrum);
+  var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime) - (sinOnCorDrum); 'is this minus because the chair and drum go opposite ways?'
 
   ' Scales *1 for D253, *-1 for D019 -- switched from previous version to make math simpler
   ChairDegreesPerSecondOffset :=  (ChairDegreesPerSecondOffsetDefault - hhposSlope/4 - hhposPos/4) * ChairDefaultDirection;
   DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - htposSlope/4 - htposPos/4) * DrumDefaultDirection;
   SetSequencerValues();
+End
+
+Func SetSinOnCorValues%()
+  'do these values need to be calculated every time driftFix is called? isn't it faster just to update every time one of the individual values gets updated?
+  ' not sure if sinPhChair/Drum is constantly updating - if so, can just calculate whether it should be multiplied by 1 or by -1'
+
+  'i think this is what I want to do? replaces just baseline amplitude (which assumes that we started at top or bottom of peaks) with the actual beginning value of the chair/drum
+  var assumedZeroChair := sinAmpChair * sin((90 - sinPhChair)/radianConversion) * -1; 'sin function only takes radian value'
+  sinOnCorChairDefault := assumedZeroChair / (2 * 3.14159 * sinHzChair)* ChairDefaultDirection; ' * default -1 for D253, 1 for D019'
+
+  var assumedZeroDrum := sinAmpDrum * sin((90 - sinPhDrum)/radianConversion) * -1;
+  sinOnCorDrumDefault := assumedZeroDrum / (2 * 3.14159 * sinHzDrum) * DrumDefaultDirection; ' * default -1 for D253, 1 for D019'
+
 End
 '--------------------------------------------------------------------------------
 ' CONVERSION FUNCTIONS
