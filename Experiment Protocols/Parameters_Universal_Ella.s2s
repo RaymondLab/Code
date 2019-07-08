@@ -78,6 +78,7 @@ var flashon% := 1;
 var waitLength := 300;
 var prevTime := 0;
 var trackEye% := 1;
+var startTracking% := 0;
 
 
 
@@ -96,8 +97,9 @@ var sinOnCorChair := 0;
 var sinOnCorDrum := 0;
 var testStim := 0;
 var rotationVelocity := 0.02;
-var delta := .01;
-var saccadeThreshold := 1; 'THIS IS A TEMPORARY VALUE'
+var delta := .01; 'TEMPORARY VALUE'
+var saccadeThreshold := 1; 'TEMPORARY VALUE'
+var gain := .5;  'TEMPORARY VALUE'
 
 '--------------------------------------------------------------------------------
 ' TOOLBAR PARAMETERS
@@ -114,7 +116,9 @@ const PulseConfigPos    := PulsePos+1;
 const VidPos            := PulseConfigPos+1;
 const StepPos           := VidPos+1;
 const StepConfigPos     := StepPos+1;
-const ExpmtPos          := StepConfigPos+1;
+const TrackPos          := StepConfigPos+1;
+const TrackConfigPos    := TrackPos+1;
+const ExpmtPos          := TrackConfigPos+1;
 const ExpmtConfigPos    := ExpmtPos+1;
 
 const HTVELChCom% := 1;
@@ -231,7 +235,7 @@ Func ToolbarPulseConfig%()
   DlgReal(2,"Pulse duration (ms)",0,5000);
   DlgReal(3,"Interpulse interval (ms)",0,5000);
   DlgReal(4,"Pulse phase (deg)",0,360);
-  DlgShow(pNumber, pulseDuration, pulseInterval,pulsePhase);
+  DlgShow(pNumber, pulseDuration, pulseInterval, pulsePhase);
   SetPulseSettings%();
   Return( 1 );
 End
@@ -393,7 +397,8 @@ End
 '--------------------------------------------------------------------------------
 'Constantly updates to track the eye movements of the mouse and adjust the drum to the same position'
 'We don't want to move the chair at all, just the drum'
-Func TrackEye()
+'Try to figure out how to change gain'
+Func ToolbarTrackEye%()
 
   prevTime := MaxTime();
   var eye1Position := ChanValue(heposCh1%, prevTime);
@@ -406,11 +411,31 @@ Func TrackEye()
   var eyePosChangeAvg := (eye1Position-prevEye1Position + eye2Position-prevEye2Position) / 2 / delta;
 
   if eyePosChangeAvg > saccadeThreshold then 'need to find real value for threshold'
-    DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - eyePosChangeAvg) * DrumDefaultDirection; 'this has to be changed to reflect the correct math for the eye tracking'
+    var eyePosChangeScaled := eyePosChangeAvg * gain;
+    DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - eyePosChangeScaled) * DrumDefaultDirection; 'this has to be changed to reflect the correct math for the eye tracking'
   else
     DrumDegreesPerSecondOffset := 0; 'is this how we say don't change position/stay constant??
+    'Maybe:'
+    'ToolbarInit%();
   endif
   SetSequencerValues();
+  Return(1);
+End
+
+Func ToolbarTrackConfig%() 'All of the values in here are guesses - may have to change how they're input, etc.
+  'also need to figure out units for everything'
+  DlgCreate("Eye Tracking settings");  'Start new dialog
+  DlgReal(1,"Delta (s)",.000001,10);
+  DlgReal(2,"Saccade Threshold",.000001,1);
+  DlgReal(3,"Gain",.01, 10);
+  DlgShow(delta, saccadeThreshold, gain);
+  'SetTrackingSettings%();
+  Return(1);
+End
+
+'this will only need to be used if i can't just directly set everything from here/if calculations will need to be done
+Func SetTrackingSettings%()
+  Return(1);
 End
 
 '--------------------------------------------------------------------------------
@@ -435,6 +460,8 @@ Proc ToolbarConfig()
   ToolbarSet(ExpmtConfigPos, "Expmt Config", ToolbarConfigExpmt%);
   ToolbarSet(CommentPos, "Comment", ToolbarComment%);
   ToolbarSet(NewFilePos, "New File", ToolbarNew%);
+  ToolbarSet(TrackPos, "Track Eye", ToolbarTrackEye%);
+  ToolbarSet(TrackConfigPos, "Track Config", ToolbarTrackConfig%);
   Toolbar("", 231);
 End
 

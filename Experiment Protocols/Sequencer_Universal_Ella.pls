@@ -74,7 +74,8 @@ INIT:   'I  RATE   0,0             ;stop cosine on drum
             DAC    0,DrumOff       ;stop the drum
             DAC    1,Chairoff      ;stop the chair
             DIGOUT [00000000]      ;stop any pulses
-            JUMP   KDRUM          ;return drum to zero - skip chair code
+            JUMP   KDRUM           ;return drum to zero - skip chair code - might have to change this back to add in chair if rig won't run with chair off
+                                   ;also could be changed if we end up wanting to do VOR too - then chair will need to be on
 
 ;-----------------------------------------------------------------------------
 ; QUIT: Stops all movement on drum and chair
