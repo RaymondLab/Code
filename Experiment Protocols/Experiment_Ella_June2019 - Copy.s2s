@@ -48,88 +48,30 @@ Func ToolbarIdle%()
       'Check the time. Seconds is the current time - compare it to the goal time of each segment
       if  MaxTime() > goalTime then
 
+        'change this from doing cases to just running a script? does that work?'
+
         docase
 
-          ' MISC GAP A - runs at beginning and end
-          case test% = 0 then
-              SampleKey("0");
-              startTracking% := 0;
-              goalTime := MaxTime() + 5;
-              SampleKey("x");
-              'ToolbarSineStop%(); Yield();
-              ToolbarLightOff%(); Yield();
-              ToolbarInit%(); Yield();
+        case test% = 0 then
+          var checkEnd := runGap(); 'gotta figure out how to pass parameter'
+          if checkEnd = 1 then
+            return(1);
+          endif;
 
-              if prePostNum = 3 then
-                ToolbarQuitExpmt%();
-                Return(1);
-              endif
+        case test% = 1 then
+          flashLight();
 
-              test% := 7;
+        case test% = 2 then
+          prePostTest();
 
-          ' MISC GAP B - flash before test
-          case test% = 7 then
-              SampleKey("7");
-              goalTime := MaxTime() + 5;
-              runFlash();
-              test% := 4;
+        case test% = 3 then
+         runGap();
 
-          ' MISC TEST - pre- and post-testing
-          case test% = 4 then
-              SampleKey("4");
-              goalTime := MaxTime() + testLength;
+        case test% = 4 then
+          flashLight();
 
-              'FIGURE OUT WHAT HAPPENS IN TESTING FOR THIS PROTOCOL AND PUT IT HERE'
-
-              docase 'prePostNum starts at 1, so 1st case is continuing experiment, second is ending experiment'
-                case prePostNum = 1 then
-                  prePostNum := prePostNum + 1;
-                  test% := 1;
-                case prePostNum = 2 then
-                  prePostNum := prePostNum + 1;
-                  test% := 0;
-              endcase
-              SampleKey("X");
-              'ToolbarSineStart%(); Yield();
-
-          ' BLOCK: GAP A
-          case test% = 1 then
-              SampleKey("1");
-              startTracking% := 0;
-              goalTime := MaxTime() + 5;
-              SampleKey("x"); 'do i need this?'
-              ToolbarLightOff%(); Yield();
-              ToolbarInit%(); Yield();
-              test% := 6;
-
-          ' BLOCK: GAP B - flash before training
-          case test% = 6 then
-              SampleKey("6");
-              goalTime := MaxTime() + 5;
-              runFlash();
-              test% := 3;
-
-          ' BLOCK: TRAIN
-          case test% = 3 then
-              SampleKey("3");
-              goalTime := MaxTime() + runLength;
-
-              'update the gain'
-              if rep% > 0 then
-                gain := gain + incrementSize;
-              endif;
-
-              rep% := rep% + 1;
-              if rep% = nBlocks% then
-                  test% := 0;
-              else
-                  test% := 1;
-              endif;
-              SampleKey("X");
-              ToolbarLightOn%(); Yield(.1);
-              'ToolbarSineStart%(); Yield(.1);
-
-              startTracking% := 1;
+        case test% = 5 then
+          train();
 
         endcase;
       endif;
@@ -138,6 +80,93 @@ Func ToolbarIdle%()
   Return(1);
 End
 
+Func runGap()
+  if test% = 0 then
+    SampleKey("0");
+  else if test% = 3 then
+    SampleKey("3")
+  endif
+
+  startTracking% := 0;
+  goalTime := MaxTime() + 5;
+
+  if preTest% = 1 then 'finds null eye position only once after pretesting'
+    findNullEyePos(); 'is this a global variable, or should i pass through a return value?'
+    preTest% := 0;
+  endif
+
+  SampleKey("x");
+  ToolbarLightOff%(); Yield();
+  ToolbarInit%(); Yield();
+
+  if prePostNum = 3 then
+    ToolbarQuitExpmt%();
+    Return(1);
+  endif
+
+  if test% = 0 then
+    test% := 1;
+  else if test% = 3 then
+    test% := 4;
+  endif
+End
+
+Proc flashLight() 'do i need to pass in anything here?'
+  if test% = 1 then
+    SampleKey("1");
+  else if test% = 4 then
+    SampleKey("4");
+  endif;
+
+  goalTime := MaxTime() + 5;
+  runFlash();
+
+  if test% = 1 then
+    test% := 2;
+  else if test% = 4 then
+    test% := 5;
+  endif;
+End
+
+Func prePostTest()
+  SampleKey("2");
+  goalTime := MaxTime() + testLength;
+
+  'FIGURE OUT WHAT HAPPENS IN TESTING FOR THIS PROTOCOL AND PUT IT HERE'
+  ToolbarLightOn%();
+  docase 'prePostNum starts at 1, so 1st case is continuing experiment, second is ending experiment'
+    case prePostNum = 1 then
+      prePostNum := prePostNum + 1;
+      test% := 3;
+    case prePostNum = 2 then
+      prePostNum := prePostNum + 1;
+      test% := 0;
+  endcase;
+  SampleKey("X");
+  'ToolbarSineStart%(); Yield();
+End
+
+Func train()
+  SampleKey("5");
+  goalTime := MaxTime() + runLength;
+
+  'update the gain'
+  if rep% > 0 then
+    gain := gain + incrementSize;
+  endif;
+
+  rep% := rep% + 1;
+  if rep% = nBlocks% then
+      test% := 0;
+  else
+      test% := 3;
+  endif;
+  SampleKey("X");
+  ToolbarLightOn%(); Yield(.1);
+  'ToolbarSineStart%(); Yield(.1);
+
+  startTracking% := 1;
+End
 '--------------------------------------------------------------------------------
 'Configure expmt settings window
 '--------------------------------------------------------------------------------

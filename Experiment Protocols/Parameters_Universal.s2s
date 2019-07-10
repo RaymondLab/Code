@@ -680,7 +680,6 @@ Proc SetSequencerValues()
 End
 
 Func driftFix%()
-  'do i need to check if sine wave is on? or should this go in SetSinOnCorValues?'
   ' When the sinewave is ON
   if sineOn% = 1 or vidOn = 1 then
     sinOnCorChair := sinOnCorChairDefault;
@@ -711,7 +710,7 @@ Func SetSinOnCorValues%()
   var assumedZeroChair := sinAmpChair * sin((90 - sinPhChair)/radianConversion) * -1; 'sin function only takes radian value'
   sinOnCorChairDefault := assumedZeroChair / (2 * 3.14159 * sinHzChair)* ChairDefaultDirection; ' * default -1 for D253, 1 for D019'
 
-  var assumedZeroDrum := sinAmpDrum * sin((90 - sinPhDrum)/radianConversion) * -1;
+  var assumedZeroDrum := sinAmpDrum * sin((90 - sinPhDrum)/radianConversion) * -1; 'this might need to not be multiplied by -1 -- in previous calculations drum rotation was opposite chair'
   sinOnCorDrumDefault := assumedZeroDrum / (2 * 3.14159 * sinHzDrum) * DrumDefaultDirection; ' * default -1 for D253, 1 for D019'
 
 End

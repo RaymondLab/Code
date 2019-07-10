@@ -80,7 +80,19 @@ var prevTime := 0;
 var trackEye% := 1;
 var startTracking% := 0;
 
-
+'--------------------------------------------------------------------------------
+' TRACKING PARAMETERS
+'--------------------------------------------------------------------------------
+var delta := .01; 'TEMPORARY VALUE'
+var saccadeThreshold := 1; 'TEMPORARY VALUE'
+var gain := .5;  'TEMPORARY VALUE'
+var gainCeiling := 5; 'TEMPORARY VALUE'
+var nullEyePos := 0;
+var eyePos := 0;
+var preTest% := 1; 'variable to check if test was run for first time to take baseline eye position'
+var LeakInstabilityScale := -1; '-1 for leak, 1 for instability'
+var leakOrInstability;
+var incrementSize := .5;
 
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS
@@ -97,9 +109,6 @@ var sinOnCorChair := 0;
 var sinOnCorDrum := 0;
 var testStim := 0;
 var rotationVelocity := 0.02;
-var delta := .01; 'TEMPORARY VALUE'
-var saccadeThreshold := 1; 'TEMPORARY VALUE'
-var gain := .5;  'TEMPORARY VALUE'
 
 '--------------------------------------------------------------------------------
 ' TOOLBAR PARAMETERS
@@ -401,23 +410,36 @@ End
 Func ToolbarTrackEye%()
 
   prevTime := MaxTime();
-  var eye1Position := ChanValue(heposCh1%, prevTime);
-  var prevEye1Position := ChanValue(heposCh1%, prevTime-delta);
-  var eye2Position := ChanValue(heposCh2%, prevTime);
-  var prevEye2Position := ChanValue(heposCh2%, prevTime-delta);
+  ' var eye1Position := ChanValue(heposCh1%, prevTime);
+  ' var prevEye1Position := ChanValue(heposCh1%, prevTime-delta);
+  ' var eye2Position := ChanValue(heposCh2%, prevTime);
+  ' var prevEye2Position := ChanValue(heposCh2%, prevTime-delta);
+  '
+  ' 'here do we want a slope (aka divide by delta) or just a difference?'
+  ' 'currently averaging two eye channels, could try to do something to find the best eye channel'
+  ' var eyePosChangeAvg := (eye1Position-prevEye1Position + eye2Position-prevEye2Position) / 2 / delta;
+  '
+  ' 'want to change this so that it uses the degree value and calculates the velocity change in response to that'
+  '
+  ' if eyePosChangeAvg > saccadeThreshold then 'need to find real value for threshold' 'OR MAYBE DON'T NEED THRESHOLD AT ALL AND JUST ALWAYS TRACK?
+  '   var eyePosChangeScaled := eyePosChangeAvg * gain;
+  '   DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - eyePosChangeScaled) * DrumDefaultDirection * LeakInstabilityScale; 'this has to be changed to reflect the correct math for the eye tracking'
+  ' else
+  '   DrumDegreesPerSecondOffset := 0; 'is this how we say don't change position/stay constant??
+  '   'Maybe:'
+  '   'ToolbarInit%();
+  ' endif
+  ' SetSequencerValues();
+  ' Return(1);
 
-  'here do we want a slope (aka divide by delta) or just a difference?'
-  'currently averaging two eye channels, could try to do something to find the best eye channel'
-  var eyePosChangeAvg := (eye1Position-prevEye1Position + eye2Position-prevEye2Position) / 2 / delta;
+  'temporary - getting eye position by averaging both channels - eventually want to update to reflect best choice channel'
+  var currEye1Pos := ChanValue(heposCh1%, prevTime);
+  var currEye2Pos := ChanValue(heposCh2%, prevTime);
+  var currEyePosAvg := (currEye1Pos + currEye2Pos) / 2;
 
-  if eyePosChangeAvg > saccadeThreshold then 'need to find real value for threshold'
-    var eyePosChangeScaled := eyePosChangeAvg * gain;
-    DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - eyePosChangeScaled) * DrumDefaultDirection; 'this has to be changed to reflect the correct math for the eye tracking'
-  else
-    DrumDegreesPerSecondOffset := 0; 'is this how we say don't change position/stay constant??
-    'Maybe:'
-    'ToolbarInit%();
-  endif
+  var degreeDiffScaled := (currEyePosAvg - nullEyePos) * gain; 'MAKE SURE THIS IS HOW WE GET THAT DEGREE VALUE'
+  DrumDegreesPerSecondOffset := (DrumDegreesPerSecondOffsetDefault - degreeDiffScaled) * DrumDefaultDirection * LeakInstabilityScale;
+
   SetSequencerValues();
   Return(1);
 End
@@ -427,16 +449,52 @@ Func ToolbarTrackConfig%() 'All of the values in here are guesses - may have to 
   DlgCreate("Eye Tracking settings");  'Start new dialog
   DlgReal(1,"Delta (s)",.000001,10);
   DlgReal(2,"Saccade Threshold",.000001,1);
-  DlgReal(3,"Gain",.01, 10);
-  DlgShow(delta, saccadeThreshold, gain);
-  'SetTrackingSettings%();
+  DlgReal(3,"Gain start value",.05, 10);
+  DlgReal(4,"Gain end value",.05, 10);
+  DlgReal(5,"Size of increments",.05, 1);
+  DlgList(5, "Train for leak or instability", "Leak|Instability");
+  DlgShow(delta, saccadeThreshold, gain, gainCeiling, incrementSize, leakOrInstability);
+
+  SetTrackingSettings%();
+
   Return(1);
 End
 
 'this will only need to be used if i can't just directly set everything from here/if calculations will need to be done
 Func SetTrackingSettings%()
+  'allows leak or instability to be chosen in menu, and scales velocities accordingly'
+  docase
+  case leakOrInstability = 0 then
+    LeakInstabilityScale := -1;
+  case leakOrInstability = 1 then
+    LeakInstabilityScale := 1;
+  endcase
+
+  'set number of blocks to go through before incrementing
+  'for this to really work the numbers have to be set such that everything ends up as a whole number'
+  'instead change it so you give a min and a max and an increment size and it defines the number of blocks from that'
+  if incrementSize = 0 then
+    nBlocks% := 1;
+  else
+    nBlocks% := (gainCeiling - gain + incrementSize) / incrementSize;
+  endif;
+
   Return(1);
 End
+
+'finds the null eye position based on data from pre-training -- currently just averages means of both channels'
+'possible improvement: find which one has less noise, use that channel to find null position'
+Func findNullEyePos()
+  prevTime := MaxTime();
+  var chan1Mean := ChanMeasure(heposCh1%, 2, prevTime-testLength, prevTime);
+  var chan2Mean := ChanMeasure(heposCh2%, 2, prevTime-testLength, prevTime);
+  nullEyePos := (chan1Mean + chan2Mean) / 2;
+End
+
+'--------------------------------------------------------------------------------
+' EXPERIMENT FUNCTIONS
+'--------------------------------------------------------------------------------
+
 
 '--------------------------------------------------------------------------------
 ' OTHER FUNCTIONS
