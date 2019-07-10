@@ -464,16 +464,16 @@ End
 Func SetTrackingSettings%()
   'allows leak or instability to be chosen in menu, and scales velocities accordingly'
   docase
-  case leakOrInstability = 0 then
+  case leakOrInstability = 0 then 'leaky'
     LeakInstabilityScale := -1;
-  case leakOrInstability = 1 then
+  case leakOrInstability = 1 then 'unstable'
     LeakInstabilityScale := 1;
   endcase
 
   'set number of blocks to go through before incrementing
   'for this to really work the numbers have to be set such that everything ends up as a whole number'
   'instead change it so you give a min and a max and an increment size and it defines the number of blocks from that'
-  if incrementSize = 0 then
+  if incrementSize = 0 or gainCeiling <= gain then
     nBlocks% := 1;
   else
     nBlocks% := (gainCeiling - gain + incrementSize) / incrementSize;
@@ -490,11 +490,6 @@ Func findNullEyePos()
   var chan2Mean := ChanMeasure(heposCh2%, 2, prevTime-testLength, prevTime);
   nullEyePos := (chan1Mean + chan2Mean) / 2;
 End
-
-'--------------------------------------------------------------------------------
-' EXPERIMENT FUNCTIONS
-'--------------------------------------------------------------------------------
-
 
 '--------------------------------------------------------------------------------
 ' OTHER FUNCTIONS
