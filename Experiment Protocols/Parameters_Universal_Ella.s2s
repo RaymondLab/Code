@@ -59,10 +59,10 @@ var lightStart := 0;
 '--------------------------------------------------------------------------------
 ' EXPERIMENT PARAMETERS
 '--------------------------------------------------------------------------------
-var nBlocks% := 6;                 'Number of run-test blocks in exmpt
+var nBlocks% := 60;                 'Number of run-test blocks in exmpt
 var nTestreps% := 1;               'Number of times to repeat 40 sec test
-var runLength := 300;             'Seconds to run protocol in each block(300 for 5 min)
-var testLength := 45;             'Seconds to test
+var runLength := 20;             'Seconds to run protocol in each block(300 for 5 min)
+var testLength := 10;             'Seconds to test
 var expmtLoc% := 1;
 var prePostNum := 1;
 var trainLoc% := 1;
@@ -104,11 +104,12 @@ var stepOn% := 0;
 var fullPulse := 0;
 'Voltage Range: check in Edit -> Edit Parameters
 var MaxVoltage := 10;
-var driftFix := 0;
+var driftFix := 1;
 var sinOnCorChair := 0;
 var sinOnCorDrum := 0;
 var testStim := 0;
 var rotationVelocity := 0.02;
+var radianConversion := 57.295779513; 'divide a value in degrees by this number to convert to radians - from Spike2 manual'
 
 '--------------------------------------------------------------------------------
 ' TOOLBAR PARAMETERS
@@ -384,7 +385,6 @@ Func ToolbarStimOn%()
   else
       SampleKey("P");
   endif;
-  sineOn% := 0;
   Yield();
   Toolbarset(PulsePos,"Pulse Off", ToolbarStimOff%);
   Return( 1 );
@@ -395,7 +395,6 @@ Func ToolbarStimOff%()
   Yield();
   SampleKey( "I" );
   Yield();
-  sineOn% := 0;
 
   Toolbarset(PulsePos,"Pulse On", ToolbarStimOn%);
   Return( 1 );
@@ -781,38 +780,41 @@ Proc SetSequencerValues()
 End
 
 Func driftFix%()
-
-  ' When the sinewave is ON
+  'drift back to 0 if sine wave isn't running
   if sineOn% = 1 or vidOn = 1 then
+    var chairSign := -1;
+    var drumSign := 1;
 
     if sinPhChair > 0 then
-      sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair) * ChairDefaultDirection; ' * default -1 for D253, 1 for D019'
-    else
-      sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair) * ChairDefaultDirection * -1; ' * negate direction from above'
+      chairSign := 1;
+    endif
+    if sinPhDrum > 0 then
+      drumSign := -1;
     endif
 
-    if sinPhDrum < 0 then
-      sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum) * DrumDefaultDirection; ' * default -1 for D253, 1 for D019'
-    else
-      sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum) * DrumDefaultDirection * -1; ' * negate direction from above'
-    endif
+    var assumedZeroChair := sinAmpChair - (sinAmpChair * sin((90 - sinPhChair) / radianConversion)); 'sin function only takes radian value'
+    sinOnCorChair := chairSign * assumedZeroChair / (2 * 3.14159 * sinHzChair)* ChairDefaultDirection; ' * default -1 for D253, 1 for D019'
+
+    var assumedZeroDrum := sinAmpDrum - (sinAmpDrum * sin((90 - sinPhDrum)/radianConversion)); 'this might need to not be multiplied by -1 -- in previous calculations drum rotation was opposite chair'
+    sinOnCorDrum := drumSign * assumedZeroDrum / (2 * 3.14159 * sinHzDrum) * DrumDefaultDirection; ' * default -1 for D253, 1 for D019'
 
   else
     sinOnCorChair := 0;
     sinOnCorDrum := 0;
   endif
 
-  ' original anti-drift code'
   prevTime := MaxTime();
   ' Measure slope from last 1 cycle of chair/drum position feedback
   var hhposSlope := ChanValue(hhposCh%, prevTime) - ChanValue(hhposCh%, prevTime-(1/sinHzChair));
   var htposSlope := ChanValue(htposCh%, prevTime) - ChanValue(htposCh%, prevTime-(1/sinHzDrum));
   var hhposPos := ChanMeasure(hhposCh%, 2, prevTime-(1/sinHzChair), prevTime) + (sinOnCorChair);
-  var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime) - (sinOnCorDrum);
+  var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime) - (sinOnCorDrum); 'is this minus because the chair and drum go opposite ways?'
 
   ' Scales *1 for D253, *-1 for D019 -- switched from previous version to make math simpler
   ChairDegreesPerSecondOffset :=  (ChairDegreesPerSecondOffsetDefault - hhposSlope/4 - hhposPos/4) * ChairDefaultDirection;
-  DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - htposSlope/4 - htposPos/4) * DrumDefaultDirection;
+  if startTracking% = 0 then
+    DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - htposSlope/4 - htposPos/4) * DrumDefaultDirection;
+  endif
   SetSequencerValues();
 End
 '--------------------------------------------------------------------------------

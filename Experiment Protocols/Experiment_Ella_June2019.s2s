@@ -2,7 +2,7 @@
 ' Rig-Specific parameters file Location
 '--------------------------------------------------------------------------------
 'D019
-#include "C:\\Users\\ellatl\\Documents\\Code\\Experiment Protocols\\Parameters_D253_Ella.s2s"
+#include "C:\\Users\\Raymond Lab\\Documents\\Code\\Experiment Protocols\\Parameters_D019_Ella.s2s"
 
 'D253
 '#include "C:\\Users\\amins\\Documents\\RL_Code\\Experiment Protocols\\Parameters_D253.s2s"
@@ -10,7 +10,7 @@
 '--------------------------------------------------------------------------------
 ' Universal Parameters File Location
 '--------------------------------------------------------------------------------
-#include "C:\\Users\\ellatl\\Documents\\Code\\Experiment Protocols\\Parameters_Universal_Ella.s2s"
+#include "C:\\Users\\Raymond Lab\\Documents\\Code\\Experiment Protocols\\Parameters_Universal_Ella.s2s"
 
 
 '--------------------------------------------------------------------------------
@@ -40,6 +40,9 @@ Func ToolbarIdle%()
     if startTracking% = 1 then
       ToolbarTrackEye%();
     endif;
+    if driftFix = 1 then
+        driftFix%();
+    endif;
   endif;
 
   'If an experiment is running: - need to update parameters (ex. testLength, runLength) to reflect protocol we want to follow
@@ -56,7 +59,7 @@ Func ToolbarIdle%()
               startTracking% := 0;
               goalTime := MaxTime() + 5;
               SampleKey("x");
-              'ToolbarSineStop%(); Yield();
+              ToolbarSineStop%(); Yield();
               ToolbarLightOff%(); Yield();
               ToolbarInit%(); Yield();
 
@@ -90,14 +93,15 @@ Func ToolbarIdle%()
                   test% := 0;
               endcase
               SampleKey("X");
-              'ToolbarSineStart%(); Yield();
+              ToolbarSineStart%(); Yield();
 
           ' BLOCK: GAP A
           case test% = 1 then
               SampleKey("1");
-              startTracking% := 0;
               goalTime := MaxTime() + 5;
               SampleKey("x"); 'do i need this?'
+              startTracking% := 0;
+              ToolbarSineStop%(); Yield();
               ToolbarLightOff%(); Yield();
               ToolbarInit%(); Yield();
               test% := 6;

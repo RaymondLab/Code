@@ -48,7 +48,7 @@
             VAR    V52,PulsePer=1000 ; pulse period duration
             VAR    V53,PulseHPe=500  ; Half Period duration
 
-            VAR    V54,RotationVel=0.02   ; velocity to rotate chair and drum
+            VAR    V54,RotVel=0.02   ; velocity to rotate chair and drum
             VAR    V55,DrumDef=1    ; default direction for drum to move
             VAR    V65,ChairDef=1   ; default direction for chair to move
 
@@ -74,8 +74,7 @@ INIT:   'I  RATE   0,0             ;stop cosine on drum
             DAC    0,DrumOff       ;stop the drum
             DAC    1,Chairoff      ;stop the chair
             DIGOUT [00000000]      ;stop any pulses
-            JUMP   KDRUM           ;return drum to zero - skip chair code - might have to change this back to add in chair if rig won't run with chair off
-                                   ;also could be changed if we end up wanting to do VOR too - then chair will need to be on
+            JUMP   KCHAIR          ;return chair to zero
 
 ;-----------------------------------------------------------------------------
 ; QUIT: Stops all movement on drum and chair
