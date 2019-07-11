@@ -48,6 +48,10 @@
             VAR    V52,PulsePer=1000 ; pulse period duration
             VAR    V53,PulseHPe=500  ; Half Period duration
 
+            VAR    V54,RotationVel=0.02   ; velocity to rotate chair and drum
+            VAR    V55,DrumDef=1    ; default direction for drum to move
+            VAR    V65,ChairDef=1   ; default direction for chair to move
+
 ;-----------------------------------------------------------------------------
 ; LOOP: our idle loop.
 ;-----------------------------------------------------------------------------
@@ -70,7 +74,8 @@ INIT:   'I  RATE   0,0             ;stop cosine on drum
             DAC    0,DrumOff       ;stop the drum
             DAC    1,Chairoff      ;stop the chair
             DIGOUT [00000000]      ;stop any pulses
-            JUMP   KCHAIR          ;return chair to zero
+            JUMP   KDRUM           ;return drum to zero - skip chair code - might have to change this back to add in chair if rig won't run with chair off
+                                   ;also could be changed if we end up wanting to do VOR too - then chair will need to be on
 
 ;-----------------------------------------------------------------------------
 ; QUIT: Stops all movement on drum and chair
@@ -90,6 +95,7 @@ KCHAIR:     RATE   1,0             ;stop cosine on chair
 
 KCHAIR1:    CHAN   V8,4            ;Get value of channel 3 (chair pos)***3to4 HP 1/10/14
             MOVI   V9,0            ;Intialize v9 to 0 (0=false) >Returning chair.
+            ABS    V54,V54         ; reset default velocity to 0.02 -- do i need to do this? NOTE: THIS ONLY WORKS IF IT'S A POSITIVE NUMBER TO BEGIN
 
             BGT    V8,0,KCHAIR2    ;get absolute value by negating if under 0
             NEG    V8,V8           ;it was < 0 so we negate it.
@@ -97,10 +103,13 @@ KCHAIR1:    CHAN   V8,4            ;Get value of channel 3 (chair pos)***3to4 HP
 
 KCHAIR2:    BLE    V8,vdac16(0.01),KCHAIREX ;check if we're within our epsilon
             BNE    V9,0,KCHAIR3    ;check if it was negative.
-            DAC    1,-0.02          ;vel for positive pos
+            MUL    V54,V55         ;make vel scaled by default direction
+            DAC    1,V54           ;vel for positive pos
             JUMP   KCHAIR1
 
-KCHAIR3:    DAC    1,0.02         ;vel for negative pos
+KCHAIR3:    MUL    V54,V55        ;make vel scaled by default direction
+            NEG    V54,V54        ;get negative of default direction
+            DAC    1,V54          ;vel for negative pos
             JUMP   KCHAIR1
 
 KCHAIREX:   DAC    1,Chairoff      ;Stop the chair
@@ -114,6 +123,7 @@ KDRUM:      RATE   0,0             ;stop sine on drum
 
 KDRUM1:     CHAN   V8,3            ;Get position of drum from Ch 3 * 14 to 3 HP 1/10/14
             MOVI   V9,0            ;Initiliaze v9 to 0 (false)
+            ABS    V54,V54         ;reset default velocity to 0.02 -- do i need to do this? NOTE: THIS ONLY WORKS IF IT'S A POSITIVE NUMBER TO BEGIN - if drum default vel =/= chair default vel add new variable
             BGT    V8,0,KDRUM2     ;get absolute value of position by negating if under 0
             NEG    V8,V8           ;it was < 0 so we negate it.
             MOVI   V9,1            ;and then remember that it was negative
@@ -122,10 +132,13 @@ KDRUM2:     BLE    V8,vdac16(0.01),KDRUMEX
                                     ;check if we're within our epsilon
                                     ;if so, exit
             BNE    V9,0,KDRUM3     ;check if position was negative
-            DAC    0,0.02         ;vel for positive pos
+            MUL    V54,V65         ;make vel scaled by default direction
+            DAC    0,V54           ;vel for positive pos
             JUMP   KDRUM1
 
-KDRUM3:     DAC    0,-0.02          ;vel for negative position
+KDRUM3:     MUL    V54,V65        ;make vel scaled by default direction
+            NEG    V54,V54        ;get negative of default direction
+            DAC    0,V54          ;vel for negative position
             JUMP   KDRUM1
 
 
