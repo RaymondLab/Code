@@ -61,9 +61,9 @@ var everyNCycles := 1;
 '--------------------------------------------------------------------------------
 ' EXPERIMENT PARAMETERS
 '--------------------------------------------------------------------------------
-var nBlocks% := 6;                 'Number of run-test blocks in exmpt
+var nBlocks% := 20;                 'Number of run-test blocks in exmpt
 var nTestreps% := 1;               'Number of times to repeat 40 sec test
-var runLength := 300;             'Seconds to run protocol in each block(300 for 5 min)
+var runLength := 30;             'Seconds to run protocol in each block(300 for 5 min)
 var testLength := 45;             'Seconds to test
 var expmtLoc% := 1;
 var prePostNum := 1;
@@ -95,8 +95,6 @@ var MaxVoltage := 10;
 var driftFix := 1;
 var sinOnCorChair := 0;
 var sinOnCorDrum := 0;
-var sinOnCorChairDefault := 0;
-var sinOnCorDrumDefault := 0;
 var testStim := 0;
 var rotationVelocity := 0.02;
 var radianConversion := 57.295779513; 'divide a value in degrees by this number to convert to radians - from Spike2 manual'
@@ -160,8 +158,6 @@ Func ToolbarSineConfig%()
   SetPulseSettings%();
 
   SetSequencerValues();
-
-  SetSinOnCorValues%();
 
   Return(1);
 End
@@ -248,8 +244,8 @@ Func SetPulseSettings%()
   pWait := (pulsePeriod/2) - 4 - (pNumber *(pulseDuration + pulseInterval+1));
 
   if pWait < 0 then
-      pWait := 0 ;
-      fullPulse := 1; 'Immediate switching between states
+    pWait := 0 ;
+    fullPulse := 1; 'Immediate switching between states
   endif;
   pDuration := pulseDuration -2;
   pWait2 := pWait-2;
@@ -257,7 +253,7 @@ Func SetPulseSettings%()
 
 
   if pInterval > 1 then
-      pInterval := pulseInterval -3;
+    pInterval := pulseInterval -3;
   endif;
 
 
@@ -377,7 +373,6 @@ Func ToolbarStimOn%()
   else
       SampleKey("P");
   endif;
-  sineOn% := 0;
   Yield();
   Toolbarset(PulsePos,"Pulse Off", ToolbarStimOff%);
   Return( 1 );
@@ -388,7 +383,6 @@ Func ToolbarStimOff%()
   Yield();
   SampleKey( "I" );
   Yield();
-  sineOn% := 0;
 
   Toolbarset(PulsePos,"Pulse On", ToolbarStimOn%);
   Return( 1 );
@@ -676,20 +670,30 @@ Proc SetSequencerValues()
   SampleSeqVar( 50, pulseDurationV);
   SampleSeqVar( 51, pulseWaitV);
   SampleSeqVar( 52, pulsePeriod);
-<<<<<<< HEAD
   SampleSeqVar( 54, everyNCycles);
-=======
-
   'Rotation Parameters
   SampleSeqVar( 54, rotationVelocity); 'This is a relative value - I don't know which is clockwise or counterclockwise
->>>>>>> 36335136526b27776e76a16cf270dcbffeb1ff41
 End
 
 Func driftFix%()
-  ' When the sinewave is ON
+  'drift back to 0 if sine wave isn't running
   if sineOn% = 1 or vidOn = 1 then
-    sinOnCorChair := sinOnCorChairDefault;
-    sinOnCorDrum := sinOnCorDrumDefault;
+    var chairSign := -1;
+    var drumSign := 1;
+
+    if sinPhChair > 0 then
+      chairSign := 1;
+    endif
+    if sinPhDrum > 0 then
+      drumSign := -1;
+    endif
+
+    var assumedZeroChair := sinAmpChair - (sinAmpChair * sin((90 - sinPhChair)/radianConversion)); 'sin function only takes radian value'
+    sinOnCorChair := chairSign * assumedZeroChair / (2 * 3.14159 * sinHzChair)* ChairDefaultDirection; ' * default -1 for D253, 1 for D019'
+
+    var assumedZeroDrum := sinAmpDrum - (sinAmpDrum * sin((90 - sinPhDrum)/radianConversion)); 'this might need to not be multiplied by -1 -- in previous calculations drum rotation was opposite chair'
+    sinOnCorDrum := drumSign * assumedZeroDrum / (2 * 3.14159 * sinHzDrum) * DrumDefaultDirection; ' * default -1 for D253, 1 for D019'
+
   else
     sinOnCorChair := 0;
     sinOnCorDrum := 0;
@@ -708,18 +712,6 @@ Func driftFix%()
   SetSequencerValues();
 End
 
-Func SetSinOnCorValues%()
-  'do these values need to be calculated every time driftFix is called? isn't it faster just to update every time one of the individual values gets updated?
-  ' not sure if sinPhChair/Drum is constantly updating - if so, can just calculate whether it should be multiplied by 1 or by -1'
-
-  'i think this is what I want to do? replaces just baseline amplitude (which assumes that we started at top or bottom of peaks) with the actual beginning value of the chair/drum
-  var assumedZeroChair := sinAmpChair * sin((90 - sinPhChair)/radianConversion) * -1; 'sin function only takes radian value'
-  sinOnCorChairDefault := assumedZeroChair / (2 * 3.14159 * sinHzChair)* ChairDefaultDirection; ' * default -1 for D253, 1 for D019'
-
-  var assumedZeroDrum := sinAmpDrum * sin((90 - sinPhDrum)/radianConversion) * -1; 'this might need to not be multiplied by -1 -- in previous calculations drum rotation was opposite chair'
-  sinOnCorDrumDefault := assumedZeroDrum / (2 * 3.14159 * sinHzDrum) * DrumDefaultDirection; ' * default -1 for D253, 1 for D019'
-
-End
 '--------------------------------------------------------------------------------
 ' CONVERSION FUNCTIONS
 '--------------------------------------------------------------------------------

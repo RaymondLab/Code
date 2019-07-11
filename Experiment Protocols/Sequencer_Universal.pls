@@ -48,7 +48,7 @@
             VAR    V52,PulsePer=1000 ; pulse period duration
             VAR    V53,PulseHPe=500  ; Half Period duration
 
-            VAR    V54,RotationVel=0.02   ; velocity to rotate chair and drum
+            VAR    V54,RotVel=0.02   ; velocity to rotate chair and drum
             VAR    V55,DrumDef=1    ; default direction for drum to move
             VAR    V65,ChairDef=1   ; default direction for chair to move
 
