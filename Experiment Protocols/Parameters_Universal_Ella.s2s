@@ -54,6 +54,7 @@ var pulsePhase := 0 ;
 var stepLight := 0;
 var lightDur := 500;
 var lightStart := 0;
+var everyNCycles := 1;
 
 
 '--------------------------------------------------------------------------------
@@ -245,7 +246,8 @@ Func ToolbarPulseConfig%()
   DlgReal(2,"Pulse duration (ms)",0,5000);
   DlgReal(3,"Interpulse interval (ms)",0,5000);
   DlgReal(4,"Pulse phase (deg)",0,360);
-  DlgShow(pNumber, pulseDuration, pulseInterval, pulsePhase);
+  DlgReal(5, "Pulses Occur Every X Cycles?", 1, 10000);
+  DlgShow(pNumber, pulseDuration, pulseInterval,pulsePhase, everyNCycles);
   SetPulseSettings%();
   Return( 1 );
 End
@@ -422,7 +424,7 @@ Func ToolbarTrackEye%()
   '
   ' if eyePosChangeAvg > saccadeThreshold then 'need to find real value for threshold' 'OR MAYBE DON'T NEED THRESHOLD AT ALL AND JUST ALWAYS TRACK?
   '   var eyePosChangeScaled := eyePosChangeAvg * gain;
-  '   DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - eyePosChangeScaled) * DrumDefaultDirection * LeakInstabilityScale; 'this has to be changed to reflect the correct math for the eye tracking'
+  '   DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - eyePosChangeScaled) * DrumResetDirection * LeakInstabilityScale; 'this has to be changed to reflect the correct math for the eye tracking'
   ' else
   '   DrumDegreesPerSecondOffset := 0; 'is this how we say don't change position/stay constant??
   '   'Maybe:'
@@ -437,7 +439,7 @@ Func ToolbarTrackEye%()
   var currEyePosAvg := (currEye1Pos + currEye2Pos) / 2;
 
   var degreeDiffScaled := (currEyePosAvg - nullEyePos) * gain; 'MAKE SURE THIS IS HOW WE GET THAT DEGREE VALUE'
-  DrumDegreesPerSecondOffset := (DrumDegreesPerSecondOffsetDefault - degreeDiffScaled) * DrumDefaultDirection * LeakInstabilityScale;
+  DrumDegreesPerSecondOffset := (DrumDegreesPerSecondOffsetDefault - degreeDiffScaled) * DrumResetDirection * LeakInstabilityScale;
 
   SetSequencerValues();
   Return(1);
@@ -742,14 +744,14 @@ Proc SetSequencerValues()
   SampleSeqVar( 27, ChairAmp2Int16%( sinAmpChair ) );
   SampleSeqVar( 28, Angle2Int32%( actualChairPh ) );
   SampleSeqVar( 29, Hz2Int32%( sinHzChair ) );
-  SampleSeqVar( 55, ChairDefaultDirection); 'this should be the rotation direction for the chair passed in'
+  SampleSeqVar( 55, ChairResetDirection); 'this should be the rotation direction for the chair passed in'
 
   'Drum parameters
   SampleSeqVar( 22, DrumAmp2Int32%( DrumDegreesPerSecondOffset ) );
   SampleSeqVar( 24, DrumAmp2Int16%( sinAmpDrum ) );
   SampleSeqVar( 25, Angle2Int32%( actualDrumPh ) );
   SampleSeqVar( 26, Hz2Int32%( sinHzDrum ) );
-  SampleSeqVar( 56, DrumDefaultDirection); 'this should be the rotation direction for the drum passed in'
+  SampleSeqVar( 65, DrumResetDirection); 'this should be the rotation direction for the drum passed in'
 
   'Pulse parameters
   SampleSeqVar( 33, pWait );
@@ -774,9 +776,9 @@ Proc SetSequencerValues()
   SampleSeqVar( 50, pulseDurationV);
   SampleSeqVar( 51, pulseWaitV);
   SampleSeqVar( 52, pulsePeriod);
-
+  SampleSeqVar( 54, everyNCycles);
   'Rotation Parameters
-  SampleSeqVar( 54, rotationVelocity); 'This is a relative value - I don't know which is clockwise or counterclockwise
+  SampleSeqVar( 66, rotationVelocity); 'This is a relative value - I don't know which is clockwise or counterclockwise
 End
 
 Func driftFix%()
@@ -792,11 +794,11 @@ Func driftFix%()
       drumSign := -1;
     endif
 
-    var assumedZeroChair := sinAmpChair - (sinAmpChair * sin((90 - sinPhChair) / radianConversion)); 'sin function only takes radian value'
-    sinOnCorChair := chairSign * assumedZeroChair / (2 * 3.14159 * sinHzChair)* ChairDefaultDirection; ' * default -1 for D253, 1 for D019'
+    var assumedZeroChair := sinAmpChair - (sinAmpChair * sin((90 - sinPhChair)/radianConversion)); 'sin function only takes radian value'
+    sinOnCorChair := chairSign * assumedZeroChair / (2 * 3.14159 * sinHzChair)* ChairResetDirection; ' * default -1 for D253, 1 for D019'
 
     var assumedZeroDrum := sinAmpDrum - (sinAmpDrum * sin((90 - sinPhDrum)/radianConversion)); 'this might need to not be multiplied by -1 -- in previous calculations drum rotation was opposite chair'
-    sinOnCorDrum := drumSign * assumedZeroDrum / (2 * 3.14159 * sinHzDrum) * DrumDefaultDirection; ' * default -1 for D253, 1 for D019'
+    sinOnCorDrum := drumSign * assumedZeroDrum / (2 * 3.14159 * sinHzDrum) * DrumResetDirection; ' * default -1 for D253, 1 for D019'
 
   else
     sinOnCorChair := 0;
@@ -811,9 +813,9 @@ Func driftFix%()
   var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime) - (sinOnCorDrum); 'is this minus because the chair and drum go opposite ways?'
 
   ' Scales *1 for D253, *-1 for D019 -- switched from previous version to make math simpler
-  ChairDegreesPerSecondOffset :=  (ChairDegreesPerSecondOffsetDefault - hhposSlope/4 - hhposPos/4) * ChairDefaultDirection;
+  ChairDegreesPerSecondOffset :=  (ChairDegreesPerSecondOffsetDefault - hhposSlope/4 - hhposPos/4) * ChairResetDirection;
   if startTracking% = 0 then
-    DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - htposSlope/4 - htposPos/4) * DrumDefaultDirection;
+    DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - htposSlope/4 - htposPos/4) * DrumResetDirection;
   endif
   SetSequencerValues();
 End

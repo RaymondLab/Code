@@ -3,7 +3,7 @@
 '--------------------------------------------------------------------------------
 ' SEQUENCER FILE LOCATION
 '--------------------------------------------------------------------------------
-var SequencerFile$ := "C:\\Users\\ellatl\\Documents\\Code\\Experiment Protocols\\Sequencer_Universal";
+var SequencerFile$ := "C:\\Users\\Raymond Lab\\Documents\\Code\\Experiment Protocols\\Sequencer_D019";
 
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS
@@ -56,5 +56,5 @@ var EyeVoltage2Position := 1;                   'Voltage to Eye Position (Scale)
 var EyeVoltage2PositionC := 0;                  'Voltage to Eye Position (offset)
 
 'Default servo direction for chair and drum -- 1 or -1'
-var ChairDefaultDirection := 1;
-var DrumDefaultDirection := 1;
+var ChairResetDirection := 1;
+var DrumResetDirection := 1;

@@ -54,15 +54,15 @@ Func ToolbarIdle%()
         if sineOn% = 1 or vidOn = 1 then
 
           if sinPhChair > 0 then
-            sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair) * ChairDefaultDirection; ' * default -1 for D253, 1 for D019'
+            sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair) * ChairResetDirection; ' * default -1 for D253, 1 for D019'
           else
-            sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair) * ChairDefaultDirection * -1; ' * negate direction from above'
+            sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair) * ChairResetDirection * -1; ' * negate direction from above'
           endif
 
           if sinPhDrum < 0 then
-            sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum) * DrumDefaultDirection; ' * default -1 for D253, 1 for D019'
+            sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum) * DrumResetDirection; ' * default -1 for D253, 1 for D019'
           else
-            sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum) * DrumDefaultDirection * -1; ' * negate direction from above'
+            sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum) * DrumResetDirection * -1; ' * negate direction from above'
           endif
 
         else

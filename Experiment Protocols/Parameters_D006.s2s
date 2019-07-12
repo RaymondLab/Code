@@ -57,5 +57,5 @@ var EyeVoltage2Position := 1;                   'Voltage to Eye Position (Scale)
 var EyeVoltage2PositionC := 0;                  'Voltage to Eye Position (offset)
 
 'Default servo direction for chair and drum -- 1 or -1'
-var ChairDefaultDirection := 1;                 'Not sure about default direction - setting both as 1 to avoid errors'
-var DrumDefaultDirection := 1;
+var ChairResetDirection := 1;                 'Not sure about default direction - setting both as 1 to avoid errors'
+var DrumResetDirection := 1;
