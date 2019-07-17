@@ -2,7 +2,7 @@
 ' Rig-Specific parameters file Location
 '--------------------------------------------------------------------------------
 'D019
-#include "C:\\Users\\amins\\Documents\\RL_Code\\Experiment Protocols\\Parameters_D019.s2s"
+#include "C:\\Users\\Raymond Lab\\Documents\\Code\\Experiment Protocols\\Parameters_D019.s2s"
 
 'D253
 '#include "C:\\Users\\amins\\Documents\\RL_Code\\Experiment Protocols\\Parameters_D253.s2s"
@@ -10,7 +10,7 @@
 '--------------------------------------------------------------------------------
 ' Universal Parameters File Location
 '--------------------------------------------------------------------------------
-#include "C:\\Users\\amins\\Documents\\RL_Code\\Experiment Protocols\\Parameters_Universal.s2s"
+#include "C:\\Users\\Raymond Lab\\Documents\\Code\\Experiment Protocols\\Parameters_Universal.s2s"
 
 
 ' Experiment Specific Parameters
@@ -51,38 +51,39 @@ Func ToolbarIdle%()
       ' This is a hack on a hack. Someone (probably me) should rewrite the
       ' anti-drift code from scratch to take this into account. - Max Gagnon 7-30-18
   if driftFix = 1 then
-        if sineOn% = 1 or vidOn = 1 then
-
-          if sinPhChair > 0 then
-            sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair) * ChairResetDirection; ' * default -1 for D253, 1 for D019'
-          else
-            sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair) * ChairResetDirection * -1; ' * negate direction from above'
-          endif
-
-          if sinPhDrum < 0 then
-            sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum) * DrumResetDirection; ' * default -1 for D253, 1 for D019'
-          else
-            sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum) * DrumResetDirection * -1; ' * negate direction from above'
-          endif
-
-        else
-          sinOnCorChair := 0;
-          sinOnCorDrum := 0;
-        endif
-
-        ' original anti-drift code'
-        prevTime := MaxTime();
-        ' Measure slope from last 1 cycle of chair/drum position feedback
-        var hhposSlope := ChanValue(hhposCh%, prevTime) - ChanValue(hhposCh%, prevTime-(1/sinHzChair));
-        var htposSlope := ChanValue(htposCh%, prevTime) - ChanValue(htposCh%, prevTime-(1/sinHzDrum));
-        var hhposPos := ChanMeasure(hhposCh%, 2, prevTime-(1/sinHzChair), prevTime) + (sinOnCorChair);
-        var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime) - (sinOnCorDrum);
-
-        ' Scales *1 for D253, *-1 for D019 -- switched from previous version to make math simpler
-        ChairDegreesPerSecondOffset :=  (ChairDegreesPerSecondOffsetDefault - hhposSlope/4 - hhposPos/4) * ChairDefaultDirection;
-        DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - htposSlope/4 - htposPos/4) * DrumDefaultDirection;
-        SetSequencerValues();
-        'SampleKey( "A" );
+        ' if sineOn% = 1 or vidOn = 1 then
+        '
+        '   if sinPhChair > 0 then
+        '     sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair) * ChairResetDirection; ' * default -1 for D253, 1 for D019'
+        '   else
+        '     sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair) * ChairResetDirection * -1; ' * negate direction from above'
+        '   endif
+        '
+        '   if sinPhDrum < 0 then
+        '     sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum) * DrumResetDirection; ' * default -1 for D253, 1 for D019'
+        '   else
+        '     sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum) * DrumResetDirection * -1; ' * negate direction from above'
+        '   endif
+        '
+        ' else
+        '   sinOnCorChair := 0;
+        '   sinOnCorDrum := 0;
+        ' endif
+        '
+        ' ' original anti-drift code'
+        ' prevTime := MaxTime();
+        ' ' Measure slope from last 1 cycle of chair/drum position feedback
+        ' var hhposSlope := ChanValue(hhposCh%, prevTime) - ChanValue(hhposCh%, prevTime-(1/sinHzChair));
+        ' var htposSlope := ChanValue(htposCh%, prevTime) - ChanValue(htposCh%, prevTime-(1/sinHzDrum));
+        ' var hhposPos := ChanMeasure(hhposCh%, 2, prevTime-(1/sinHzChair), prevTime) + (sinOnCorChair);
+        ' var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime) - (sinOnCorDrum);
+        '
+        ' ' Scales *1 for D253, *-1 for D019 -- switched from previous version to make math simpler
+        ' ChairDegreesPerSecondOffset :=  (ChairDegreesPerSecondOffsetDefault - hhposSlope/4 - hhposPos/4) * ChairResetDirection;
+        ' DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - htposSlope/4 - htposPos/4) * DrumResetDirection;
+        ' SetSequencerValues();
+        ' 'SampleKey( "A" );
+        driftFix%();
     endif;
   endif;
 
