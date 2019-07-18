@@ -688,9 +688,17 @@ Func driftFix%()
   'drift back to 0 if sine wave isn't running
   docase
   case sineOn% = 1 or vidOn = 1 then
-    var chairSign := sinPhChair / Abs(sinPhChair);
-    var drumSign := sinPhDrum / Abs(sinPhDrum);
+    var chairSign := 1; 'set default to 1 if phase = 0'
+    var drumSign := 1;
 
+    if sinPhChair <> 0 then
+      chairSign := sinPhChair / Abs(sinPhChair);
+    endif
+    if sinPhDrum <> 0 then
+      drumSign := sinPhDrum / Abs(sinPhDrum);
+    endif
+
+    'add in mod!!'
     centerLineChair := (sinAmpChair / (2 * 3.14159 * sinHzChair) * (1 - cos((-1 * sinPhChair)/radianConversion)) + measuredZeroChair) * chairSign * ChairResetDirection; 'sin function only takes radian value'
     centerLineDrum := (sinAmpDrum / (2 * 3.14159 * sinHzDrum) * (1 - cos((-1 * sinPhDrum)/radianConversion)) - measuredZeroDrum) * drumSign * DrumResetDirection; 'this might need to not be multiplied by -1 -- in previous calculations drum rotation was opposite chair'
 
