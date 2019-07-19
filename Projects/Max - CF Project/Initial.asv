@@ -34,7 +34,7 @@ for j = 1:length(bFiles)
     % Extract ephys Data 
     if ephys_loc > 0
         ephys_exists = 1;
-        ePath = fullfile(bFiles(ephys_loc).folder, bFiles(ephys_loc).name)
+        ePath = fullfile(bFiles(ephys_loc).folder, bFiles(ephys_loc).name);
     else
         warning([eFile ': No Ephys'])
         continue
@@ -42,7 +42,7 @@ for j = 1:length(bFiles)
     
     % Extract behavior Data
     try
-        bPath = fullfile(bFiles(j).folder, bFiles(j).name)
+        bPath = fullfile(bFiles(j).folder, bFiles(j).name);
         beh = opensingleMAXEDIT(bPath, ephys_exists, ePath);
     catch
         warning([bPath, ' Failed'])
