@@ -700,9 +700,9 @@ Func driftFix%()
 
     'add in mod!!'
     centerLineChair := (sinAmpChair / (2 * 3.14159 * sinHzChair) * (1 - cos((-1 * sinPhChair)/radianConversion)) + measuredZeroChair) * chairSign * ChairResetDirection; 'sin function only takes radian value'
-    centerLineChair := centerLineChair + (ChairResetDirection * ChairDriftFactor * sinAmpChair * sin(2 * sinPhChair)); 'THIS IS A HACK IDK IF IT WORKS OR WHY IT WORKS'
+    centerLineChair := centerLineChair + (ChairResetDirection * ChairDriftFactor * sinAmpChair * sin(2 * sinPhChair / radianConversion)); 'THIS IS A HACK IDK IF IT WORKS OR WHY IT WORKS'
     centerLineDrum := (sinAmpDrum / (2 * 3.14159 * sinHzDrum) * (1 - cos((-1 * sinPhDrum)/radianConversion)) - measuredZeroDrum) * drumSign * DrumResetDirection; 'this might need to not be multiplied by -1 -- in previous calculations drum rotation was opposite chair'
-    centerLineDrum := centerLineDrum + (DrumResetDirection * DrumDriftFactor * sinAmpDrum * sin(2 * sinPhDrum)); 'THIS MIGHT BE WRONG FOR DRUM'
+    centerLineDrum := centerLineDrum + (DrumResetDirection * DrumDriftFactor * sinAmpDrum * sin(2 * sinPhDrum / radianConversion)); 'THIS MIGHT BE WRONG FOR DRUM'
 
   else
     centerLineChair := 0;
