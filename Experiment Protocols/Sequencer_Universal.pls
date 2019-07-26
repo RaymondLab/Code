@@ -95,7 +95,7 @@ KCHAIR:     RATE   1,0             ;stop cosine on chair
 
 KCHAIR1:    CHAN   V8,4            ;Get value of channel 3 (chair pos)***3to4 HP 1/10/14
             MOVI   V9,0            ;Intialize v9 to 0 (0=false) >Returning chair.
-            ABS    initVel,initVel         ; reset default velocity to 0.02 -- do i need to do this? NOTE: THIS ONLY WORKS IF IT'S A POSITIVE NUMBER TO BEGIN
+            ABS    initVel,initVel         ; reset default velocity to 0.02 -- NOTE: THIS ONLY WORKS IF IT'S A POSITIVE NUMBER TO BEGIN
 
             BGT    V8,0,KCHAIR2    ;get absolute value by negating if under 0
             NEG    V8,V8           ;it was < 0 so we negate it.
@@ -134,11 +134,11 @@ KDRUM2:     BLE    V8,vdac16(0.01),KDRUMEX
                                     ;if so, exit
             BNE    V9,0,KDRUM3     ;check if position was negative
             MUL    initVel,initDirD         ;make vel go default direction
+            NEG    initVel,initVel        ;get negative of default direction
             DAC    0,initVel           ;vel for positive pos
             JUMP   KDRUM1
 
 KDRUM3:     MUL    initVel,initDirD        ;make vel go default direction
-            NEG    initVel,initVel        ;get negative of default direction
             DAC    0,initVel          ;vel for negative position
             JUMP   KDRUM1
 
