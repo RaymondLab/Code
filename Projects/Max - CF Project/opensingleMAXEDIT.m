@@ -13,11 +13,10 @@
 %       3. Option to load or not load CS
 % 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function beh = opensingleMAXEDIT(filename, ephys_exists, full_ephys)
+function [beh, shiftAmt, shiftConfidence] = opensingleMAXEDIT(filename, ephys_exists, full_ephys)
 
     %% Opens Cntrlx file in Matlab and saves as "behavior"
     behavior = readcxdata(filename, 0, 6); % 6 channels for jennifer, 7 for Akira
-    %disp(behavior.sortedSpikes(1))    
     
     %% Flip data for elvis so that contra is up and ipsi is down
     if ~isempty(regexp(filename,'da','once'))
@@ -25,120 +24,98 @@ function beh = opensingleMAXEDIT(filename, ephys_exists, full_ephys)
     end
     
     % Assigns structures in "behavior" to specific signals
-    dt = .002;
+    bSamplerate = 500;
+    eSamplerate = 50000;
+    %eSamplerate = 1000;
     hgpos = behavior.data(1,:);% *12.5 * dt;
     vepos = behavior.data(2,:);% *12.5 * dt;
     hevel = behavior.data(3,:);% *0.09189;
     htpos = behavior.data(4,:);% *12.5 * dt;
     hhvel = behavior.data(5,:);% *0.09189;
     hdvel = behavior.data(6,:);% *0.09189;
+  
+    % Fix the offset of hhvel
+    hhvel = hhvel-mean(hhvel);
 
     % create time vectors 
-    timebehavior = 0:dt:(length(htpos)-1)*dt;
+    timebehavior = 0:1/bSamplerate:(length(htpos)-1)/bSamplerate;
+
+    % ms --> s
+    timeofcomplexspikes = behavior.sortedSpikes{1}*0.001;
     timeofsimplespikes = (behavior.spikes)*0.001;
-    
     if isempty(timeofsimplespikes)
         timeofsimplespikes = (behavior.events)*0.001;
     end
-    timeofcomplexspikes=behavior.sortedSpikes{1}*0.001;
     
-    % Fix the offset of hhvel
-    hhvel = hhvel-mean(hhvel);
-    
-    %% LOAD ELECTROPHYS DATA
-    if ephys_exists
-        data = openmaestro(full_ephys);
-        fs = 50000;
+    shiftAmt = NaN;
+    shiftConfidence = NaN;
+    if ephys_exists       
+        %% Load Ephys Data
+        ephys = openmaestro(full_ephys);
+        timeEphys = 0:1/eSamplerate:(length(ephys)-1)/eSamplerate;
 
-        %% Creates a time variable for the ephys recording data
-        timerecording=0:1/fs:(length(data)-1)/fs;
-        data=data-mean(data);
+        %% Allign Ephys Data
+        eventsSampleTime = timeofsimplespikes * eSamplerate;
+        eventsSampleTime = eventsSampleTime(100:150);
+        eventsSampleTime = round(eventsSampleTime);
+        eventsSampleTime = eventsSampleTime - eventsSampleTime(1);
+        sumofthings = nan(length(ephys),1);
 
-        %% Fix the offset on the ephys recording trace
-       
-        % Jennifer
-        offsetguess = 0.002;
-        % Akira
-        %offsetguess = 0.1205;
-        timerecording=timerecording+offsetguess;% Best guess
+        for x = 1:length(ephys)
+            if max(eventsSampleTime + x) > length(ephys)
+                break
+            end
+            sumofthings(x) = sum(ephys(eventsSampleTime + x));
+        end
         
-        
-        %% Special Akira alignment - testing
-        %[pks locs] = findpeaks(data*-1, timerecording);
-        %spikeamt = length(timeofsimplespikes);
-        %[pks_large, inds] = maxk(pks, spikeamt);
-        %locs_large = locs(inds);
-        
-        
-        
-        %%
-        figure(2); clf
-        hephys = plot(timerecording,data,'k','LineWidth',1); hold on;
-        hSS = plot(timeofsimplespikes,0*ones(1,length(timeofsimplespikes)),'+g','LineWidth',2);
-        hCS = plot(timeofcomplexspikes,0*ones(1,length(timeofcomplexspikes)),'or','MarkerFaceColor','r');
-        ylim([-2.5 2.5]);
+        maxMatchValue = max(abs(sumofthings));
+        maxSumLoc = timeEphys(find(abs(sumofthings) == maxMatchValue));
 
-        %% Find first reference point
-        spike1 = 20;
-        % Jennifer
-        window = .0015;
-        % Akira
-        %window = .005;
-        
-        figure(4); clf
-        hephys = plot(timerecording,data,'k','LineWidth',1); hold on;
-        hSS = plot(timeofsimplespikes,0*ones(1,length(timeofsimplespikes)),'+g','LineWidth',2);
-        hCS = plot(timeofcomplexspikes,0*ones(1,length(timeofcomplexspikes)),'or','MarkerFaceColor','r');
-        ylim([-2.5 2.5]);
-        xlim([timeofsimplespikes(spike1)-window timeofsimplespikes(spike1)+window ])
-        title(filename(end-9:end))
-
-
-        %% Find first reference point, con't
-        plot(timeofsimplespikes(spike1),0,'+g','MarkerSize',10,'LineWidth',3)
-        y1 = timeofsimplespikes(spike1);
-
-        thresh = .0030;
-        vline(timeofsimplespikes(spike1)+thresh)
-        vline(timeofsimplespikes(spike1)-thresh)
-        [~, currinds] = find(abs(timerecording-timeofsimplespikes(spike1))<thresh);
-        currdata = data(currinds);
-        [maxdata, maxind] = max(abs(currdata));
-        x1 = timerecording(currinds(maxind));
-
-        ephysshift = y1 - x1
-        timerecording = timerecording + ephysshift;
-
-        % Update time on graph
-        set(hephys,'XData',timerecording)
-        vline(timeofsimplespikes(spike1))
-        pause(.01)
-        data = data-mean(data);
+        % Modify ephys
+        if maxMatchValue > 30
+            shiftAmt = -(maxSumLoc - timeofsimplespikes(100));
+            timeEphys = timeEphys + shiftAmt;
+            
+            figure(9);clf
+            plot(timeEphys, abs(sumofthings))
+            ylim([0 100])
+            if ~isempty(maxSumLoc)
+                vline(maxSumLoc + shiftAmt)
+                xlim([maxSumLoc-1 maxSumLoc+1])
+            end
+            shiftConfidence = maxMatchValue;
+            
+            figure(10); clf
+            plot(timeEphys, ephys);
+            vline(timeofsimplespikes(1:100))
+            xlim([.5 1.5])
+        else
+            shiftAmt = 0;
+            shiftConfidence = 0;
+        end
     end
-        
+           
     %% Save data in a dat structure
     tstart = timebehavior(1);
-    tend = timebehavior(end);
+    tend   = timebehavior(end);
     
     % Calculate Velocity
     veltau = .01;
-    fs = 500;
-    htvel = movingslopeCausal(htpos,round(fs*veltau))*fs;
+    bSamplerate = 500;
+    htvel = movingslopeCausal(htpos,round(bSamplerate*veltau))*bSamplerate;
     
     % Store data
-    beh        = dat(hgpos,'Horz Gaze Vel',1,500,tstart, tend,'deg');
-    beh(end+1) = dat(vepos,'Vert Eye Pos',2,500,tstart, tend,'deg');
-    beh(end+1) = dat(hevel,'Horz Eye Pos',3,500,tstart, tend,'deg/s');
-    beh(end+1) = dat(htpos,'Horz Target Pos',4,500,tstart, tend,'deg');
-    beh(end+1) = dat(hhvel,'Horz Head Vel',5,500,tstart, tend,'deg/s');
-    beh(end+1) = dat(hdvel,'Horz d Vel',6,500,tstart, tend,'deg/s');
-    beh(end+1) = dat(htvel,'Horz Target Vel',7,500,tstart, tend,'deg/s');
+    beh        = dat(hgpos,'Horz Gaze Vel',  1,bSamplerate,tstart, tend,'deg');
+    beh(end+1) = dat(vepos,'Vert Eye Pos',   2,bSamplerate,tstart, tend,'deg');
+    beh(end+1) = dat(hevel,'Horz Eye Pos',   3,bSamplerate,tstart, tend,'deg/s');
+    beh(end+1) = dat(htpos,'Horz Target Pos',4,bSamplerate,tstart, tend,'deg');
+    beh(end+1) = dat(hhvel,'Horz Head Vel',  5,bSamplerate,tstart, tend,'deg/s');
+    beh(end+1) = dat(hdvel,'Horz d Vel',     6,bSamplerate,tstart, tend,'deg/s');
+    beh(end+1) = dat(htvel,'Horz Target Vel',7,bSamplerate,tstart, tend,'deg/s');
     if ephys_exists
-        beh(end+1) = dat(data, 'Ephys',7,50000,timerecording(1),timerecording(end),'mV?');
+        beh(end+1) = dat(ephys, 'Ephys',7,50000,timeEphys(1),timeEphys(end),'mV?');
     else
         beh(end+1) = dat([], 'Ephys',7,50000,tstart,tend,'mV?');
     end
-    beh(end+1) = dat(timeofsimplespikes,'ss',8,'event',tstart, tend,'s');
+    beh(end+1) = dat(timeofsimplespikes,'ss', 8,'event',tstart, tend,'s');
     beh(end+1) = dat(timeofcomplexspikes,'cs',9,'event',tstart, tend,'s');
-    
-

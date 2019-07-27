@@ -60,7 +60,7 @@ switch methodNum
     case 2
         %% Method 2
         eventsSampleTime = events * samplerate;
-        eventsSampleTime = eventsSampleTime(100:150);
+        eventsSampleTime = eventsSampleTime(200:250);
         eventsSampleTime = round(eventsSampleTime);
         % zero c
         eventsSampleTime = eventsSampleTime - eventsSampleTime(1);
@@ -84,10 +84,14 @@ switch methodNum
         
         maxSumLoc = timeVec(find(abs(sumofthings) == max(abs(sumofthings))))
         %minStdLoc = timeVec(find(stdofthings == min(stdofthings)))
-        vline(maxSumLoc)
-        xlim([maxSumLoc-1 maxSumLoc+1])
-        %vline(minStdLoc)
-
+        if ~isempty(maxSumLoc)
+            vline(maxSumLoc)
+            xlim([maxSumLoc-1 maxSumLoc+1])
+            %vline(minStdLoc)
+        end
+        
+        % Find Time corrected Events
+        events = events + (maxSumLoc - events(100));
     case 3
         %% Method 3
         %Initialize ephys and event channel vectors.
@@ -120,14 +124,19 @@ end
 
 %% Plotting
 figure(3); clf
-qa = tight_subplot(2,1,[.03 .03],[.03 .03],[.03 .03]);
+qa = tight_subplot(1,1,[.03 .03],[.03 .03],[.03 .03]);
 
 axes(qa(1))
-plot(timeVec, ephys)
-xlim([0 events(30)])
+plot(timeVec, ephys); hold on
+try
+    vline(events(1:200))
+    xlim([events(125) events(150)])
+end
 
-axes(qa(2))
-vline(events(1:100))
-%linkaxes(qa, 'x')
-xlim([0 events(30)])
-disp(1)
+
+
+% axes(qa(2))
+% vline(events(1:100))
+% %linkaxes(qa, 'x')
+% xlim([0 events(50)])
+% disp(1)
