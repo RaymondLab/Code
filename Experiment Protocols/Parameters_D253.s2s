@@ -3,7 +3,7 @@
 '--------------------------------------------------------------------------------
 ' SEQUENCER FILE LOCATION
 '--------------------------------------------------------------------------------
-var SequencerFile$ := "C:\\Users\\amins\\Documents\\RL_Code\\Experiment Protocols\\Sequencer_Universal";
+var SequencerFile$ := "C:\\Users\\amins\\Documents\\RL_Code\\Experiment Protocols\\Sequencer_D253";
 
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS

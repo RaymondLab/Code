@@ -691,6 +691,7 @@ Func driftFix%()
     var chairSign := 1; 'set default to 1 if phase = 0'
     var drumSign := 1;
 
+    'figure out whether we want velocity to be positive or negative'
     if sinPhChair <> 0 then
       chairSign := sinPhChair / Abs(sinPhChair);
     endif
@@ -698,11 +699,26 @@ Func driftFix%()
       drumSign := sinPhDrum / Abs(sinPhDrum);
     endif
 
-    'add in mod!!'
-    centerLineChair := (sinAmpChair / (2 * 3.14159 * sinHzChair) * (1 - cos((-1 * sinPhChair)/radianConversion)) + measuredZeroChair) * chairSign * ChairResetDirection; 'sin function only takes radian value'
-    centerLineChair := centerLineChair + (ChairResetDirection * ChairDriftFactor * sinAmpChair * sin(2 * sinPhChair / radianConversion)); 'THIS IS A HACK IDK IF IT WORKS OR WHY IT WORKS'
-    centerLineDrum := (sinAmpDrum / (2 * 3.14159 * sinHzDrum) * (1 - cos((-1 * sinPhDrum)/radianConversion)) - measuredZeroDrum) * drumSign * DrumResetDirection; 'this might need to not be multiplied by -1 -- in previous calculations drum rotation was opposite chair'
-    centerLineDrum := centerLineDrum + (DrumResetDirection * DrumDriftFactor * sinAmpDrum * sin(2 * sinPhDrum / radianConversion)); 'THIS MIGHT BE WRONG FOR DRUM'
+    'convert from the sine amplitude signal to the actual position amplitude'
+    var trueAmpChair := sinAmpChair / (2 * 3.14159 * sinHzChair);
+    var trueAmpDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum)
+
+    'calculates the center y value according to the phase given'
+    var centerForPhaseChair := trueAmpChair * (1 - cos((-1 * sinPhChair)/radianConversion));
+    var centerForPhaseDrum := trueAmpDrum * (1 - cos((-1 * sinPhDrum)/radianConversion));
+
+    'takes into account that chair/drum may not start at 0'
+    var theoreticalCenterChair := (centerForPhaseChair + measuredZeroChair) * chairSign;
+    var theoreticalCenterDrum := (centerForPhaseDrum - measuredZeroDrum) * drumSign;
+
+    'NOTE: there is something funky with the motors where there is an error that follows a sine wave from phase'
+    'WE DON'T KNOW WHY, ONLY THAT IT HAPPENS'
+    'the drift coefficients need to be calculated manually by testing the error for different phase offsets'
+    var errorOffsetChair := ChairDriftFactor * sinAmpChair * sin(2 * sinPhChair / radianConversion);
+    'var errorOffsetDrum := DrumDriftFactor * sinAmpDrum * sin(2 * sinPhDrum / radianConversion);
+
+    centerLineChair := (theoreticalCenterChair + errorOffsetChair) * ChairResetDirection;
+    centerLineDrum := (theoreticalCenterDrum + errorOffsetDrum) * DrumResetDirection;
 
   else
     centerLineChair := 0;
@@ -714,9 +730,9 @@ Func driftFix%()
   var hhposSlope := ChanValue(hhposCh%, prevTime) - ChanValue(hhposCh%, prevTime-(1/sinHzChair));
   var htposSlope := ChanValue(htposCh%, prevTime) - ChanValue(htposCh%, prevTime-(1/sinHzDrum));
   var hhposPos := ChanMeasure(hhposCh%, 2, prevTime-(1/sinHzChair), prevTime) + (centerLineChair);
-  var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime) + (centerLineDrum); 'is this minus because the chair and drum go opposite ways?'
+  var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime) + (centerLineDrum);
 
-  ' Scales *1 for D253, *-1 for D019 -- switched from previous version to make math simpler
+  ' Scales *1 for D253, *-1 for D019
   ChairDegreesPerSecondOffset :=  (ChairDegreesPerSecondOffsetDefault - hhposSlope/4 - hhposPos/4) * ChairResetDirection;
   DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - htposSlope/4 - htposPos/4) * DrumResetDirection;
 
