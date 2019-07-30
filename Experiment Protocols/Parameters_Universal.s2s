@@ -648,14 +648,14 @@ Proc SetSequencerValues()
   SampleSeqVar( 27, ChairAmp2Int16%( sinAmpChair ) );
   SampleSeqVar( 28, Angle2Int32%( actualChairPh ) );
   SampleSeqVar( 29, Hz2Int32%( sinHzChair ) );
-  SampleSeqVar( 55, ChairResetDirection); 'this should be the rotation direction for the chair passed in'
+  SampleSeqVar( 55, ChairResetDirection); 'default chair direction
 
   'Drum parameters
   SampleSeqVar( 22, DrumAmp2Int32%( DrumDegreesPerSecondOffset ) );
   SampleSeqVar( 24, DrumAmp2Int16%( sinAmpDrum ) );
   SampleSeqVar( 25, Angle2Int32%( actualDrumPh ) );
   SampleSeqVar( 26, Hz2Int32%( sinHzDrum ) );
-  SampleSeqVar( 65, DrumResetDirection); 'this should be the rotation direction for the drum passed in'
+  SampleSeqVar( 65, DrumResetDirection); 'default drum direction
 
   'Pulse parameters
   SampleSeqVar( 33, pWait );
@@ -682,7 +682,7 @@ Proc SetSequencerValues()
   SampleSeqVar( 52, pulsePeriod);
   SampleSeqVar( 54, everyNCycles);
   'Rotation Parameters
-  SampleSeqVar( 66, rotationVelocity); 'This is a relative value - I don't know which is clockwise or counterclockwise
+  SampleSeqVar( 66, rotationVelocity); 'This is a relative value
 End
 
 Func driftFix%()
@@ -702,7 +702,7 @@ Func driftFix%()
 
     'convert from the sine amplitude signal to the actual position amplitude'
     var trueAmpChair := sinAmpChair / (2 * 3.14159 * sinHzChair);
-    var trueAmpDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum)
+    var trueAmpDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum);
 
     'calculates the center y value according to the phase given'
     var centerForPhaseChair := trueAmpChair * (1 - cos((-1 * sinPhChair)/radianConversion));
@@ -710,13 +710,13 @@ Func driftFix%()
 
     'takes into account that chair/drum may not start at 0'
     var theoreticalCenterChair := (centerForPhaseChair + measuredZeroChair) * chairSign;
-    var theoreticalCenterDrum := (centerForPhaseDrum - measuredZeroDrum) * drumSign;
+    var theoreticalCenterDrum := (centerForPhaseDrum + measuredZeroDrum) * drumSign;
 
     'NOTE: there is something funky with the motors where there is an error that follows a sine wave from phase'
     'WE DON'T KNOW WHY, ONLY THAT IT HAPPENS'
     'the drift coefficients need to be calculated manually by testing the error for different phase offsets'
     var errorOffsetChair := ChairDriftFactor * sinAmpChair * sin(2 * sinPhChair / radianConversion);
-    'var errorOffsetDrum := DrumDriftFactor * sinAmpDrum * sin(2 * sinPhDrum / radianConversion);
+    var errorOffsetDrum := DrumDriftFactor * sinAmpDrum * sin(2 * sinPhDrum / radianConversion);
 
     centerLineChair := (theoreticalCenterChair + errorOffsetChair) * ChairResetDirection;
     centerLineDrum := (theoreticalCenterDrum + errorOffsetDrum) * DrumResetDirection;

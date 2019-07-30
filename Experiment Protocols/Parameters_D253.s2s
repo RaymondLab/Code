@@ -59,4 +59,4 @@ var DrumResetDirection := -1;
 
 'Scale factor for amplitude of sine wave drift'
 var ChairDriftFactor := .04;
-var DrumDriftFactor := .04; 'need to take measurements for drum'
+var DrumDriftFactor := 0.0; 'need to take measurements for drum'
