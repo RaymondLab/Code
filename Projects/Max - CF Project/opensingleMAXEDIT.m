@@ -16,7 +16,8 @@
 function [beh, shiftAmt, shiftConfidence] = opensingleMAXEDIT(filename, ephys_exists, full_ephys)
 
     %% Opens Cntrlx file in Matlab and saves as "behavior"
-    behavior = readcxdata(filename, 0, 6); % 6 channels for jennifer, 7 for Akira
+    chanAmt = 6; %6: Jennifer, 7: Akira
+    behavior = readcxdata(filename, 0, chanAmt);
     
     %% Flip data for elvis so that contra is up and ipsi is down
     if ~isempty(regexp(filename,'da','once'))
@@ -76,25 +77,27 @@ function [beh, shiftAmt, shiftConfidence] = opensingleMAXEDIT(filename, ephys_ex
             shiftAmt = -(maxSumLoc - timeofsimplespikes(100));
             timeEphys = timeEphys + shiftAmt;
             
-            figure(9);clf
-            plot(timeEphys, abs(sumofthings))
-            ylim([0 100])
-            if ~isempty(maxSumLoc)
-                vline(maxSumLoc + shiftAmt)
-                xlim([maxSumLoc-1 maxSumLoc+1])
-            end
-            shiftConfidence = maxMatchValue;
-            
-            figure(10); clf
-            plot(timeEphys, ephys);
-            vline(timeofsimplespikes(1:100))
-            xlim([.5 1.5])
+%             figure(9);clf
+%             plot(timeEphys, abs(sumofthings))
+%             ylim([0 100])
+%             if ~isempty(maxSumLoc)
+%                 vline(maxSumLoc + shiftAmt)
+%                 xlim([maxSumLoc-1 maxSumLoc+1])
+%             end
+             shiftConfidence = maxMatchValue;
+%             
+%             figure(10); clf
+%             plot(timeEphys, ephys);
+%             vline(timeofsimplespikes(1:100))
+%             xlim([.5 1])
         else
             shiftAmt = 0;
             shiftConfidence = 0;
         end
     end
            
+
+    
     %% Save data in a dat structure
     tstart = timebehavior(1);
     tend   = timebehavior(end);
