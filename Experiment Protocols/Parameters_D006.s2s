@@ -3,7 +3,7 @@
 '--------------------------------------------------------------------------------
 ' SEQUENCER FILE LOCATION
 '--------------------------------------------------------------------------------
-var SequencerFile$ := "C:\\Users\\maxga\\Documents\\GitHub\\Code\\Experiment Protocols\\Sequencer_D019";
+var SequencerFile$ := "C:\\Users\\tstay\\Documents\\RaymondLabCode\\Experiment Protocols\\Sequencer_D019";
 
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS
@@ -16,11 +16,11 @@ var sinAmpDrum := 10;
 '--------------------------------------------------------------------------------
 
 'Chair converstion factors
-var ChairDegreesPerSecond2Voltage := -0.01;       'Chair velocity to voltage (Scale)
-var ChairDegreesPerSecondOffset :=  -.15;         'Chair velocity to voltage (offset)  *** Input default Chair offset here
+var ChairDegreesPerSecond2Voltage := -0.2 ; ' -0.01;   'Chair velocity to voltage (Scale)
+var ChairDegreesPerSecondOffset :=  -0.1 ; '-.15;         'Chair velocity to voltage (offset)  *** Input default Chair offset here
 
 'Drum conversion factors
-var DrumDegreesPerSecond2Voltage := 0.5;    'Drum velocity to voltage (Scale)
+var DrumDegreesPerSecond2Voltage := 0.95;    'Drum velocity to voltage (Scale)
 var DrumDegreesPerSecondOffset := 0;        'Drum velocity to voltage (offset)   *** Input default Drum offset here
 
 

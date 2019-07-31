@@ -462,6 +462,12 @@ Proc WindowConfig()
   'SampleTitle$(7,"phys");
   'SampleComment$(7, "phys");
 
+  'Channel 7 - TIB
+  SampleTalker(7, "LS7366", 0);
+  SampleTitle$(7, "Drum_P");
+  SampleComment$(7, "Drum Position");
+
+
   'Channel 8
   SampleWaveform(hhvelCh%,7,1000);
   SampleCalibrate(hhvelCh%,"deg/s",ChairVelReadoutScale,ChairVelReadoutOffset);
