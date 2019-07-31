@@ -5,12 +5,13 @@
 #include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D019.s2s"
 
 'D253
-'#include "C:\\Users\\amins\\Documents\\RL_Code\\Experiment Protocols\\Parameters_D253.s2s"
+'#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D253.s2s"
 
 '--------------------------------------------------------------------------------
 ' Universal Parameters File Location
 '--------------------------------------------------------------------------------
 #include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal.s2s"
+
 
 '--------------------------------------------------------------------------------
 ' MAIN PROGRAM
@@ -30,113 +31,110 @@ Func ToolbarIdle%()
   ' Check a valid sampling view is running
   var currView := ViewKind();
   if  currView <> 0 then
-    return 1;
+      return 1;
   endif;
 
-  'Call TrackEye function repeatedly when it's in the training portion
-  'this might not be how I want to do this but it's how they do driftFix
-  if MaxTime() > (prevTime + delta) then
-    if startTracking% = 1 then
-      ToolbarTrackEye%();
-    endif;
-    if driftFix = 1 then
-        driftFix%();
+  ' Keep sine wave from drifting!!!
+  if MaxTime() > (prevTime + 1/sinHzChair) then
+  if driftFix = 1 then
+      driftFix%();
     endif;
   endif;
 
-  'If an experiment is running: - need to update parameters (ex. testLength, runLength) to reflect protocol we want to follow
+
+  'If an experiment is running:
   if runExpmt% = 1 then
 
       'Check the time. Seconds is the current time - compare it to the goal time of each segment
       if  MaxTime() > goalTime then
 
-        docase
+          if   rep% = (nBlocks%+2) then 'all done
+              ToolbarQuitExpmt%();    ' All done
+              Return(1);
+          endif;
 
-          ' MISC GAP A - runs at beginning and end
+          docase
+
+
+
+          ' MISC GAP
           case test% = 0 then
               SampleKey("0");
-              startTracking% := 0;
-              goalTime := MaxTime() + 5;
-              SampleKey("x");
-              ToolbarSineStop%(); Yield();
-              ToolbarLightOff%(); Yield();
+              goalTime := MaxTime() + 10;
               ToolbarInit%(); Yield();
-
-              if prePostNum = 3 then
-                ToolbarQuitExpmt%();
-                Return(1);
-              endif
-
-              test% := 7;
-
-          ' MISC GAP B - flash before test
-          case test% = 7 then
-              SampleKey("7");
-              goalTime := MaxTime() + 5;
-              runFlash();
+              Yield(5);
               test% := 4;
 
-          ' MISC TEST - pre- and post-testing
+          ' MISC TEST
           case test% = 4 then
               SampleKey("4");
               goalTime := MaxTime() + testLength;
 
-              'FIGURE OUT WHAT HAPPENS IN TESTING FOR THIS PROTOCOL AND PUT IT HERE'
+              if prePostNum = 1 then
+                test% := 0;
+                prePostNum := prePostNum + 1;
+              else
+                test% := 1;
+              endif
 
-              docase 'prePostNum starts at 1, so 1st case is continuing experiment, second is ending experiment'
-                case prePostNum = 1 then
-                  prePostNum := prePostNum + 1;
+
+
+          ' BLOCK: GAP
+          case test% = 1 then               '
+                SampleKey("1");
+                prePostNum := 1;
+              goalTime  := MaxTime() +  10;    'wait 10 seconds for init
+                ToolbarInit%(); Yield();
+                Yield(5);
+                test% := 2;
+
+          ' BLOCK: TEST
+          case test% = 2 then               'FINISHED WAITING, TEST NOW
+              SampleKey("2");
+              goalTime := MaxTime() + testLength;
+              testrep% := testrep% + 1;
+
+              if testrep% = nTestreps% then
+                  test% := 3;
+                  rep% := rep% + 1;
+              else
                   test% := 1;
-                case prePostNum = 2 then
-                  prePostNum := prePostNum + 1;
-                  test% := 0;
-              endcase
-              SampleKey("X");
-              ToolbarSineStart%(); Yield();
-
-          ' BLOCK: GAP A
-          case test% = 1 then
-              SampleKey("1");
-              goalTime := MaxTime() + 5;
-              SampleKey("x"); 'do i need this?'
-              startTracking% := 0;
-              ToolbarSineStop%(); Yield();
-              ToolbarLightOff%(); Yield();
-              ToolbarInit%(); Yield();
-              test% := 6;
-
-          ' BLOCK: GAP B - flash before training
-          case test% = 6 then
-              SampleKey("6");
-              goalTime := MaxTime() + 5;
-              runFlash();
-              test% := 3;
+              endif;
 
           ' BLOCK: TRAIN
-          case test% = 3 then
+          case test% = 3 then                  'Finished test, run training
               SampleKey("3");
               goalTime := MaxTime() + runLength;
 
-              'update the gain'
-              if rep% > 0 then
-                gain := gain + incrementSize;
+              if rep% < (nBlocks%+1) then
+                  docase
+                  case expmtMode = 3 or expmtMode = 4 then          '3 = ipsi, 4 = contra
+                      ToolbarStimOn%();
+                  case expmtMode = 1 or expmtMode = 2 then          '1 = x0, 2 = x2
+                      ToolbarLightOn%();
+                  case exptMode = 6 then
+                    if rep% % 2 = 0 then
+                      ToolbarLightOn%();
+                    else
+                      ToolbarLightOff%();
+                    endif;
+                  endcase;
+              else
+                  ToolbarLightOff();
               endif;
 
-              rep% := rep% + 1;
               if rep% = nBlocks% then
                   test% := 0;
               else
                   test% := 1;
               endif;
-              SampleKey("X");
-              ToolbarLightOn%(); Yield(.1);
-              'ToolbarSineStart%(); Yield(.1);
+              testrep% := 0;
 
-              startTracking% := 1;
+          endcase;
 
-        endcase;
       endif;
   endif;
+
 
   Return(1);
 End
@@ -150,7 +148,7 @@ Func ToolbarConfigExpmt%()
   DlgInteger(2,"Number of tests per block",1,100,0,0,1);    'set to 0 if not using Chair
   DlgReal(3,"Run length (s)",0,5000);
   DlgReal(4,"Test length (s)",0,5000);
-  DlgList(5,"Expmt mode", "habit|x0|x2|ipsi|contra|steps");
+  DlgList(5,"Expmt mode", "habit|x0|x2|ipsi|contra|steps|lightblocks");
   DlgInteger(6,"Light flash on?)",0,1,0,0,"0|1");
   DlgReal(7,"Test stim and bilat (0 or 1)",0,1);
 
@@ -180,6 +178,12 @@ Func ToolbarConfigExpmt%()
       sinAmpDrum := 0;
   case expmtMode = 5 then      'steps
       ToolbarStepConfig%();
+  case exptMode = 6 then
+      sinAmpChair := 0;
+      sinAmpDrum := 0;
+      nTestreps% := 0;
+      flashoon% := 0;
+      testStim := 0;
   endcase;
 
 

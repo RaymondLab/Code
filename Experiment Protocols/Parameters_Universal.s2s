@@ -734,8 +734,8 @@ Func driftFix%()
   var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime) + (centerLineDrum);
 
   ' Scales *1 for D253, *-1 for D019
-  ChairDegreesPerSecondOffset :=  (ChairDegreesPerSecondOffsetDefault - hhposSlope/4 - hhposPos/4) * ChairResetDirection;
-  DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - htposSlope/4 - htposPos/4) * DrumResetDirection;
+  ChairDegreesPerSecondOffset :=  (ChairDegreesPerSecondOffsetDefault - hhposSlope/4 - hhposPos/4 - centerLineChair/4) * ChairResetDirection;
+  DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - htposSlope/4 - htposPos/4 - centerLineDrum/4) * DrumResetDirection;
 
   SetSequencerValues();
 End

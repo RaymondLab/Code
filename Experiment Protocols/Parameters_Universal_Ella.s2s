@@ -106,11 +106,13 @@ var fullPulse := 0;
 'Voltage Range: check in Edit -> Edit Parameters
 var MaxVoltage := 10;
 var driftFix := 1;
-var sinOnCorChair := 0;
-var sinOnCorDrum := 0;
+var centerLineChair := 0;
+var centerLineDrum := 0;
 var testStim := 0;
 var rotationVelocity := 0.02;
 var radianConversion := 57.295779513; 'divide a value in degrees by this number to convert to radians - from Spike2 manual'
+var measuredZeroChair := 0;
+var measuredZeroDrum := 0;
 
 '--------------------------------------------------------------------------------
 ' TOOLBAR PARAMETERS
@@ -145,9 +147,11 @@ const htvelCh% := 13;
 ' SINE FUNCTIONS
 '--------------------------------------------------------------------------------
 Func ToolbarSineStart%()
+  prevTime := MaxTime();
+  measuredZeroChair := ChanMeasure(hhposCh%, 2, prevTime-2, prevTime-.5);
+  measuredZeroDrum := ChanMeasure(htposCh%, 2, prevTime-2, prevTime-.5);
   SampleKey( "S" );
   sineOn% := 1;
-  prevTime := MaxTime();
   Yield();
   ToolbarSet(SinePos, "Sine Off",ToolbarSineStop%);
   Return( 1 );
@@ -285,6 +289,10 @@ Func ToolbarStepOn%()
   	ToolbarSet(StepPos, "Step Stop", ToolbarStepOff%);
   else
       if stepLight = 1 and stepStim = 0 then
+        stepOn% := 1;
+        prevTime := MaxTime();
+        measuredZeroChair := ChanMeasure(hhposCh%, 2, prevTime-2, prevTime);
+        measuredZeroDrum := ChanMeasure(htposCh%, 2, prevTime-2, prevTime);
       docase
           case lightDur = stepLength and lightStart = 0 then
               SampleKey ("t");   ' Entire step
@@ -314,6 +322,7 @@ End
 
 Func ToolbarStepOff%()
   SampleKey( "I" );
+  stepOn% := 0;
   ToolbarSet(StepPos, "Step Start", ToolbarStepOn%);
   Return( 1 );
 End
@@ -387,6 +396,7 @@ Func ToolbarStimOn%()
   else
       SampleKey("P");
   endif;
+  sineOn% := 0;
   Yield();
   Toolbarset(PulsePos,"Pulse Off", ToolbarStimOff%);
   Return( 1 );
@@ -397,6 +407,7 @@ Func ToolbarStimOff%()
   Yield();
   SampleKey( "I" );
   Yield();
+  sineOn% := 0;
 
   Toolbarset(PulsePos,"Pulse On", ToolbarStimOn%);
   Return( 1 );
@@ -744,14 +755,13 @@ Proc SetSequencerValues()
   SampleSeqVar( 27, ChairAmp2Int16%( sinAmpChair ) );
   SampleSeqVar( 28, Angle2Int32%( actualChairPh ) );
   SampleSeqVar( 29, Hz2Int32%( sinHzChair ) );
-  SampleSeqVar( 55, ChairResetDirection); 'this should be the rotation direction for the chair passed in'
-
+  SampleSeqVar( 55, ChairResetDirection); 'default chair direction
   'Drum parameters
   SampleSeqVar( 22, DrumAmp2Int32%( DrumDegreesPerSecondOffset ) );
   SampleSeqVar( 24, DrumAmp2Int16%( sinAmpDrum ) );
   SampleSeqVar( 25, Angle2Int32%( actualDrumPh ) );
   SampleSeqVar( 26, Hz2Int32%( sinHzDrum ) );
-  SampleSeqVar( 65, DrumResetDirection); 'this should be the rotation direction for the drum passed in'
+  SampleSeqVar( 65, DrumResetDirection); 'default drum direction
 
   'Pulse parameters
   SampleSeqVar( 33, pWait );
@@ -778,45 +788,61 @@ Proc SetSequencerValues()
   SampleSeqVar( 52, pulsePeriod);
   SampleSeqVar( 54, everyNCycles);
   'Rotation Parameters
-  SampleSeqVar( 66, rotationVelocity); 'This is a relative value - I don't know which is clockwise or counterclockwise
+  SampleSeqVar( 66, rotationVelocity); 'This is a relative value
 End
 
 Func driftFix%()
   'drift back to 0 if sine wave isn't running
-  if sineOn% = 1 or vidOn = 1 then
-    var chairSign := -1;
+  docase
+  case sineOn% = 1 or vidOn = 1 then
+    var chairSign := 1; 'set default to 1 if phase = 0'
     var drumSign := 1;
 
-    if sinPhChair > 0 then
-      chairSign := 1;
+    'figure out whether we want velocity to be positive or negative'
+    if sinPhChair <> 0 then
+      chairSign := sinPhChair / Abs(sinPhChair);
     endif
-    if sinPhDrum > 0 then
-      drumSign := -1;
+    if sinPhDrum <> 0 then
+      drumSign := sinPhDrum / Abs(sinPhDrum);
     endif
 
-    var assumedZeroChair := sinAmpChair - (sinAmpChair * sin((90 - sinPhChair)/radianConversion)); 'sin function only takes radian value'
-    sinOnCorChair := chairSign * assumedZeroChair / (2 * 3.14159 * sinHzChair)* ChairResetDirection; ' * default -1 for D253, 1 for D019'
+    'convert from the sine amplitude signal to the actual position amplitude'
+    var trueAmpChair := sinAmpChair / (2 * 3.14159 * sinHzChair);
+    var trueAmpDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum);
 
-    var assumedZeroDrum := sinAmpDrum - (sinAmpDrum * sin((90 - sinPhDrum)/radianConversion)); 'this might need to not be multiplied by -1 -- in previous calculations drum rotation was opposite chair'
-    sinOnCorDrum := drumSign * assumedZeroDrum / (2 * 3.14159 * sinHzDrum) * DrumResetDirection; ' * default -1 for D253, 1 for D019'
+    'calculates the center y value according to the phase given'
+    var centerForPhaseChair := trueAmpChair * (1 - cos((-1 * sinPhChair)/radianConversion));
+    var centerForPhaseDrum := trueAmpDrum * (1 - cos((-1 * sinPhDrum)/radianConversion));
+
+    'takes into account that chair/drum may not start at 0'
+    var theoreticalCenterChair := (centerForPhaseChair + measuredZeroChair) * chairSign;
+    var theoreticalCenterDrum := (centerForPhaseDrum + measuredZeroDrum) * drumSign;
+
+    'NOTE: there is something funky with the motors where there is an error that follows a sine wave from phase'
+    'WE DON'T KNOW WHY, ONLY THAT IT HAPPENS'
+    'the drift coefficients need to be calculated manually by testing the error for different phase offsets'
+    var errorOffsetChair := ChairDriftFactor * sinAmpChair * sin(2 * sinPhChair / radianConversion);
+    var errorOffsetDrum := DrumDriftFactor * sinAmpDrum * sin(2 * sinPhDrum / radianConversion);
+
+    centerLineChair := (theoreticalCenterChair + errorOffsetChair) * ChairResetDirection;
+    centerLineDrum := (theoreticalCenterDrum + errorOffsetDrum) * DrumResetDirection;
 
   else
-    sinOnCorChair := 0;
-    sinOnCorDrum := 0;
-  endif
+    centerLineChair := 0;
+    centerLineDrum := 0;
+  endcase
 
   prevTime := MaxTime();
   ' Measure slope from last 1 cycle of chair/drum position feedback
   var hhposSlope := ChanValue(hhposCh%, prevTime) - ChanValue(hhposCh%, prevTime-(1/sinHzChair));
   var htposSlope := ChanValue(htposCh%, prevTime) - ChanValue(htposCh%, prevTime-(1/sinHzDrum));
-  var hhposPos := ChanMeasure(hhposCh%, 2, prevTime-(1/sinHzChair), prevTime) + (sinOnCorChair);
-  var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime) - (sinOnCorDrum); 'is this minus because the chair and drum go opposite ways?'
+  var hhposPos := ChanMeasure(hhposCh%, 2, prevTime-(1/sinHzChair), prevTime) + (centerLineChair);
+  var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime) + (centerLineDrum);
 
-  ' Scales *1 for D253, *-1 for D019 -- switched from previous version to make math simpler
-  ChairDegreesPerSecondOffset :=  (ChairDegreesPerSecondOffsetDefault - hhposSlope/4 - hhposPos/4) * ChairResetDirection;
-  if startTracking% = 0 then
-    DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - htposSlope/4 - htposPos/4) * DrumResetDirection;
-  endif
+  ' Scales *1 for D253, *-1 for D019
+  ChairDegreesPerSecondOffset :=  (ChairDegreesPerSecondOffsetDefault - hhposSlope/4 - hhposPos/4 - centerLineChair/4) * ChairResetDirection;
+  DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - htposSlope/4 - htposPos/4 - centerLineDrum/4) * DrumResetDirection;
+
   SetSequencerValues();
 End
 '--------------------------------------------------------------------------------
