@@ -20,12 +20,10 @@ var ChairDegreesPerSecond2Voltage := -0.01;       'Chair velocity to voltage (Sc
 var ChairDegreesPerSecondOffsetDefault :=  -.15;         'Chair velocity to voltage (offset)  *** Input default Chair offset here
 var ChairDegreesPerSecondOffset :=  -.15;         'Starting value, is updated repeatedly
 
-
 'Drum conversion factors
 var DrumDegreesPerSecond2Voltage := 0.5;    'Drum velocity to voltage (Scale)
 var DrumDegreesPerSecondOffsetDefault := 0;        'Drum velocity to voltage (offset)   *** Input default Drum offset here
 var DrumDegreesPerSecondOffset := 0;        'Starting value, is updated repeatedly
-
 
 'Channel 1: Scaling to display the drum COMMAND signal
 var DrumVoltage2Velocity := -1/DrumDegreesPerSecond2Voltage;                'Voltage to Drum Velocity (Scale)
@@ -34,7 +32,6 @@ var DrumVoltage2VelocityC := 0;                 'Voltage to Drum Velocity (offse
 'Channel 2: Scaling to display the chair COMMAND signal
 var ChairVoltage2Velocity := ChairDegreesPerSecond2Voltage; '107.42869;         'Voltage to Chair Velocity (Scale)
 var ChairVoltage2VelocityC := 0;                'Voltage to Chair Velocity (offset)
-
 
 'Chair velocity readout
 var ChairVelReadoutScale := -100.3;           '
