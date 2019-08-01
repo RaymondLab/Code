@@ -275,11 +275,16 @@ for count = 1:nSegs
         plotStim = headVel_cycleMean;
         stimType = 'Chair';
     end
-    ylimits = double([floor(min(plotStim)*1.1) ceil(max(plotStim)*1.1)]);
+    
+    ylimits = double([round(min(plotStim)/10)*12, round(max(plotStim)/10)*12]);
+    
+    % Jaydev: Big Axis
+    %ylimits = double([round(min(plotStim)/10)*20 round(max(plotStim)/10)*20])
     
     % check for bad or missing stim
-    if ylimits(1) == 0
-        ylimits(1) = -.1;
+    if abs(ylimits(1)) <= 2
+        ylimits(1) = -2;
+        ylimits(2) = 2;
     end
     
     if params.do_subplot1
@@ -306,7 +311,7 @@ for count = 1:nSegs
         
         % Cosmetics
         xlim([0 max(segTime)]);
-        ylim([-150 150])
+        ylim([-100 100])
         title(datatype)
         
         % Only add xlabel on final segment
