@@ -60,10 +60,10 @@ var everyNCycles := 1;
 '--------------------------------------------------------------------------------
 ' EXPERIMENT PARAMETERS
 '--------------------------------------------------------------------------------
-var nBlocks% := 60;                 'Number of run-test blocks in exmpt
-var nTestreps% := 1;               'Number of times to repeat 40 sec test
-var runLength := 20;             'Seconds to run protocol in each block(300 for 5 min)
-var testLength := 10;             'Seconds to test
+var nBlocks% := 5;                 'Number of run-test blocks in exmpt
+var nTestreps% := 0;               'Number of times to repeat 40 sec test
+var runLength := 300;             'Seconds to run protocol in each block(300 for 5 min)
+var testLength := 0;             'Seconds to test
 var expmtLoc% := 1;
 var prePostNum := 1;
 var trainLoc% := 1;
@@ -78,7 +78,6 @@ var goalTime := 1000000000;    'maximum time the motor is allowed to run for
 var flashon% := 1;
 var waitLength := 300;
 var prevTime := 0;
-var trackEye% := 1;
 var startTracking% := 0;
 
 '--------------------------------------------------------------------------------
@@ -419,7 +418,7 @@ End
 'Constantly updates to track the eye movements of the mouse and adjust the drum to the same position'
 'We don't want to move the chair at all, just the drum'
 'Try to figure out how to change gain'
-Func ToolbarTrackEye%()
+Func trackEye%()
 
   prevTime := MaxTime();
   ' var eye1Position := ChanValue(heposCh1%, prevTime);
@@ -445,12 +444,12 @@ Func ToolbarTrackEye%()
   ' Return(1);
 
   'temporary - getting eye position by averaging both channels - eventually want to update to reflect best choice channel'
-  var currEye1Pos := ChanValue(heposCh1%, prevTime);
-  var currEye2Pos := ChanValue(heposCh2%, prevTime);
+  var currEye1Pos := ChanValue(hhposCh%, prevTime);'ChanValue(heposCh1%, prevTime);
+  var currEye2Pos := ChanValue(hhposCh%, prevTime);'ChanValue(heposCh2%, prevTime);
   var currEyePosAvg := (currEye1Pos + currEye2Pos) / 2;
 
   var degreeDiffScaled := (currEyePosAvg - nullEyePos) * gain; 'MAKE SURE THIS IS HOW WE GET THAT DEGREE VALUE'
-  DrumDegreesPerSecondOffset := (DrumDegreesPerSecondOffsetDefault - degreeDiffScaled) * DrumResetDirection * LeakInstabilityScale;
+  DrumDegreesPerSecondOffset := (DrumDegreesPerSecondOffsetDefault + degreeDiffScaled) * DrumResetDirection * LeakInstabilityScale;
 
   SetSequencerValues();
   Return(1);
@@ -460,12 +459,11 @@ Func ToolbarTrackConfig%() 'All of the values in here are guesses - may have to 
   'also need to figure out units for everything'
   DlgCreate("Eye Tracking settings");  'Start new dialog
   DlgReal(1,"Delta (s)",.000001,10);
-  DlgReal(2,"Saccade Threshold",.000001,1);
-  DlgReal(3,"Gain start value",.05, 10);
-  DlgReal(4,"Gain end value",.05, 10);
-  DlgReal(5,"Size of increments",.05, 1);
+  DlgReal(2,"Gain start value",.05, 10);
+  DlgReal(3,"Gain end value",.05, 10);
+  DlgReal(4,"Size of increments",.05, 1);
   DlgList(5, "Train for leak or instability", "Leak|Instability");
-  DlgShow(delta, saccadeThreshold, gain, gainCeiling, incrementSize, leakOrInstability);
+  DlgShow(delta, gain, gainCeiling, incrementSize, leakOrInstability);
 
   SetTrackingSettings%();
 
@@ -503,6 +501,20 @@ Func findNullEyePos()
   nullEyePos := (chan1Mean + chan2Mean) / 2;
 End
 
+Func ToolbarTrackEyeOn%()
+  'SampleKey( "R" );
+  startTracking% := 1;
+  Toolbarset(TrackPos,"Track Off", ToolbarTrackEyeOff%);
+  Return( 1 );
+End
+
+Func ToolbarTrackEyeOff%()
+  SampleKey( "r" );
+  startTracking% := 0;
+  Toolbarset(TrackPos,"Track On", ToolbarTrackEyeOff%);
+  Return( 1 );
+End
+
 '--------------------------------------------------------------------------------
 ' OTHER FUNCTIONS
 '--------------------------------------------------------------------------------
@@ -525,7 +537,7 @@ Proc ToolbarConfig()
   ToolbarSet(ExpmtConfigPos, "Expmt Config", ToolbarConfigExpmt%);
   ToolbarSet(CommentPos, "Comment", ToolbarComment%);
   ToolbarSet(NewFilePos, "New File", ToolbarNew%);
-  ToolbarSet(TrackPos, "Track Eye", ToolbarTrackEye%);
+  ToolbarSet(TrackPos, "Track On", ToolbarTrackEyeOn%);
   ToolbarSet(TrackConfigPos, "Track Config", ToolbarTrackConfig%);
   Toolbar("", 231);
 End

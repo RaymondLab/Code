@@ -2,7 +2,7 @@
 ' Rig-Specific parameters file Location
 '--------------------------------------------------------------------------------
 'D019
-#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D019.s2s"
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D019_Ella.s2s"
 
 'D253
 '#include "C:\\Users\\amins\\Documents\\RL_Code\\Experiment Protocols\\Parameters_D253.s2s"
@@ -10,7 +10,7 @@
 '--------------------------------------------------------------------------------
 ' Universal Parameters File Location
 '--------------------------------------------------------------------------------
-#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal.s2s"
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal_Ella.s2s"
 
 '--------------------------------------------------------------------------------
 ' MAIN PROGRAM
@@ -35,9 +35,9 @@ Func ToolbarIdle%()
 
   'Call TrackEye function repeatedly when it's in the training portion
   'this might not be how I want to do this but it's how they do driftFix
-  if MaxTime() > (prevTime + delta) then
+  if MaxTime() > (prevTime + .1) then
     if startTracking% = 1 then
-      ToolbarTrackEye%();
+      trackEye%();
     endif;
     if driftFix = 1 then
         driftFix%();
