@@ -35,12 +35,12 @@ Func ToolbarIdle%()
 
   'Call TrackEye function repeatedly when it's in the training portion
   'this might not be how I want to do this but it's how they do driftFix
-  if MaxTime() > (prevTime + .1) then
-    if startTracking% = 1 then
-      trackEye%();
-    endif;
+  if MaxTime() > (prevTime + delta) then
     if driftFix = 1 then
         driftFix%();
+    endif;
+    if startTracking% = 1 then
+      trackEye%();
     endif;
   endif;
 

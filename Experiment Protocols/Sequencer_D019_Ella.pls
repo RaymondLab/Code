@@ -320,7 +320,7 @@ SINEON: 'S  SZ     1,ChrAmp        ;set cosine amplitude
 OFFST1:     WAITC  1,OFFST1
             OFFSET 1,Chairoff
 
-            JUMP   OFFST1            ;set loop to continue sine function > Sine running.
+            JUMP   KDRUM            ;set loop to continue sine function > Sine running.
 
 SINEOFF: 's RATE   0,0             ;stop cosine on drum
             RATE   1,0             ;stop cosine on chair

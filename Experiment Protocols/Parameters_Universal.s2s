@@ -730,8 +730,8 @@ Func driftFix%()
   ' Measure slope from last 1 cycle of chair/drum position feedback
   var hhposSlope := ChanValue(hhposCh%, prevTime) - ChanValue(hhposCh%, prevTime-(1/sinHzChair));
   var htposSlope := ChanValue(htposCh%, prevTime) - ChanValue(htposCh%, prevTime-(1/sinHzDrum));
-  var hhposPos := ChanMeasure(hhposCh%, 2, prevTime-(1/sinHzChair), prevTime) + (centerLineChair);
-  var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime) + (centerLineDrum);
+  var hhposPos := ChanMeasure(hhposCh%, 2, prevTime-(1/sinHzChair), prevTime);
+  var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime);
 
   ' Scales *1 for D253, *-1 for D019
   ChairDegreesPerSecondOffset :=  (ChairDegreesPerSecondOffsetDefault - hhposSlope/4 - hhposPos/4 - centerLineChair/4) * ChairResetDirection;
