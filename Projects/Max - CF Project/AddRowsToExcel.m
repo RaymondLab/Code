@@ -1,13 +1,15 @@
 %% Set up
 
 % open Excel File
-excelFile = 'C:\Users\maxwellg\Documents\RL_Code\Projects\Max - CF Project\Monkey Metadata by Max.xlsx';
+%excelFile = 'C:\Users\maxwellg\Documents\RL_Code\Projects\Max - CF Project\Monkey Metadata by Max.xlsx';
+excelFile = 'C:\Users\maxwellg\Documents\RL_Code\Projects\Max - CF Project\Monkey Metadata by Max (Akira).xlsx';
 expmt_table = readtable(excelFile);
 
 % Filters
 %expmt_table(~strcmp(expmt_table.SineStep, {'Sine'}),:) = [];
 
-ExpmtDataFolder = 'G:\My Drive\Expmt Data\2019_05 - Max Climbing Fiber\Initial Data for testing';
+%ExpmtDataFolder = 'G:\My Drive\Expmt Data\2019_05 - Max Climbing Fiber\Initial Data for testing';
+ExpmtDataFolder = 'G:\My Drive\Expmt Data\2019_05 - Akira and Sriram Complex Spikes';
 bFiles = dir([ExpmtDataFolder '\**\*.0*']);
 
 % Filters
@@ -25,11 +27,6 @@ for j = 1:length(bFiles)
     %% Add new line if new entry
     expmt_row = find(strcmp(expmt_table.Filename, bFiles(j).name));
     
-    % Filters
-    %if ~strcmp(expmt_table.SineStep(expmt_row), {'Sine'})
-    %    continue
-    %end
-    
     if isempty(expmt_row)
         TempRow = expmt_table(find(contains(expmt_table.Filename, 'PlaceHolder')), :);
         TempRow.Filename = bFiles(j).name;
@@ -42,8 +39,15 @@ for j = 1:length(bFiles)
     ephys_exists = 1;
     ePath = [];
     if contains(bFiles(j).name, '.0')
-        eFile = strrep(bFiles(j).name, 'da', 'du');
-        eFile = strrep(eFile, '.0', '.');
+        
+        % Akira Data
+        eFile = strrep(bFiles(j).name, 'U', 'unit');
+        eFile = strrep(eFile, '.0', '.00');
+        
+        % Jennifer Style
+        %eFile = strrep(bFiles(j).name, 'da', 'du');
+        %eFile = strrep(eFile, '.0', '.');
+        
         ephys_loc = find(contains({bFiles.name}, eFile));
         if ephys_loc > 0
             ephys_exists = 1;
