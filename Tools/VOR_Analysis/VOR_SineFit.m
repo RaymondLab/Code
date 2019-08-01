@@ -78,8 +78,8 @@ for count = 1:nSegs
     % Import Eye, Chair, and Drum velocity
     headVel = datchandata(dataseg,'hhvel');
     drumVel = datchandata(dataseg,'htvel');
-    eyeVel = datchandata(dataseg,'hevel');
-    eyePos = datchandata(dataseg,'hepos');
+    eyeVel  = datchandata(dataseg,'hevel');
+    eyePos  = datchandata(dataseg,'hepos');
 
     % define vector of time
     segLength = length(headVel);
@@ -224,9 +224,9 @@ for count = 1:nSegs
     [~, idealEye_cycleMean]                = VOR_breakTrace(cycleLength, startpt, idealEyeVel);
 
     % Calculate Extras
-    badCycles = any(omit_mat,2);
-    goodCount = sum(~badCycles);
-    eyeVel_des_Sem       = nanstd(eyeVel_des_mat)./sqrt(sum(~isnan(eyeVel_des_mat)));
+    badCycles       = any(omit_mat,2);
+    goodCount       = sum(~badCycles);
+    eyeVel_des_Sem  = nanstd(eyeVel_des_mat)./sqrt(sum(~isnan(eyeVel_des_mat)));
     
     if goodCount > 0
         eyeVel_good_cycleMean = nanmean(eyeVel_des_mat(~badCycles,:), 1);
@@ -357,11 +357,13 @@ for count = 1:nSegs
         end 
         
         % Add quick reference text
-        text(max(cycleTime)*1.05, ylimits(2), ['Good Cycles: ', num2str(goodCount), '/', num2str(length(badCycles))],'FontSize',7);
-        text(max(cycleTime)*1.05, ylimits(2)-5, ['Rel Gain: ' num2str(eyeVel_rel_gain)], 'Fontsize', 7);
-        text(max(cycleTime)*1.05, ylimits(2)-10, ['Eye Amp: ', num2str(eyeVel_amp,3)],'FontSize',7);
-        text(max(cycleTime)*1.05, ylimits(2)-15, ['Rel. Phase: ', num2str(eyeVel_rel_phase,3)],'FontSize',7);
-        text(max(cycleTime)*1.05, ylimits(2)-20, ['Stim: ', stimType],'FontSize',7);
+        ylimRange = ylimits(2) - ylimits(1);
+        text(max(cycleTime)*1.05, ylimits(2)-.1*ylimRange, ['Good Cycles: ', num2str(goodCount), '/', num2str(length(badCycles))],'FontSize',7);
+        text(max(cycleTime)*1.05, ylimits(2)-.2*ylimRange, ['Rel Gain: ' num2str(eyeVel_rel_gain)], 'Fontsize', 7);
+        text(max(cycleTime)*1.05, ylimits(2)-.3*ylimRange, ['Eye Amp: ', num2str(eyeVel_amp,3)],'FontSize',7);
+        text(max(cycleTime)*1.05, ylimits(2)-.4*ylimRange, ['Rel. Phase: ', num2str(eyeVel_rel_phase,3)],'FontSize',7);
+        text(max(cycleTime)*1.05, ylimits(2)-.5*ylimRange, ['Stim: ', stimType],'FontSize',7);
+        text(max(cycleTime)*1.05, ylimits(2)-.6*ylimRange, ['r^2: ', num2str(stat(1))],'FontSize',7);
 
         % Manual y axis b/c matlab is literal garbage
         yticks([min(ylim) 0 max(ylim)])
