@@ -3,7 +3,11 @@
 '--------------------------------------------------------------------------------
 ' SEQUENCER FILE LOCATION
 '--------------------------------------------------------------------------------
+<<<<<<< HEAD
 var SequencerFile$ := "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Sequencer_D019";
+=======
+var SequencerFile$ := "C:\\Users\\maxga\\Documents\\GitHub\\Code\\Experiment Protocols\\Sequencer_Universal";
+>>>>>>> 4deb180d40e4459c32418c554c097f4ebeeca472
 
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS
@@ -19,13 +23,19 @@ var sinAmpDrum := 10;
 var ChairDegreesPerSecond2Voltage := -0.01;       'Chair velocity to voltage (Scale)
 var ChairDegreesPerSecondOffsetDefault :=  -.15;         'Chair velocity to voltage (offset)  *** Input default Chair offset here
 var ChairDegreesPerSecondOffset :=  -.15;         'Starting value, is updated repeatedly
+<<<<<<< HEAD
 
+=======
+>>>>>>> 4deb180d40e4459c32418c554c097f4ebeeca472
 
 'Drum conversion factors
 var DrumDegreesPerSecond2Voltage := 0.5;    'Drum velocity to voltage (Scale)
 var DrumDegreesPerSecondOffsetDefault := 0;        'Drum velocity to voltage (offset)   *** Input default Drum offset here
 var DrumDegreesPerSecondOffset := 0;        'Starting value, is updated repeatedly
+<<<<<<< HEAD
 
+=======
+>>>>>>> 4deb180d40e4459c32418c554c097f4ebeeca472
 
 'Channel 1: Scaling to display the drum COMMAND signal
 var DrumVoltage2Velocity := -1/DrumDegreesPerSecond2Voltage;                'Voltage to Drum Velocity (Scale)
@@ -35,7 +45,10 @@ var DrumVoltage2VelocityC := 0;                 'Voltage to Drum Velocity (offse
 var ChairVoltage2Velocity := ChairDegreesPerSecond2Voltage; '107.42869;         'Voltage to Chair Velocity (Scale)
 var ChairVoltage2VelocityC := 0;                'Voltage to Chair Velocity (offset)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 4deb180d40e4459c32418c554c097f4ebeeca472
 'Chair velocity readout
 var ChairVelReadoutScale := -100.3;           '
 var ChairVelReadoutOffset := -.1548;

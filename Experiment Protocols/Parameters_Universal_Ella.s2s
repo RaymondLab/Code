@@ -11,7 +11,6 @@ var sinPhDrum := 90;
 var actualDrumPh;
 var sineOn% := 0;
 
-
 '--------------------------------------------------------------------------------
 ' STEP PARAMETERS
 '--------------------------------------------------------------------------------
@@ -61,10 +60,10 @@ var everyNCycles := 1;
 '--------------------------------------------------------------------------------
 ' EXPERIMENT PARAMETERS
 '--------------------------------------------------------------------------------
-var nBlocks% := 6;                 'Number of run-test blocks in exmpt
-var nTestreps% := 1;               'Number of times to repeat 40 sec test
+var nBlocks% := 5;                 'Number of run-test blocks in exmpt
+var nTestreps% := 0;               'Number of times to repeat 40 sec test
 var runLength := 300;             'Seconds to run protocol in each block(300 for 5 min)
-var testLength := 45;             'Seconds to test
+var testLength := 0;             'Seconds to test
 var expmtLoc% := 1;
 var prePostNum := 1;
 var trainLoc% := 1;
@@ -79,8 +78,22 @@ var goalTime := 1000000000;    'maximum time the motor is allowed to run for
 var flashon% := 1;
 var waitLength := 300;
 var prevTime := 0;
+var startTracking% := 0;
 
-
+'--------------------------------------------------------------------------------
+' TRACKING PARAMETERS
+'--------------------------------------------------------------------------------
+var delta := .001; 'TEMPORARY VALUE'
+var saccadeThreshold := 1; 'TEMPORARY VALUE'
+var gain := 5;  'TEMPORARY VALUE'
+var gainCeiling := 5; 'TEMPORARY VALUE'
+var nullEyePos := 0;
+var eyePos := 0;
+var preTest% := 1; 'variable to check if test was run for first time to take baseline eye position'
+var LeakInstabilityScale := -1; '-1 for leak, 1 for instability'
+var leakOrInstability;
+var incrementSize := .5;
+var drumDriftFix% := 1;
 
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS
@@ -116,7 +129,10 @@ const PulseConfigPos    := PulsePos+1;
 const VidPos            := PulseConfigPos+1;
 const StepPos           := VidPos+1;
 const StepConfigPos     := StepPos+1;
-const ExpmtPos          := StepConfigPos+1;
+const TrackPos          := StepConfigPos+1;
+const TrackConfigPos    := TrackPos+1;
+const FindNullEyePos    := TrackConfigPos+1;
+const ExpmtPos          := FindNullEyePos+1;
 const ExpmtConfigPos    := ExpmtPos+1;
 
 const HTVELChCom% := 1;
@@ -134,11 +150,7 @@ const htvelCh% := 13;
 Func ToolbarSineStart%()
   prevTime := MaxTime();
   measuredZeroChair := ChanMeasure(hhposCh%, 2, prevTime-2, prevTime-.5);
-<<<<<<< HEAD
   measuredZeroDrum := ChanMeasure(htposCh%, 2, prevTime-2, prevTime-.5);
-=======
-  measuredZeroDrum := ChanMeasure(htposCh%, 2, prevTime-2, prevTime-.1);
->>>>>>> 4deb180d40e4459c32418c554c097f4ebeeca472
   SampleKey( "S" );
   sineOn% := 1;
   Yield();
@@ -166,7 +178,6 @@ Func ToolbarSineConfig%()
   SetPulseSettings%();
 
   SetSequencerValues();
-
   Return(1);
 End
 
@@ -404,6 +415,119 @@ Func ToolbarStimOff%()
 End
 
 '--------------------------------------------------------------------------------
+' TRACKING FUNCTIONS
+'--------------------------------------------------------------------------------
+'Constantly updates to track the eye movements of the mouse and adjust the drum to the same position'
+'We don't want to move the chair at all, just the drum'
+'Try to figure out how to change gain'
+Func trackEye%()
+
+  prevTime := MaxTime();
+  ' var eye1Position := ChanValue(heposCh1%, prevTime);
+  ' var prevEye1Position := ChanValue(heposCh1%, prevTime-delta);
+  ' var eye2Position := ChanValue(heposCh2%, prevTime);
+  ' var prevEye2Position := ChanValue(heposCh2%, prevTime-delta);
+  '
+  ' 'here do we want a slope (aka divide by delta) or just a difference?'
+  ' 'currently averaging two eye channels, could try to do something to find the best eye channel'
+  ' var eyePosChangeAvg := (eye1Position-prevEye1Position + eye2Position-prevEye2Position) / 2 / delta;
+  '
+  ' 'want to change this so that it uses the degree value and calculates the velocity change in response to that'
+  '
+  ' if eyePosChangeAvg > saccadeThreshold then 'need to find real value for threshold' 'OR MAYBE DON'T NEED THRESHOLD AT ALL AND JUST ALWAYS TRACK?
+  '   var eyePosChangeScaled := eyePosChangeAvg * gain;
+  '   DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - eyePosChangeScaled) * DrumResetDirection * LeakInstabilityScale; 'this has to be changed to reflect the correct math for the eye tracking'
+  ' else
+  '   DrumDegreesPerSecondOffset := 0; 'is this how we say don't change position/stay constant??
+  '   'Maybe:'
+  '   'ToolbarInit%();
+  ' endif
+  ' SetSequencerValues();
+  ' Return(1);
+
+  'temporary - getting eye position by averaging both channels - eventually want to update to reflect best choice channel'
+  var currEye1Pos := ChanValue(hhposCh%, prevTime);'ChanValue(heposCh1%, prevTime);
+  var currEye2Pos := ChanValue(hhposCh%, prevTime);'ChanValue(heposCh2%, prevTime);
+  var currEyePosAvg := (currEye1Pos + currEye2Pos) / 2;
+
+  var degreeDiffScaled := (currEyePosAvg - nullEyePos) * gain; 'MAKE SURE THIS IS HOW WE GET THAT DEGREE VALUE'
+  DrumDegreesPerSecondOffset := (degreeDiffScaled) * DrumResetDirection * LeakInstabilityScale;
+  'make sure that the drum is going the right way'
+
+  SetSequencerValues();
+  Return(1);
+End
+
+Func ToolbarTrackConfig%() 'All of the values in here are guesses - may have to change how they're input, etc.
+  'also need to figure out units for everything'
+  DlgCreate("Eye Tracking settings");  'Start new dialog
+  DlgReal(1,"Delta (s)",.000001,10);
+  DlgReal(2,"Gain start value",.05, 10);
+  DlgReal(3,"Gain end value",.05, 10);
+  DlgReal(4,"Size of increments",.05, 1);
+  DlgList(5, "Train for leak or instability", "Leak|Instability");
+  DlgShow(delta, gain, gainCeiling, incrementSize, leakOrInstability);
+
+  SetTrackingSettings%();
+
+  Return(1);
+End
+
+'this will only need to be used if i can't just directly set everything from here/if calculations will need to be done
+Func SetTrackingSettings%()
+  'allows leak or instability to be chosen in menu, and scales velocities accordingly'
+  docase
+  case leakOrInstability = 0 then 'leaky'
+    LeakInstabilityScale := -1;
+  case leakOrInstability = 1 then 'unstable'
+    LeakInstabilityScale := 1;
+  endcase
+
+  'set number of blocks to go through before incrementing
+  'for this to really work the numbers have to be set such that everything ends up as a whole number'
+  'instead change it so you give a min and a max and an increment size and it defines the number of blocks from that'
+  if incrementSize = 0 or gainCeiling <= gain then
+    nBlocks% := 1;
+  else
+    nBlocks% := (gainCeiling - gain + incrementSize) / incrementSize;
+  endif;
+
+  Return(1);
+End
+
+'finds the null eye position based on data from pre-training -- currently just averages means of both channels'
+'possible improvement: find which one has less noise, use that channel to find null position'
+Func ToolbarFindNullEye%()
+  Toolbarset(FindNullEyePos,"Reset", ToolbarNullEyeReset%);
+  prevTime := MaxTime();
+  var chan1Mean := ChanMeasure(heposCh1%, 2, prevTime-testLength, prevTime);
+  var chan2Mean := ChanMeasure(heposCh2%, 2, prevTime-testLength, prevTime);
+  nullEyePos := (chan1Mean + chan2Mean) / 2;
+End
+
+Func ToolbarNullEyeReset%()
+  Toolbarset(FindNullEyePos,"Find Null Pos", ToolbarFindNullEye%);
+  nullEyePos := 0;
+End
+
+Func ToolbarTrackEyeOn%()
+  'SampleKey( "R" );
+  Toolbarset(TrackPos,"Track Off", ToolbarTrackEyeOff%);
+  startTracking% := 1;
+  drumDriftFix% := 0;
+  Return( 1 );
+End
+
+Func ToolbarTrackEyeOff%()
+  'SampleKey( "r" );
+  Toolbarset(TrackPos,"Track On", ToolbarTrackEyeOn%);
+  startTracking% := 0;
+  drumDriftFix% := 1;
+  DrumDegreesPerSecondOffset := 0;
+  Return( 1 );
+End
+
+'--------------------------------------------------------------------------------
 ' OTHER FUNCTIONS
 '--------------------------------------------------------------------------------
 Proc ToolbarConfig()
@@ -425,6 +549,9 @@ Proc ToolbarConfig()
   ToolbarSet(ExpmtConfigPos, "Expmt Config", ToolbarConfigExpmt%);
   ToolbarSet(CommentPos, "Comment", ToolbarComment%);
   ToolbarSet(NewFilePos, "New File", ToolbarNew%);
+  ToolbarSet(TrackPos, "Track On", ToolbarTrackEyeOn%);
+  ToolbarSet(TrackConfigPos, "Track Config", ToolbarTrackConfig%);
+  ToolbarSet(FindNullEyePos, "Find Null Pos", ToolbarFindNullEye%);
   Toolbar("", 231);
 End
 
@@ -654,7 +781,6 @@ Proc SetSequencerValues()
   SampleSeqVar( 28, Angle2Int32%( actualChairPh ) );
   SampleSeqVar( 29, Hz2Int32%( sinHzChair ) );
   SampleSeqVar( 55, ChairResetDirection); 'default chair direction
-
   'Drum parameters
   SampleSeqVar( 22, DrumAmp2Int32%( DrumDegreesPerSecondOffset ) );
   SampleSeqVar( 24, DrumAmp2Int16%( sinAmpDrum ) );
@@ -714,13 +840,8 @@ Func driftFix%()
     var centerForPhaseDrum := trueAmpDrum * (1 - cos((-1 * sinPhDrum)/radianConversion));
 
     'takes into account that chair/drum may not start at 0'
-<<<<<<< HEAD
     var theoreticalCenterChair := (centerForPhaseChair + measuredZeroChair) * chairSign;
     var theoreticalCenterDrum := (centerForPhaseDrum + measuredZeroDrum) * drumSign;
-=======
-    var theoreticalCenterChair := (centerForPhaseChair - measuredZeroChair) * chairSign;
-    var theoreticalCenterDrum := (centerForPhaseDrum - measuredZeroDrum) * drumSign;
->>>>>>> 4deb180d40e4459c32418c554c097f4ebeeca472
 
     'NOTE: there is something funky with the motors where there is an error that follows a sine wave from phase'
     'WE DON'T KNOW WHY, ONLY THAT IT HAPPENS'
@@ -728,11 +849,7 @@ Func driftFix%()
     var errorOffsetChair := ChairDriftFactor * sinAmpChair * sin(2 * sinPhChair / radianConversion);
     var errorOffsetDrum := DrumDriftFactor * sinAmpDrum * sin(2 * sinPhDrum / radianConversion);
 
-<<<<<<< HEAD
     centerLineChair := (theoreticalCenterChair + errorOffsetChair) * ChairResetDirection;
-=======
-    centerLineChair := (theoreticalCenterChair - errorOffsetChair) * ChairResetDirection;
->>>>>>> 4deb180d40e4459c32418c554c097f4ebeeca472
     centerLineDrum := (theoreticalCenterDrum + errorOffsetDrum) * DrumResetDirection;
 
   else
@@ -744,25 +861,20 @@ Func driftFix%()
   ' Measure slope from last 1 cycle of chair/drum position feedback
   var hhposSlope := ChanValue(hhposCh%, prevTime) - ChanValue(hhposCh%, prevTime-(1/sinHzChair));
   var htposSlope := ChanValue(htposCh%, prevTime) - ChanValue(htposCh%, prevTime-(1/sinHzDrum));
-<<<<<<< HEAD
-  var hhposPos := ChanMeasure(hhposCh%, 2, prevTime-(1/sinHzChair), prevTime) + (centerLineChair);
-  var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime) + (centerLineDrum);
-
-  ' Scales *1 for D253, *-1 for D019
-  ChairDegreesPerSecondOffset :=  (ChairDegreesPerSecondOffsetDefault - hhposSlope/4 - hhposPos/4) * ChairResetDirection;
-  DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - htposSlope/4 - htposPos/4) * DrumResetDirection;
-=======
   var hhposPos := ChanMeasure(hhposCh%, 2, prevTime-(1/sinHzChair), prevTime);
   var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime);
 
   ' Scales *1 for D253, *-1 for D019
   ChairDegreesPerSecondOffset :=  (ChairDegreesPerSecondOffsetDefault - hhposSlope/4 - hhposPos/4 - centerLineChair/4) * ChairResetDirection;
-  DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - htposSlope/4 - htposPos/4 - centerLineDrum/4) * DrumResetDirection;
->>>>>>> 4deb180d40e4459c32418c554c097f4ebeeca472
-
+  if drumDriftFix% = 1 then
+    DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - htposSlope/4 - htposPos/4 - centerLineDrum/4) * DrumResetDirection;
+  else
+    if startTracking% = 1 then
+      trackEye%();
+    endif;
+  endif;
   SetSequencerValues();
 End
-
 '--------------------------------------------------------------------------------
 ' CONVERSION FUNCTIONS
 '--------------------------------------------------------------------------------

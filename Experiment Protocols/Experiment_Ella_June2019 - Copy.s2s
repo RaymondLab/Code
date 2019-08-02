@@ -1,0 +1,218 @@
+'--------------------------------------------------------------------------------
+' Rig-Specific parameters file Location
+'--------------------------------------------------------------------------------
+'D019
+#include "C:\\Users\\ellatl\\Documents\\Code\\Experiment Protocols\\Parameters_D253_Ella.s2s"
+
+'D253
+'#include "C:\\Users\\amins\\Documents\\RL_Code\\Experiment Protocols\\Parameters_D253.s2s"
+
+'--------------------------------------------------------------------------------
+' Universal Parameters File Location
+'--------------------------------------------------------------------------------
+#include "C:\\Users\\ellatl\\Documents\\Code\\Experiment Protocols\\Parameters_Universal_Ella.s2s"
+
+
+'--------------------------------------------------------------------------------
+' MAIN PROGRAM
+'--------------------------------------------------------------------------------
+ToolbarConfig();
+
+
+'--------------------------------------------------------------------------------
+' Toolbar Callbacks
+'--------------------------------------------------------------------------------
+Func ToolbarIdle%()
+  'This function calls repeatedly whenever nothing else is happening
+  'if runExmpt=1, it is used to run a full expmt automatically.  -HP
+  'expmtMode: 0=habit, 1=0x, 2=2x, 3=ipsi stim, 4=contra stim
+  'test: 0=wait, 1=test, 2=train
+
+  ' Check a valid sampling view is running
+  var currView := ViewKind();
+  if  currView <> 0 then
+    return 1;
+  endif;
+
+  'Call TrackEye function repeatedly when it's in the training portion
+  'this might not be how I want to do this but it's how they do driftFix
+  if MaxTime() > (prevTime + delta) then
+    if startTracking% = 1 then
+      ToolbarTrackEye%();
+    endif;
+  endif;
+
+  'If an experiment is running: - need to update parameters (ex. testLength, runLength) to reflect protocol we want to follow
+  if runExpmt% = 1 then
+
+      'Check the time. Seconds is the current time - compare it to the goal time of each segment
+      if  MaxTime() > goalTime then
+
+        'change this from doing cases to just running a script? does that work?'
+
+        docase
+
+        case test% = 0 then
+          var checkEnd := runGap(); 'gotta figure out how to pass parameter'
+          if checkEnd = 1 then
+            return(1);
+          endif;
+
+        case test% = 1 then
+          flashLight();
+
+        case test% = 2 then
+          prePostTest();
+
+        case test% = 3 then
+         runGap();
+
+        case test% = 4 then
+          flashLight();
+
+        case test% = 5 then
+          train();
+
+        endcase;
+      endif;
+  endif;
+
+  Return(1);
+End
+
+Func runGap()
+  if test% = 0 then
+    SampleKey("0");
+  else if test% = 3 then
+    SampleKey("3")
+  endif
+
+  startTracking% := 0;
+  goalTime := MaxTime() + 5;
+
+  if preTest% = 1 then 'finds null eye position only once after pretesting'
+    findNullEyePos(); 'is this a global variable, or should i pass through a return value?'
+    preTest% := 0;
+  endif
+
+  SampleKey("x");
+  ToolbarLightOff%(); Yield();
+  ToolbarInit%(); Yield();
+
+  if prePostNum = 3 then
+    ToolbarQuitExpmt%();
+    Return(1);
+  endif
+
+  if test% = 0 then
+    test% := 1;
+  else if test% = 3 then
+    test% := 4;
+  endif
+End
+
+Proc flashLight() 'do i need to pass in anything here?'
+  if test% = 1 then
+    SampleKey("1");
+  else if test% = 4 then
+    SampleKey("4");
+  endif;
+
+  goalTime := MaxTime() + 5;
+  runFlash();
+
+  if test% = 1 then
+    test% := 2;
+  else if test% = 4 then
+    test% := 5;
+  endif;
+End
+
+Func prePostTest()
+  SampleKey("2");
+  goalTime := MaxTime() + testLength;
+
+  'FIGURE OUT WHAT HAPPENS IN TESTING FOR THIS PROTOCOL AND PUT IT HERE'
+  ToolbarLightOn%();
+  docase 'prePostNum starts at 1, so 1st case is continuing experiment, second is ending experiment'
+    case prePostNum = 1 then
+      prePostNum := prePostNum + 1;
+      test% := 3;
+    case prePostNum = 2 then
+      prePostNum := prePostNum + 1;
+      test% := 0;
+  endcase;
+  SampleKey("X");
+  'ToolbarSineStart%(); Yield();
+End
+
+Func train()
+  SampleKey("5");
+  goalTime := MaxTime() + runLength;
+
+  'update the gain'
+  if rep% > 0 then
+    gain := gain + incrementSize;
+  endif;
+
+  rep% := rep% + 1;
+  if rep% = nBlocks% then
+      test% := 0;
+  else
+      test% := 3;
+  endif;
+  SampleKey("X");
+  ToolbarLightOn%(); Yield(.1);
+  'ToolbarSineStart%(); Yield(.1);
+
+  startTracking% := 1;
+End
+'--------------------------------------------------------------------------------
+'Configure expmt settings window
+'--------------------------------------------------------------------------------
+Func ToolbarConfigExpmt%()
+  DlgCreate("Experiment settings");  'Start new dialog
+  DlgInteger(1,"Number of run-test blocks",0,100,0,0,1);
+  DlgInteger(2,"Number of tests per block",1,100,0,0,1);    'set to 0 if not using Chair
+  DlgReal(3,"Run length (s)",0,5000);
+  DlgReal(4,"Test length (s)",0,5000);
+  DlgList(5,"Expmt mode", "habit|x0|x2|ipsi|contra|steps");
+  DlgInteger(6,"Light flash on?)",0,1,0,0,"0|1");
+  DlgReal(7,"Test stim and bilat (0 or 1)",0,1);
+
+  DlgShow(nBlocks%, nTestreps%, runLength, testLength, expmtMode, flashon%,testStim);
+
+  docase
+  case expmtMode = 0 then     'habit
+      sinPhDrum := 90;
+      sinPhChair := 90;
+      sinAmpChair := 10;
+      sinAmpDrum := 0;
+  case expmtMode = 1 then     'x0
+      sinPhDrum := 90;
+      sinPhChair := 90;
+      sinAmpChair := 10;
+      sinAmpDrum := 10;
+  case expmtMode = 2 then     'x2
+      sinPhDrum := -90;
+      sinPhChair := 90;
+      sinAmpChair := 10;
+      sinAmpDrum := 10;
+  case expmtMode = 3  then     'ipsi
+      sinPhChair := -90;'D019:-90, D253:90'
+      sinAmpDrum := 0;
+  case expmtMode = 4 then      'contra
+      sinPhChair := 90; 'D019:90, D253:-90'
+      sinAmpDrum := 0;
+  case expmtMode = 5 then      'steps
+      ToolbarStepConfig%();
+  endcase;
+
+
+  if testStim > 0 then
+      ToolbarPulseConfig%()
+  endif;
+
+  SetSequencerValues();
+  Return(1);
+End

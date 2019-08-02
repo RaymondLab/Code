@@ -3,11 +3,7 @@
 '--------------------------------------------------------------------------------
 ' SEQUENCER FILE LOCATION
 '--------------------------------------------------------------------------------
-<<<<<<< HEAD
-var SequencerFile$ := "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Sequencer_D253";
-=======
-var SequencerFile$ :=  "C:\\Users\\RaymondLab\\Documents\\Code\\Experiment Protocols\\Sequencer_D253";
->>>>>>> 4deb180d40e4459c32418c554c097f4ebeeca472
+var SequencerFile$ := "C:\\Users\\RaymondLab\\Documents\\Code\\Experiment Protocols\\Sequencer_Universal_Ella";
 
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS
@@ -22,20 +18,12 @@ var sinAmpDrum := 10;
 'Chair converstion factors
 var ChairDegreesPerSecond2Voltage := 0.0098255; 'Chair velocity to voltage (Scale)  * Doubled after fixing scaling (10 V MaxVoltage) 12/10/15 HP
 var ChairDegreesPerSecondOffsetDefault :=  .06;         'Chair velocity to voltage (offset)  *** Input default Chair offset here
-<<<<<<< HEAD
-var ChairDegreesPerSecondOffset :=  .06;         'Starting value, is updated repeatedly
-=======
 var ChairDegreesPerSecondOffset :=  .06;         'Chair velocity to voltage (offset)  *** Input default Chair offset here
->>>>>>> 4deb180d40e4459c32418c554c097f4ebeeca472
 
 'Drum conversion factors
 var DrumDegreesPerSecond2Voltage := 0.005;      'Drum velocity to voltage (Scale)
 var DrumDegreesPerSecondOffsetDefault := .246;        'Drum velocity to voltage (offset)   *** Input default Drum offset here
-<<<<<<< HEAD
-var DrumDegreesPerSecondOffset := .246;         'Starting value, is updated repeatedly
-=======
 var DrumDegreesPerSecondOffset := .246;        'Drum velocity to voltage (offset)   *** Input default Drum offset here
->>>>>>> 4deb180d40e4459c32418c554c097f4ebeeca472
 
 'Channel 1: Scaling to display the drum COMMAND signal
 var DrumVoltage2Velocity := -1/DrumDegreesPerSecond2Voltage;                'Voltage to Drum Velocity (Scale)

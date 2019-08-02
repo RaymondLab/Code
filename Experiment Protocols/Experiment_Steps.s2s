@@ -2,7 +2,11 @@
 ' Rig-Specific parameters file Location
 '--------------------------------------------------------------------------------
 'D019
+<<<<<<< HEAD
 '#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D019.s2s"
+=======
+#include "C:\\Users\\Raymond Lab\\Documents\\Code\\Experiment Protocols\\Parameters_D019.s2s"
+>>>>>>> 4deb180d40e4459c32418c554c097f4ebeeca472
 
 'D253
 '#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D253.s2s"
@@ -10,7 +14,11 @@
 '--------------------------------------------------------------------------------
 ' Universal Parameters File Location
 '--------------------------------------------------------------------------------
+<<<<<<< HEAD
 #include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal.s2s"
+=======
+#include "C:\\Users\\Raymond Lab\\Documents\\Code\\Experiment Protocols\\Parameters_Universal.s2s"
+>>>>>>> 4deb180d40e4459c32418c554c097f4ebeeca472
 
 
 ' Experiment Specific Parameters
@@ -37,6 +45,7 @@ Func ToolbarIdle%()
   'if runExmpt=1, it is used to run a full expmt automatically.  -HP
   'expmtMode: 0=habit, 1=0x, 2=2x, 3=ipsi stim, 4=contra stim
   'test: 0=wait, 1=test, 2=train
+<<<<<<< HEAD
   ' Check a valid sampling view is running
   var currView := ViewKind();
   if  currView <> 0 then
@@ -47,6 +56,55 @@ Func ToolbarIdle%()
   if MaxTime() > (prevTime + 1000/stepPeriod) then
     if driftFix = 1 then
       driftFix%();
+=======
+      ' Check a valid sampling view is running
+      var currView := ViewKind();
+      if  currView <> 0 then
+          return 1;
+      endif;
+
+
+  ' Keep sine wave from drifting!!!
+  if MaxTime() > (prevTime + 1/sinHzChair) then
+
+      ' If sine wave is on, do not return to the 0 point, stay where you are
+      ' This is a hack on a hack. Someone (probably me) should rewrite the
+      ' anti-drift code from scratch to take this into account. - Max Gagnon 7-30-18
+  if driftFix = 1 then
+        ' if sineOn% = 1 or vidOn = 1 then
+        '
+        '   if sinPhChair > 0 then
+        '     sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair) * ChairResetDirection; ' * default -1 for D253, 1 for D019'
+        '   else
+        '     sinOnCorChair := sinAmpChair / (2 * 3.14159 * sinHzChair) * ChairResetDirection * -1; ' * negate direction from above'
+        '   endif
+        '
+        '   if sinPhDrum < 0 then
+        '     sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum) * DrumResetDirection; ' * default -1 for D253, 1 for D019'
+        '   else
+        '     sinOnCorDrum := sinAmpDrum / (2 * 3.14159 * sinHzDrum) * DrumResetDirection * -1; ' * negate direction from above'
+        '   endif
+        '
+        ' else
+        '   sinOnCorChair := 0;
+        '   sinOnCorDrum := 0;
+        ' endif
+        '
+        ' ' original anti-drift code'
+        ' prevTime := MaxTime();
+        ' ' Measure slope from last 1 cycle of chair/drum position feedback
+        ' var hhposSlope := ChanValue(hhposCh%, prevTime) - ChanValue(hhposCh%, prevTime-(1/sinHzChair));
+        ' var htposSlope := ChanValue(htposCh%, prevTime) - ChanValue(htposCh%, prevTime-(1/sinHzDrum));
+        ' var hhposPos := ChanMeasure(hhposCh%, 2, prevTime-(1/sinHzChair), prevTime) + (sinOnCorChair);
+        ' var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime) - (sinOnCorDrum);
+        '
+        ' ' Scales *1 for D253, *-1 for D019 -- switched from previous version to make math simpler
+        ' ChairDegreesPerSecondOffset :=  (ChairDegreesPerSecondOffsetDefault - hhposSlope/4 - hhposPos/4) * ChairResetDirection;
+        ' DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - htposSlope/4 - htposPos/4) * DrumResetDirection;
+        ' SetSequencerValues();
+        ' 'SampleKey( "A" );
+        driftFix%();
+>>>>>>> 4deb180d40e4459c32418c554c097f4ebeeca472
     endif;
   endif;
 
