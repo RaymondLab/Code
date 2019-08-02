@@ -3,7 +3,7 @@
 '--------------------------------------------------------------------------------
 ' SEQUENCER FILE LOCATION
 '--------------------------------------------------------------------------------
-var SequencerFile$ := "C:\\Users\\ellatl\\Documents\\Code\\Experiment Protocols\\Sequencer_Universal_Ella";
+var SequencerFile$ := "C:\\Users\\RaymondLab\\Documents\\Code\\Experiment Protocols\\Sequencer_Universal_Ella";
 
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS
