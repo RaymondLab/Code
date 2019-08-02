@@ -465,7 +465,8 @@ Func ToolbarTrackConfig%() 'All of the values in here are guesses - may have to 
   DlgReal(3,"Gain end value",.05, 10);
   DlgReal(4,"Size of increments",.05, 1);
   DlgList(5, "Train for leak or instability", "Leak|Instability");
-  DlgShow(delta, gain, gainCeiling, incrementSize, leakOrInstability);
+  DlgReal(6, "Null eye pos (for development)",-50,50);
+  DlgShow(delta, gain, gainCeiling, incrementSize, leakOrInstability, nullEyePos);
 
   SetTrackingSettings%();
 
