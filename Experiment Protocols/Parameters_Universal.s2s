@@ -11,6 +11,7 @@ var sinPhDrum := 90;
 var actualDrumPh;
 var sineOn% := 0;
 
+
 '--------------------------------------------------------------------------------
 ' STEP PARAMETERS
 '--------------------------------------------------------------------------------
@@ -133,7 +134,7 @@ const htvelCh% := 13;
 Func ToolbarSineStart%()
   prevTime := MaxTime();
   measuredZeroChair := ChanMeasure(hhposCh%, 2, prevTime-2, prevTime-.5);
-  measuredZeroDrum := ChanMeasure(htposCh%, 2, prevTime-2, prevTime-.5);
+  measuredZeroDrum := ChanMeasure(htposCh%, 2, prevTime-2, prevTime-.1);
   SampleKey( "S" );
   sineOn% := 1;
   Yield();
@@ -709,8 +710,8 @@ Func driftFix%()
     var centerForPhaseDrum := trueAmpDrum * (1 - cos((-1 * sinPhDrum)/radianConversion));
 
     'takes into account that chair/drum may not start at 0'
-    var theoreticalCenterChair := (centerForPhaseChair + measuredZeroChair) * chairSign;
-    var theoreticalCenterDrum := (centerForPhaseDrum + measuredZeroDrum) * drumSign;
+    var theoreticalCenterChair := (centerForPhaseChair - measuredZeroChair) * chairSign;
+    var theoreticalCenterDrum := (centerForPhaseDrum - measuredZeroDrum) * drumSign;
 
     'NOTE: there is something funky with the motors where there is an error that follows a sine wave from phase'
     'WE DON'T KNOW WHY, ONLY THAT IT HAPPENS'
@@ -718,7 +719,7 @@ Func driftFix%()
     var errorOffsetChair := ChairDriftFactor * sinAmpChair * sin(2 * sinPhChair / radianConversion);
     var errorOffsetDrum := DrumDriftFactor * sinAmpDrum * sin(2 * sinPhDrum / radianConversion);
 
-    centerLineChair := (theoreticalCenterChair + errorOffsetChair) * ChairResetDirection;
+    centerLineChair := (theoreticalCenterChair - errorOffsetChair) * ChairResetDirection;
     centerLineDrum := (theoreticalCenterDrum + errorOffsetDrum) * DrumResetDirection;
 
   else
