@@ -2,7 +2,7 @@
 ' Rig-Specific parameters file Location
 '--------------------------------------------------------------------------------
 'D019
-'#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D019.s2s"
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D019.s2s"
 
 'D253
 '#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D253.s2s"
@@ -22,6 +22,10 @@ pulseDuration := 250;
 nBlocks% := 3;
 runLength := 600;
 expmtMode := 4;
+var stepAmpChairOriginal := 0;
+var stepAmpDrumOriginal := 0;
+var pulseDurationOriginal := 250;
+var pNumberOriginal := 1;
 
 '--------------------------------------------------------------------------------
 ' MAIN PROGRAM
@@ -62,27 +66,28 @@ Func ToolbarIdle%()
           checkConfig := 0;
   		    ToolbarConfigExpmt%();
   		    Yield(.2);
-          ToolbarStepConfig%();
+          StepConfigWindow%();
           Yield(.2);
           ToolbarPulseConfig%();
-          var stepAmpChairOriginal := stepAmpChair;
-          var stepAmpDrumOriginal := stepAmpDrum;
+          Yield(.2);
+          stepAmpChairOriginal := stepAmpChair;
+          stepAmpDrumOriginal := stepAmpDrum;
+          pulseDurationOriginal := pulseDuration;
+          pNumberOriginal := pNumber;
         endif
 
         docase
 
         'Pause
         case test% = 0 then             ' Run Stim test and bilat test
-          SampleKey("0");
-          goalTime := MaxTime() + 5;
           SampleKey("x");
+          goalTime := MaxTime() + 5;
           ToolbarStimoff%(); Yield();
           ToolbarStepOff%(); Yield();
           ToolbarInit%(); Yield();
           test% := 7;
 
         case test% = 7 then
-          SampleKey("7");
           goalTime := MaxTime() + 5;
           runFlash();
 
@@ -102,16 +107,19 @@ Func ToolbarIdle%()
 
         ' Pre and Post testing
         case test% = 1 then
-            SampleKey("1");
             docase
 
             ' STIM only
             case prePostNum = 1 or prePostNum = 4 or prePostNum = 5 then
-              SampleKey("9");
+              SampleKey("X");
               goalTime := MaxTime() + testLength;
               prePostNum := prePostNum + 1;
+
               ' Only STIM
               ' No head, no chair, no light, only STIM
+              pNumber := pNumberOriginal;
+              pulseDuration := pulseDurationOriginal;
+              SetPulseSettings%(); Yield();
               ToolbarStimOn%();
               test% := 0;
               if prePostNum = 6 then
@@ -122,12 +130,12 @@ Func ToolbarIdle%()
 
             ' VORD
             case prePostNum = 2 then
-              SampleKey("8");
+              SampleKey("X");
               goalTime := MaxTime() + testLength;
               prePostNum := prePostNum + 1;
               ' NO STIM
 
-              ' YES Chair
+              ' YES CHAIR
               stepAmpChair := stepAmpChairOriginal;
               sAmpChair := ChairVel2Int32%( stepAmpChair );   ' Amp chair
               sAmpChairN := 0-sAmpChair;                      ' Amp chair (opposite direction)
@@ -140,15 +148,14 @@ Func ToolbarIdle%()
               ' NO LIGHT
               stepLight := 0;
               stepStim := 0;
-
-              SetSequencerValues();
-              Yield();
+              ToolbarStepConfig%(); Yield();
+              SetSequencerValues(); Yield();
               ToolbarStepOn%();
-              test% := 0
+              test% := 0;
 
             ' OKR
             case prePostNum = 3 then
-              SampleKey("7");
+              SampleKey("X");
               goalTime := MaxTime() + testLength;
               prePostNum := prePostNum + 1;
               ' NO STIM
@@ -158,7 +165,7 @@ Func ToolbarIdle%()
               sAmpChair := ChairVel2Int32%( stepAmpChair );   ' Amp chair
               sAmpChairN := 0-sAmpChair;                      ' Amp chair (opposite direction)
 
-              ' YES Drum
+              ' YES DRUM
               stepAmpDrum := stepAmpDrumOriginal;
               sAmpDrum := DrumVel2Int32%( stepAmpDrum );   ' Amp drum
               sAmpDrumN := 0-sAmpDrum;                      ' Amp drum (opposite direction)
@@ -167,8 +174,8 @@ Func ToolbarIdle%()
               stepLight := 0; ' BUT NOT STEP LIGHT
               toolbarLightOn%();
 
-              SetSequencerValues();
-              Yield();
+              ToolbarStepConfig%(); Yield();
+              SetSequencerValues(); Yield();
               ToolbarStepOn%();
               test% := 0
 
@@ -176,28 +183,32 @@ Func ToolbarIdle%()
 
         ' test-train blocks
         case test% = 2 then
-          SampleKey("2");
           docase
 
           ' STIM only
           case trainLoc% = 1 then
-
-            SampleKey("9");
+            SampleKey("X");
             goalTime := MaxTime() + testLength;
             trainLoc% := trainLoc% + 1;
+
             ' Only STIM
             ' No head, no chair, no light, only STIM
+            pNumber := pNumberOriginal;
+            pulseDuration := pulseDurationOriginal;
+            SetPulseSettings%(); Yield();
             ToolbarStimOn%();
 
           ' Training
           case trainLoc% = 2 then
-            SampleKey("9");
+            SampleKey("x");
+            SampleKey("X");
             goalTime := MaxTime() + runLength;
             trainLoc% := trainLoc% - 1;
             test% := 0;
             trainAmount := trainAmount + 1;
             ToolbarInit%();
-            Yield(.1);
+
+            'Yield(.1);
             ' STEP LIGHT ON
             stepLight := 1;
             stepStim := 1;
@@ -207,28 +218,23 @@ Func ToolbarIdle%()
             sAmpChair := ChairVel2Int32%( stepAmpChair );   ' Amp chair
             sAmpChairN := 0-sAmpChair;                      ' Amp chair (opposite direction)
 
-            ' NO DRUM
-            stepAmpDrum := 0;
-            sAmpDrum := DrumVel2Int32%( stepAmpDrum );   ' Amp drum
+            ' YES DRUM
+            stepAmpDrum := stepAmpDrumOriginal;
+            sAmpDrum := DrumVel2Int32%( stepAmpDrum );    ' Amp drum
             sAmpDrumN := 0-sAmpDrum;                      ' Amp drum (opposite direction)
 
-            Yield();
-            SetSequencerValues();
-            Yield();
+            ToolbarStepConfig%(); Yield();
+            SetSequencerValues(); Yield();
             ToolbarStepOn%();
+
 
             if trainAmount = nBlocks% then
               expmtLoc% := 1;
             endif
-
           endcase;
-
         endcase;
-
       endif;
   endif;
-
-
   Return(1);
 End
 

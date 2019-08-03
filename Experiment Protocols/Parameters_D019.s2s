@@ -8,8 +8,8 @@ var SequencerFile$ := "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS
 '--------------------------------------------------------------------------------
-var sinAmpChair := 20;
-var sinAmpDrum := 20;
+var sinAmpChair := 10;
+var sinAmpDrum := 10;
 
 '--------------------------------------------------------------------------------
 ' MOTOR CALIBRATION PARAMETERS
