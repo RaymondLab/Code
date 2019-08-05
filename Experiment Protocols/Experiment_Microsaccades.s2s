@@ -2,7 +2,7 @@
 ' Rig-Specific parameters file Location
 '--------------------------------------------------------------------------------
 'D019
-#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D019.s2s"
+#include "C:\\Users\\RaymondLab\\Documents\\Code\\Experiment Protocols\\Parameters_D253.s2s"
 
 'D253
 '#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D253.s2s"
@@ -10,7 +10,7 @@
 '--------------------------------------------------------------------------------
 ' Universal Parameters File Location
 '--------------------------------------------------------------------------------
-#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal.s2s"
+#include "C:\\Users\\RaymondLab\\Documents\\Code\\Experiment Protocols\\Parameters_Universal_Old.s2s"
 
 
 '--------------------------------------------------------------------------------
@@ -112,7 +112,7 @@ Func ToolbarIdle%()
                       ToolbarStimOn%();
                   case expmtMode = 1 or expmtMode = 2 then          '1 = x0, 2 = x2
                       ToolbarLightOn%();
-                  case exptMode = 6 then
+                  case expmtMode = 6 then
                     if rep% % 2 = 0 then
                       ToolbarLightOn%();
                     else
@@ -178,11 +178,11 @@ Func ToolbarConfigExpmt%()
       sinAmpDrum := 0;
   case expmtMode = 5 then      'steps
       ToolbarStepConfig%();
-  case exptMode = 6 then
+  case expmtMode = 6 then
       sinAmpChair := 0;
       sinAmpDrum := 0;
       nTestreps% := 0;
-      flashoon% := 0;
+      flashon% := 0;
       testStim := 0;
   endcase;
 
