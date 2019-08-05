@@ -55,14 +55,13 @@ Func ToolbarIdle%()
 
           docase
 
-
-
           ' MISC GAP
           case test% = 0 then
               SampleKey("0");
-              goalTime := MaxTime() + 10;
+              'goalTime := MaxTime() + 10;
               ToolbarInit%(); Yield();
-              Yield(5);
+              'Yield(5);
+              'runFlash();
               test% := 4;
 
           ' MISC TEST
@@ -78,15 +77,16 @@ Func ToolbarIdle%()
               endif
 
 
-
           ' BLOCK: GAP
           case test% = 1 then               '
-                SampleKey("1");
-                prePostNum := 1;
-              goalTime  := MaxTime() +  10;    'wait 10 seconds for init
-                ToolbarInit%(); Yield();
-                Yield(5);
-                test% := 2;
+              SampleKey("1");
+              prePostNum := 1;
+              'goalTime  := MaxTime() +  10;    'wait 10 seconds for init
+              ToolbarLightOff%();
+              ToolbarInit%(); Yield();
+              'Yield(5);
+              runFlash();
+              test% := 2;
 
           ' BLOCK: TEST
           case test% = 2 then               'FINISHED WAITING, TEST NOW
@@ -120,7 +120,7 @@ Func ToolbarIdle%()
                     endif;
                   endcase;
               else
-                  ToolbarLightOff();
+                  'ToolbarLightOff%();
               endif;
 
               if rep% = nBlocks% then
@@ -145,7 +145,7 @@ End
 Func ToolbarConfigExpmt%()
   DlgCreate("Experiment settings");  'Start new dialog
   DlgInteger(1,"Number of run-test blocks",0,100,0,0,1);
-  DlgInteger(2,"Number of tests per block",1,100,0,0,1);    'set to 0 if not using Chair
+  DlgInteger(2,"Number of tests per block",0,100,0,0,1);    'set to 0 if not using Chair
   DlgReal(3,"Run length (s)",0,5000);
   DlgReal(4,"Test length (s)",0,5000);
   DlgList(5,"Expmt mode", "habit|x0|x2|ipsi|contra|steps|lightblocks");
@@ -181,8 +181,8 @@ Func ToolbarConfigExpmt%()
   case expmtMode = 6 then
       sinAmpChair := 0;
       sinAmpDrum := 0;
-      nTestreps% := 0;
-      flashon% := 0;
+      'nTestreps% := 0;
+      'flashon% := 1;
       testStim := 0;
   endcase;
 
