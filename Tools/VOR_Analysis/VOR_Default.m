@@ -20,7 +20,7 @@ Max Gagnon 8/6/18
 
 %% === Import start/stop times from .smr file ========================== %%
 
-[params.segStarts, params.segEnds] = extractSineSegs(params.folder);
+
 
 %% === Import Time Segments ============================================ %%
 T = readtable(fullfile(params.folder,[params.file '.xlsx']));
@@ -30,12 +30,23 @@ goodRows = ~isnan(table2array(T(:,2)));
 params.segAmt = sum(goodRows);
 T = T(goodRows,:);
 
-% Catch for common excel/start time error
+% New Version
+[params.segStarts, params.segEnds] = extractSegmentTimes(params.folder);
 if length(params.segStarts) ~= params.segAmt
-    error(sprintf(['\n\n\nSegment Count Error \n', ...
-           'Segments Listed in Excel File: ', num2str(params.segAmt), '\n', ...
-           'Segments Found After Listed Start Time(', num2str(4), '): ', num2str(length(params.segStarts)), '\n', ...
-           'Listed start time needs to be before the first segment starts\n\n']))
+    
+    % Old Version
+    [params.segStarts, params.segEnds] = extractSineSegs(params.folder);
+    if length(params.segStarts) ~= params.segAmt
+        
+        % Used for some of Jaydev & Sriram's Experiments Summer 2019
+        [params.segStarts, params.segEnds] = extractSineSegs_B(params.folder, params);
+        if length(params.segStarts) ~= params.segAmt
+            error(sprintf(['\n\n\nSegment Count Error \n', ...
+               'Segments Listed in Excel File: ', num2str(params.segAmt), '\n', ...
+               'Segments Found After Listed Start Time(', num2str(4), '): ', num2str(length(params.segStarts)), '\n', ...
+               'Listed start time needs to be before the first segment starts\n\n']))
+        end
+    end
 end
 
 % Pull out start/end times and frequency
