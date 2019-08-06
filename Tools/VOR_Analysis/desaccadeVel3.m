@@ -47,7 +47,7 @@ eyevelOut = eye_pos_filt;
 eyevelOut(logical(rejecttemp2))= NaN;
 omitH = isnan(eyevelOut);
 
-accel = 1;
+accel = 0;
 if accel
 
     eye_acc_pfilt = movingslopeCausal(eye_vel_pfilt,round(samplerate*veltau))*samplerate;
