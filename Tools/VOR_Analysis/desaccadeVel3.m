@@ -47,9 +47,25 @@ eyevelOut = eye_pos_filt;
 eyevelOut(logical(rejecttemp2))= NaN;
 omitH = isnan(eyevelOut);
 
+accel = 1;
+if accel
 
+    eye_acc_pfilt = movingslopeCausal(eye_vel_pfilt,round(samplerate*veltau))*samplerate;
+    eye_acc_praw = movingslopeCausal(eye_vel_praw,round(samplerate*veltau))*samplerate;
+
+    % Calculations
+    accelThresh = 500;
+    omitCenters = abs(eye_acc_pfilt) > accelThresh;
+    rejecttemp1 = conv(double(omitCenters),sacmask);
+    rejecttemp2 = rejecttemp1(presaccade:presaccade+length(eye_pos_raw)-2);
+    eyevelOut = eye_pos_filt;
+    eyevelOut(logical(rejecttemp2))= NaN;
+    omitH = isnan(eyevelOut);
+end
+    
 %% FOR TESTING, DEBUGGING, AND TWEAKING DESACCADE %%%%%%%%%%%%%%%%%%%%%%%%
 if params.NoiseAnalysis
+
     
     % find start and end times of sacs
     sac_start = strfind(omitH', [0 1]);
@@ -65,13 +81,13 @@ if params.NoiseAnalysis
     end
     
     x = [sac_start; sac_end; sac_end; sac_start];
-    y = [-200;-200;200;200];
+    y = [-20000;-20000;20000;20000];
     y = repmat(y,[1 size(x, 2)]);
     
     %% Plot Basic Visuals
-    figure(99)
+    figure(99);clf
     
-    ha = tight_subplot(3,1,[.01 .03],[.1 .01],[.01 .01]);
+    ha = tight_subplot(3,1,[.01 .02],[.1 .01],[.01 .01]);
 
     axes(ha(1))
     plot(eye_pos_raw, 'r')
@@ -81,25 +97,51 @@ if params.NoiseAnalysis
     PrevYlim = ylim;
     patch(x, y, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
     ylim(PrevYlim);
+    xlim([0 length(eye_vel_pfilt)])
     hold off
     
-    axes(ha(2))
-    plot(eye_vel_praw, 'r')
-    hold on
-    plot(eye_vel_pfilt, 'k', 'LineWidth', 1.5)
-    title('Velocity')
-    patch(x, y, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
-    ylim([-200 200])
-    hold off
+    if accel
+        % Plot
+        axes(ha(2))
+        plot(eye_acc_praw, 'r')
+        hold on
+        plot(eye_acc_pfilt, 'k', 'LineWidth', 1.5)
+        title('Accel')
+        ylim([-15000 15000])
+        patch(x, y, 'k', 'FaceAlpha',.5, 'LineStyle', 'none');
+        xlim([0 length(eye_vel_pfilt)])
+        hold off
+        
+        axes(ha(3))
+        plot(abs(eye_acc_pfilt), 'k', 'LineWidth', 1.5)
+        hline(450, 'b')
+        patch(x, y.*100, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
+        ylim([0 2500])
+        xlim([0 length(eye_vel_pfilt)])
+        
+       
+    else
+        axes(ha(2))
+        plot(eye_vel_praw, 'r')
+        hold on
+        plot(eye_vel_pfilt, 'k', 'LineWidth', 1.5)
+        title('Velocity')
+        patch(x, y, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
+        ylim([-200 200])
+        xlim([0 length(eye_vel_pfilt)])
+        hold off
+        
+        axes(ha(3))
+        plot((eye_vel_pfilt - fit1).^2, 'k', 'LineWidth', 1.5)
+        hline(params.saccadeThresh, 'b')
+        patch(x, y.*100, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
+        ylim([0 10000])
+        xlim([0 length(eye_vel_pfilt)])
+    end
     
-    axes(ha(3))
-    plot((eye_vel_pfilt - fit1).^2, 'k', 'LineWidth', 1.5)
-    hline(params.saccadeThresh, 'b')
-    patch(x, y.*100, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
-    ylim([0 10000])
-    
+
     %% Plot frequency spectrum as check on experiment freq
-    do_100 = 1 ;
+    do_100 = 0 ;
     if do_100
         figure(100)
         L = length(eye_vel_pfilt);
@@ -217,7 +259,9 @@ if params.NoiseAnalysis
         linkaxes(ha)
         A.Color = 'w';
     end
-    pause
+    
+      
+    %disp('a')
 end
 
 
