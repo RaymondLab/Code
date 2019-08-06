@@ -1,28 +1,28 @@
 %% Set up
-
+clear;clc;
 % open Excel File
-%excelFile = 'C:\Users\maxwellg\Documents\RL_Code\Projects\Max - CF Project\Monkey Metadata by Max.xlsx';
-excelFile = 'C:\Users\maxwellg\Documents\RL_Code\Projects\Max - CF Project\Monkey Metadata by Max (Akira).xlsx';
+%excelFile = 'C:\Users\Public\RaymondLabCode\Projects\Max - CF Project\Monkey Metadata by Max.xlsx';
+excelFile = 'C:\Users\Public\RaymondLabCode\Projects\Max - CF Project\Monkey Metadata by Max (Akira).xlsx';
 expmt_table = readtable(excelFile);
-
-% Filters
-%expmt_table(~strcmp(expmt_table.SineStep, {'Sine'}),:) = [];
 
 %ExpmtDataFolder = 'G:\My Drive\Expmt Data\2019_05 - Max Climbing Fiber\Initial Data for testing';
 ExpmtDataFolder = 'G:\My Drive\Expmt Data\2019_05 - Akira and Sriram Complex Spikes';
-bFiles = dir([ExpmtDataFolder '\**\*.0*']);
 
-% Filters
-%bFiles(contains({bFiles.name}, {'301'})) = [];
+%bFiles = dir([ExpmtDataFolder '\**\*.0*']);
+bFiles = dir([ExpmtDataFolder '\**\*']);
+
+%% Filters
+% Remove directories
+bFiles([bFiles.isdir]) = [];
 
 
 %% Match the corresponding ephys folders with their motor folders
 for j = 1:length(bFiles)
-
-    % If the file is an ephys or oddly named file, skip it
-    if length(bFiles(j).name) ~= 11
-        continue
-    end
+    j
+    % If the file is an ephys or oddly named file, skip it - Jennifer 
+%     if length(bFiles(j).name) ~= 11
+%         continue
+%     end
         
     %% Add new line if new entry
     expmt_row = find(strcmp(expmt_table.Filename, bFiles(j).name));
@@ -33,10 +33,13 @@ for j = 1:length(bFiles)
         expmt_table = [expmt_table; TempRow];
         expmt_row = find(contains(expmt_table.Filename, bFiles(j).name));
         disp(bFiles(j).name)
+    elseif length(expmt_row) > 1
+        warning('Possible Duplicate entry')
+        disp(bFiles(j).name)
     end
     
     %% Does this experiment have a matching Ephys file?
-    ephys_exists = 1;
+    ephys_exists = 0;
     ePath = [];
     if contains(bFiles(j).name, '.0')
         
@@ -49,7 +52,7 @@ for j = 1:length(bFiles)
         %eFile = strrep(eFile, '.0', '.');
         
         ephys_loc = find(contains({bFiles.name}, eFile));
-        if ephys_loc > 0
+        if any(ephys_loc > 0)
             ephys_exists = 1;
             ePath = fullfile(bFiles(ephys_loc).folder, bFiles(ephys_loc).name);
         end
@@ -60,7 +63,7 @@ for j = 1:length(bFiles)
         bPath = fullfile(bFiles(j).folder, bFiles(j).name)
         [beh shiftAmt, shiftConfidence] = opensingleMAXEDIT(bPath, ephys_exists, ePath);
     catch
-        warning(fullfile(bFiles(j).folder, bFiles(j).name))
+        %warning(fullfile(bFiles(j).folder, bFiles(j).name))
         continue
     end
 
@@ -94,7 +97,7 @@ for j = 1:length(bFiles)
     end
     
     %% PLOT the power Spectrum of each channel
-    freqPlot = 0;
+    freqPlot = 1;
     if freqPlot
         maxFreqLoc = [0,0,0,0,0; 0,0,0,0,0];
         figure(85); clf
@@ -114,10 +117,12 @@ for j = 1:length(bFiles)
             
             % Cosmetics
             xlim([0 11])
-            vline(f(P1 == max(P1)))
-            title([beh(w).chanlabel, ':   ', num2str(f(P1 == max(P1)))])
-            maxFreqLoc(1, w-3) = f(P1 == max(P1));
-            maxFreqLoc(2, w-3) = max(P1);
+            if sum(P1 == max(P1)) == 1
+                vline(f(P1 == max(P1)))
+                title([beh(w).chanlabel, ':   ', num2str(f(P1 == max(P1)))])
+                maxFreqLoc(1, w-3) = f(P1 == max(P1));
+                maxFreqLoc(2, w-3) = max(P1);
+            end
         end
     end
     

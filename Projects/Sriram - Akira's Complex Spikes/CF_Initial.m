@@ -5,11 +5,11 @@ dbstop if error
 %files = dir('C:\Users\maxwellg\OneDrive\04 Work\01 Stanford - LSRP\CF Project\Data\D1_1995\da0208');
 %files = dir('C:\Users\maxwellg\Documents\CF_Project\Data\D2_1995\da0315');
 %files = dir('C:\Users\maxwellg\Documents\CF_Project\Data\D2_1995\**\**');
-files = dir('G:\My Drive\Expmt Data\2019_05 - Akira and Sriram Complex Spikes\Unit data files\Unit data files\2005');
+files = dir('G:\My Drive\Expmt Data\2019_05 - Akira and Sriram Complex Spikes\**\**');%Unit data files\Unit data files\2005');
 %files = dir('G:\My Drive\Expmt Data\2019_05 - Akira and Sriram Complex Spikes\Unit data files\Unit data files\2005');
 
 % remove . and .. files
-files(~contains({files.name}, '.0')) = [];
+%files(~contains({files.name}, '.0')) = [];
 
 % figure inital setup
 q = figure('units','normalized','outerposition',[0 0 1 1]);
@@ -20,16 +20,20 @@ do = 1;
 for j = 1:length(files)
 
     clc
-    for qq = 1:30        
-        qq
-        RawRecording = readcxdata(fullfile(files(j).folder, files(j).name), 0, qq)
-        clc
-    end
+%     for qq = 1:30        
+%         qq
+%         RawRecording = readcxdata(fullfile(files(j).folder, files(j).name), 0, qq)
+%         clc
+%     end
+
+    
+    RawRecording = readcxdata(fullfile(files(j).folder, files(j).name), 0, 7)
     if isempty(RawRecording.data)
         continue
     end
     
-    DatRecording = opensingleMAXEDIT(fullfile(files(j).folder, files(j).name), 1);
+    fullfile(files(j).folder, files(j).name)
+    DatRecording = opensingleMAXEDIT(fullfile(files(j).folder, files(j).name), 0);
     clf(ha);
     t = linspace(DatRecording(1).tstart, DatRecording(1).tend, length(DatRecording(1).data));
    

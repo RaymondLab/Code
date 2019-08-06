@@ -17,6 +17,7 @@ function [beh, shiftAmt, shiftConfidence] = opensingleMAXEDIT(filename, ephys_ex
 
     %% Opens Cntrlx file in Matlab and saves as "behavior"
     chanAmt = 7; %6: Jennifer, 7: Akira
+    filename
     behavior = readcxdata(filename, 0, chanAmt);
     
     %% Flip data for elvis so that contra is up and ipsi is down
@@ -24,8 +25,8 @@ function [beh, shiftAmt, shiftConfidence] = opensingleMAXEDIT(filename, ephys_ex
         behavior.data = -behavior.data;
     end
     
-    if ~isempy(isempty(behavior.data))
-        disp('a')
+    if ~isempty(behavior.data)
+        %disp('a')
     end
     
     % Assigns structures in "behavior" to specific signals
