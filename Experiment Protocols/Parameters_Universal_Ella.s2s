@@ -94,6 +94,9 @@ var LeakInstabilityScale := -1; '-1 for leak, 1 for instability'
 var leakOrInstability;
 var incrementSize := .5;
 var drumDriftFix% := 1;
+var bestChannel% := 0;
+var MaxDrumPos% := 60; 'TEMP VALUE'
+var MinDrumPos% := -60; 'these need to be updated to reflect real values
 
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS
@@ -446,14 +449,32 @@ Func trackEye%()
   ' Return(1);
 
   'temporary - getting eye position by averaging both channels - eventually want to update to reflect best choice channel'
-  var currEye1Pos := ChanValue(hhposCh%, prevTime);'ChanValue(heposCh1%, prevTime);
-  var currEye2Pos := ChanValue(hhposCh%, prevTime);'ChanValue(heposCh2%, prevTime);
-  var currEyePosAvg := (currEye1Pos + currEye2Pos) / 2;
+  var currEyePosAvg := 0;
 
-  var degreeDiffScaled := (currEyePosAvg - nullEyePos) * gain; 'MAKE SURE THIS IS HOW WE GET THAT DEGREE VALUE'
-  DrumDegreesPerSecondOffset := (degreeDiffScaled) * DrumResetDirection * LeakInstabilityScale;
+  docase
+  case bestChannel = 0 then
+    var currEye1Pos := ChanValue(heposCh1%, prevTime);'ChanValue(heposCh1%, prevTime);
+    var currEye2Pos := ChanValue(heposCh2%, prevTime);'ChanValue(heposCh2%, prevTime);
+    currEyePosAvg := (currEye1Pos + currEye2Pos) / 2;
+  case bestChannel = 1 then
+    currEyePosAvg := ChanValue(heposCh1%, prevTime);
+  case bestChannel = 2 then
+    currEyePosAvg := ChanValue(heposCh2%, prevTime);
+  endcase
+
+  var degreeDiffScaled := 0;
+
+  docase
+  case currEyePosAvg < MaxDrumPos and currEyePosAvg > MinDrumPos then
+    degreeDiffScaled := (currEyePosAvg - nullEyePos) * gain;
   'make sure that the drum is going the right way'
-
+  case currEyePosAvg > MaxDrumPos then
+    degreeDiffScaled := (MaxDrumPos - currEyePosAvg) / 4; 'this is kinda a hack to make it move back slowly, but could mess up experiment
+  case currEyePosAvg < MinDrumPos then
+    degreeDiffScaled := (MinDrumPOs - currEyePosAvg) / 4;
+  endcase
+  d
+  DrumDegreesPerSecondOffset := (degreeDiffScaled) * DrumResetDirection * LeakInstabilityScale;
   SetSequencerValues();
   Return(1);
 End
@@ -467,7 +488,8 @@ Func ToolbarTrackConfig%() 'All of the values in here are guesses - may have to 
   DlgReal(4,"Size of increments",.05, 1);
   DlgList(5, "Train for leak or instability", "Leak|Instability");
   DlgReal(6, "Null eye pos (for development)",-50,50);
-  DlgShow(delta, gain, gainCeiling, incrementSize, leakOrInstability, nullEyePos);
+  DlgReal(7, "Which eye channel?", 0, 2); 'if 0, average channels
+  DlgShow(delta, gain, gainCeiling, incrementSize, leakOrInstability, nullEyePos, bestChannel%);
 
   SetTrackingSettings%();
 
