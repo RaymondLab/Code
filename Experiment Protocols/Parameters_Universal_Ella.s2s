@@ -94,9 +94,9 @@ var LeakInstabilityScale := -1; '-1 for leak, 1 for instability'
 var leakOrInstability;
 var incrementSize := .5;
 var drumDriftFix% := 1;
-var bestChannel% := 0;
-var MaxDrumPos% := 60; 'TEMP VALUE'
-var MinDrumPos% := -60; 'these need to be updated to reflect real values
+var bestChannel := 0;
+var MaxDrumPos := 60; 'TEMP VALUE'
+var MinDrumPos := -60; 'these need to be updated to reflect real values
 
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS
@@ -453,8 +453,8 @@ Func trackEye%()
 
   docase
   case bestChannel = 0 then
-    var currEye1Pos := ChanValue(heposCh1%, prevTime);'ChanValue(heposCh1%, prevTime);
-    var currEye2Pos := ChanValue(heposCh2%, prevTime);'ChanValue(heposCh2%, prevTime);
+    var currEye1Pos := ChanValue(hhposCh%, prevTime);'ChanValue(heposCh1%, prevTime);
+    var currEye2Pos := ChanValue(hhposCh%, prevTime);'ChanValue(heposCh2%, prevTime);
     currEyePosAvg := (currEye1Pos + currEye2Pos) / 2;
   case bestChannel = 1 then
     currEyePosAvg := ChanValue(heposCh1%, prevTime);
@@ -473,7 +473,7 @@ Func trackEye%()
   case currEyePosAvg < MinDrumPos then
     degreeDiffScaled := (MinDrumPOs - currEyePosAvg) / 4;
   endcase
-  d
+
   DrumDegreesPerSecondOffset := (degreeDiffScaled) * DrumResetDirection * LeakInstabilityScale;
   SetSequencerValues();
   Return(1);
@@ -489,7 +489,7 @@ Func ToolbarTrackConfig%() 'All of the values in here are guesses - may have to 
   DlgList(5, "Train for leak or instability", "Leak|Instability");
   DlgReal(6, "Null eye pos (for development)",-50,50);
   DlgReal(7, "Which eye channel?", 0, 2); 'if 0, average channels
-  DlgShow(delta, gain, gainCeiling, incrementSize, leakOrInstability, nullEyePos, bestChannel%);
+  DlgShow(delta, gain, gainCeiling, incrementSize, leakOrInstability, nullEyePos, bestChannel);
 
   SetTrackingSettings%();
 

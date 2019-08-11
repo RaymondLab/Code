@@ -2,16 +2,16 @@
 ' Rig-Specific parameters file Location
 '--------------------------------------------------------------------------------
 'D019
-''#include "C:\\Users\\Raymond Lab\\Documents\\Code\\Experiment Protocols\\Parameters_D019_Ella.s2s"
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D019_Ella.s2s"
 
-'D253
-#include "C:\\Users\\RaymondLab\\Documents\\Code\\Experiment Protocols\\Parameters_D253_Ella.s2s"
+'''D253
+''#include "C:\\Users\\RaymondLab\\Documents\\Code\\Experiment Protocols\\Parameters_D253_Ella.s2s"
 
 '--------------------------------------------------------------------------------
 ' Universal Parameters File Location
 '--------------------------------------------------------------------------------
 ''#include "C:\\Users\\Raymond Lab\\Documents\\Code\\Experiment Protocols\\Parameters_Universal_Ella.s2s"
-#include "C:\\Users\\RaymondLab\\Documents\\Code\\Experiment Protocols\\Parameters_Universal_Ella.s2s"
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal_Ella.s2s"
 
 
 '--------------------------------------------------------------------------------
