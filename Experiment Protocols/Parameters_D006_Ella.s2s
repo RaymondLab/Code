@@ -3,7 +3,7 @@
 '--------------------------------------------------------------------------------
 ' SEQUENCER FILE LOCATION
 '--------------------------------------------------------------------------------
-var SequencerFile$ := "C:\\Users\\tstay\\Documents\\RaymondLabCode\\Experiment Protocols\\Sequencer_D019";
+var SequencerFile$ := "C:\\Users\\tstay\\Documents\\RaymondLabCode\\Experiment Protocols\\Sequencer_D019_Ella";
 
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS
@@ -34,6 +34,8 @@ var DrumVoltage2VelocityC := 0;                 'Voltage to Drum Velocity (offse
 var ChairVoltage2Velocity := ChairDegreesPerSecond2Voltage; '107.42869;         'Voltage to Chair Velocity (Scale)
 var ChairVoltage2VelocityC := 0;                'Voltage to Chair Velocity (offset)
 
+
+
 'Chair velocity readout
 var ChairVelReadoutScale := -100.3;           '
 var ChairVelReadoutOffset := -.1548;
@@ -54,8 +56,10 @@ var DrumPosReadoutOffset := .719269;                  'Drum position readout off
 var EyeVoltage2Position := 1;                   'Voltage to Eye Position (Scale)
 var EyeVoltage2PositionC := 0;                  'Voltage to Eye Position (offset)
 
+'Default servo direction for chair and drum -- 1 or -1'
+var ChairResetDirection := 1;
+var DrumResetDirection := 1;
+
+'Scale factor for amplitude of sine wave drift'
 var ChairDriftFactor := 0;
 var DrumDriftFactor := 0;
-
-var ChairResetDirection := -1;
-var DrumResetDirection := 1;
