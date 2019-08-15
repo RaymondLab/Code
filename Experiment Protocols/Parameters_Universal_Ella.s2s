@@ -94,6 +94,7 @@ var LeakInstabilityScale := -1; '-1 for leak, 1 for instability'
 var leakOrInstability;
 var incrementSize := .5;
 var drumDriftFix% := 1;
+var bestChannel := 0;
 
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS
@@ -131,7 +132,8 @@ const StepPos           := VidPos+1;
 const StepConfigPos     := StepPos+1;
 const TrackPos          := StepConfigPos+1;
 const TrackConfigPos    := TrackPos+1;
-const ExpmtPos          := TrackConfigPos+1;
+const FindNullEyePos    := TrackConfigPos+1;
+const ExpmtPos          := FindNullEyePos+1;
 const ExpmtConfigPos    := ExpmtPos+1;
 
 const HTVELChCom% := 1;
@@ -465,7 +467,9 @@ Func ToolbarTrackConfig%() 'All of the values in here are guesses - may have to 
   DlgReal(3,"Gain end value",.05, 10);
   DlgReal(4,"Size of increments",.05, 1);
   DlgList(5, "Train for leak or instability", "Leak|Instability");
-  DlgShow(delta, gain, gainCeiling, incrementSize, leakOrInstability);
+  DlgReal(6, "Null eye pos (for development)",-50,50);
+  DlgReal(7, "Which eye channel?", 0, 2); 'if 0, average channels
+  DlgShow(delta, gain, gainCeiling, incrementSize, leakOrInstability, nullEyePos, bestChannel);
 
   SetTrackingSettings%();
 
@@ -496,11 +500,17 @@ End
 
 'finds the null eye position based on data from pre-training -- currently just averages means of both channels'
 'possible improvement: find which one has less noise, use that channel to find null position'
-Func findNullEyePos()
+Func ToolbarFindNullEye%()
+  Toolbarset(FindNullEyePos,"Reset", ToolbarNullEyeReset%);
   prevTime := MaxTime();
   var chan1Mean := ChanMeasure(heposCh1%, 2, prevTime-testLength, prevTime);
   var chan2Mean := ChanMeasure(heposCh2%, 2, prevTime-testLength, prevTime);
   nullEyePos := (chan1Mean + chan2Mean) / 2;
+End
+
+Func ToolbarNullEyeReset%()
+  Toolbarset(FindNullEyePos,"Find Null Pos", ToolbarFindNullEye%);
+  nullEyePos := 0;
 End
 
 Func ToolbarTrackEyeOn%()
@@ -544,6 +554,7 @@ Proc ToolbarConfig()
   ToolbarSet(NewFilePos, "New File", ToolbarNew%);
   ToolbarSet(TrackPos, "Track On", ToolbarTrackEyeOn%);
   ToolbarSet(TrackConfigPos, "Track Config", ToolbarTrackConfig%);
+  ToolbarSet(FindNullEyePos, "Find Null Pos", ToolbarFindNullEye%);
   Toolbar("", 231);
 End
 
