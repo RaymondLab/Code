@@ -49,7 +49,7 @@ function singleAnalysis(params)
     cd(params.folder)
     params = subPlotDim(params);
     params.temp_placement = 1;
-    fprintf(['\n\nFile: ', params.file, ' \n'])
+    fprintf(['\n###########################\nFile: ', params.file, ' \n'])
     
     %% Default Analysis
     switch params.analysis
