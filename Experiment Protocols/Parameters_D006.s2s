@@ -18,11 +18,12 @@ var sinAmpDrum := 10;
 'Chair converstion factors
 var ChairDegreesPerSecond2Voltage := -0.2 ; ' -0.01;   'Chair velocity to voltage (Scale)
 var ChairDegreesPerSecondOffset :=  -0.1 ; '-.15;         'Chair velocity to voltage (offset)  *** Input default Chair offset here
+var ChairDegreesPerSecondOffsetDefault :=  -0.1 ; '-.15;         'Chair velocity to voltage (offset)  *** Input default Chair offset here
 
 'Drum conversion factors
 var DrumDegreesPerSecond2Voltage := 0.95;    'Drum velocity to voltage (Scale)
 var DrumDegreesPerSecondOffset := 0;        'Drum velocity to voltage (offset)   *** Input default Drum offset here
-
+var DrumDegreesPerSecondOffsetDefault := 0;        'Drum velocity to voltage (offset)   *** Input default Drum offset here
 
 
 'Channel 1: Scaling to display the drum COMMAND signal
@@ -54,3 +55,9 @@ var DrumPosReadoutOffset := .719269;                  'Drum position readout off
 'Channel 5/6: Eye position readout
 var EyeVoltage2Position := 1;                   'Voltage to Eye Position (Scale)
 var EyeVoltage2PositionC := 0;                  'Voltage to Eye Position (offset)
+
+var ChairResetDirection := -1;
+var DrumResetDirection := -1;
+
+var ChairDriftFactor := 0;
+var DrumDriftFactor := 0;
