@@ -64,7 +64,7 @@ function singleAnalysis(params)
             params = VOR_Default_SEM(params);
         otherwise
             fprintf('Running: Default Sine Analysis\n')
-            params = VOR_Default_SEM(params);
+            params = VOR_Default(params);
     end
 
     %% Unique Analysis & Summaries
