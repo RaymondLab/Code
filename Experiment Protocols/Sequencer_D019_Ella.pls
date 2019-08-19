@@ -3,7 +3,7 @@
 ;-----------------------------------------------------------------------------
 
         ; for IntTo32bit: *429496729.6,   for IntTo16bit: 6553.6
-            SET    1.000,1,0       ;Get rate at 1 ms & scaling O command
+            SET    0.1000,1,0       ;Get rate at 1 ms & scaling O command
 			;rate msPerStep, DACscale(1 = +-5V), DACoffset
             ;offset for Drum because of the DAC0 output bias of about 700uV
             VAR    V22,DrumOff=VDAC32(0.0000) ;HP .0003 - 0 1/10/14
