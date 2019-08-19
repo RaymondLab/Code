@@ -3,7 +3,7 @@
 ;-----------------------------------------------------------------------------
 
         ; for IntTo32bit: *429496729.6,   for IntTo16bit: 6553.6
-            SET    0.1000,1,0       ;Get rate at 1 ms & scaling O command
+            SET    1.000,1,0       ;Get rate at 1 ms & scaling O command
 			;rate msPerStep, DACscale(1 = +-5V), DACoffset
             ;offset for Drum because of the DAC0 output bias of about 700uV
             VAR    V22,DrumOff=VDAC32(0.0000) ;HP .0003 - 0 1/10/14
@@ -49,6 +49,11 @@
             VAR    V53,PulseHPe=500  ; Half Period duration
             VAR    V54,evNcyc=1      ; Pulses occur every X cycles
 
+            VAR    V65,drumDir=1   ; default drum direction
+            VAR    V67,nullEye=0     ; default null eye position = 0
+            VAR    V68,gain=.5       ; default gain
+            VAR    V69,leak=-1       ; -1 for leak, 1 for instability
+
 ;-----------------------------------------------------------------------------
 ; LOOP: our idle loop.
 ;-----------------------------------------------------------------------------
@@ -71,7 +76,7 @@ INIT:   'I  RATE   0,0             ;stop cosine on drum
             DAC    0,DrumOff       ;stop the drum
             DAC    1,Chairoff      ;stop the chair
             DIGOUT [00000000]      ;stop any pulses
-            JUMP   KDRUM          ;return chair to zero
+            ;JUMP   KDRUM          ;return chair to zero
 
 ;-----------------------------------------------------------------------------
 ; QUIT: Stops all movement on drum and chair
@@ -133,6 +138,26 @@ KDRUM3:     DAC    0,0.02          ;vel for negative position
 KDRUMEX:    DAC    0,DrumOff       ;Exit KDRUM
             JUMP   LOOP            ;Drum stopped
 
+;-----------------------------------------------------------------------------
+;TRACK: Make the drum track the eye position
+;Change velocity proportionally to eye offset
+;-----------------------------------------------------------------------------
+TRACK: 'R   CHAN   V8,5            ;Get position of eye1
+            CHAN   V9,6            ;Get position of eye2
+            ADD    V8,V9,0,1       ;take average of eye positions
+
+            SUB    V8,nullEye      ;find difference w null pos
+            MUL    V8,gain         ;multiply by gain
+
+            MUL    V8,leak         ;multiply by -1 for leak
+                                   ;multiply by 1 for instability
+            MUL    V8,drumDir
+            DAC    0,V8            ;set velocity
+;-----------------------------------------------------------------------------
+;TRACK: Make the drum track the eye position
+;Change velocity proportionally to eye offset
+;-----------------------------------------------------------------------------
+TRACKOFF: 'r DAC 0,DrumOff               ;turn off drum
 ;-----------------------------------------------------------------------------
 ;Set step command to move chair and drum without stimulation
 ;-----------------------------------------------------------------------------

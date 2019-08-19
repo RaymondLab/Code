@@ -109,8 +109,6 @@ for count = 1:nSegs
     %    sac_amps_proc(i-1) = (seg_means_proc(i) - seg_means_proc(i-1));
     %end
 
-    data_deriv = diff(eyeVel);
-
     amps_this_seg = []
     for i = 2:length(seg_means)
         amp_temp = abs((seg_means(i) - seg_means(i-1)));
@@ -126,7 +124,7 @@ for count = 1:nSegs
     end
     fig_title = ['segment', string(count)];
     %addHistogram(amps_this_seg, count, join(fig_title));
-    addHistogram(amps_this_seg, count);
+    addLinePlot(amps_this_seg, count);
 
 
 
@@ -572,16 +570,19 @@ function [h] = addHistogram(amps, segNum, t)
     mu = median(amps);
     line([mu, mu], ylim, 'LineWidth', 2, 'Color', chooseColor(segNum));
 
-function [s] = addStemPlot(amps, segNum)
+% not used
+function [s] = addLinePlot(amps, segNum)
     hold on;
     edges = zeros(1, 101);
     for i = 0:100
         edges(i+1) = .02 * i;
     end
-    [N, e] = histcounts(amps, edges);
-    s = stem(e(1:100), N);
-    s.Color = chooseColor(segNum);
-    s.LineStyle = 'none';
+    [N, e] = histcounts(amps, edges, 'Normalization', 'probability');
+    %s = stem(e(1:100), N);
+    %s.Color = chooseColor(segNum);
+    %s.LineStyle = 'none';
+    p = plot(e(1:100), N);
+    p.Color = chooseColor(segNum);
     hold on;
     mu = median(amps);
     line([mu, mu], ylim, 'LineWidth', 2, 'Color', chooseColor(segNum));

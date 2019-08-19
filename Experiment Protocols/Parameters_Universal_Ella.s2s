@@ -85,7 +85,7 @@ var startTracking% := 0;
 '--------------------------------------------------------------------------------
 var delta := .001; 'TEMPORARY VALUE'
 var saccadeThreshold := 1; 'TEMPORARY VALUE'
-var gain := 5;  'TEMPORARY VALUE'
+var gain := .5;  'TEMPORARY VALUE'
 var gainCeiling := 5; 'TEMPORARY VALUE'
 var nullEyePos := 0;
 var eyePos := 0;
@@ -447,6 +447,7 @@ Func trackEye%()
   ' Return(1);
 
   'temporary - getting eye position by averaging both channels - eventually want to update to reflect best choice channel'
+  SampleKey("R");
   var currEye1Pos := ChanValue(hhposCh%, prevTime);'ChanValue(heposCh1%, prevTime);
   var currEye2Pos := ChanValue(hhposCh%, prevTime);'ChanValue(heposCh2%, prevTime);
   var currEyePosAvg := (currEye1Pos + currEye2Pos) / 2;
@@ -472,6 +473,7 @@ Func ToolbarTrackConfig%() 'All of the values in here are guesses - may have to 
   DlgShow(delta, gain, gainCeiling, incrementSize, leakOrInstability, nullEyePos, bestChannel);
 
   SetTrackingSettings%();
+  SetSequencerValues();
 
   Return(1);
 End
@@ -495,6 +497,7 @@ Func SetTrackingSettings%()
     nBlocks% := (gainCeiling - gain + incrementSize) / incrementSize;
   endif;
 
+  SetSequencerValues();
   Return(1);
 End
 
@@ -506,15 +509,17 @@ Func ToolbarFindNullEye%()
   var chan1Mean := ChanMeasure(heposCh1%, 2, prevTime-testLength, prevTime);
   var chan2Mean := ChanMeasure(heposCh2%, 2, prevTime-testLength, prevTime);
   nullEyePos := (chan1Mean + chan2Mean) / 2;
+  SetSequencerValues();
 End
 
 Func ToolbarNullEyeReset%()
   Toolbarset(FindNullEyePos,"Find Null Pos", ToolbarFindNullEye%);
   nullEyePos := 0;
+  SetSequencerValues();
 End
 
 Func ToolbarTrackEyeOn%()
-  'SampleKey( "R" );
+  SampleKey( "R" );
   Toolbarset(TrackPos,"Track Off", ToolbarTrackEyeOff%);
   startTracking% := 1;
   drumDriftFix% := 0;
@@ -522,7 +527,7 @@ Func ToolbarTrackEyeOn%()
 End
 
 Func ToolbarTrackEyeOff%()
-  'SampleKey( "r" );
+  SampleKey( "r" );
   Toolbarset(TrackPos,"Track On", ToolbarTrackEyeOn%);
   startTracking% := 0;
   drumDriftFix% := 1;
@@ -815,8 +820,14 @@ Proc SetSequencerValues()
   SampleSeqVar( 51, pulseWaitV);
   SampleSeqVar( 52, pulsePeriod);
   SampleSeqVar( 54, everyNCycles);
+
   'Rotation Parameters
   SampleSeqVar( 66, rotationVelocity); 'This is a relative value
+
+  'Tracking parameters
+  SampleSeqVar( 67, nullEyePos);
+  SampleSeqVar( 68, gain);
+  SampleSeqVar( 69, LeakInstabilityScale);
 End
 
 Func driftFix%()
@@ -871,10 +882,6 @@ Func driftFix%()
   ChairDegreesPerSecondOffset :=  (ChairDegreesPerSecondOffsetDefault - hhposSlope/4 - hhposPos/4 - centerLineChair/4) * ChairResetDirection;
   if drumDriftFix% = 1 then
     DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - htposSlope/4 - htposPos/4 - centerLineDrum/4) * DrumResetDirection;
-  else
-    if startTracking% = 1 then
-      trackEye%();
-    endif;
   endif;
   SetSequencerValues();
 End
