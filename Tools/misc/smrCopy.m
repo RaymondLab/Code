@@ -1,5 +1,7 @@
 function fhand2 = smrCopy(smrFile, ending)
 
+maxPointsToRead = 200000000;
+
 %% Open file & gather info
 activateCEDS64;
 fhand1 = CEDS64Open(smrFile);

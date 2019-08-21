@@ -196,6 +196,7 @@ classdef dat %< hgsetget
             end
             chanind = chanind(chanind>0);
         end
+        
         function datout = datchan(obj, chans)
             % Get a dat structure with just the specificied channels
             chaninds = datchanind(obj, chans);
@@ -226,6 +227,7 @@ classdef dat %< hgsetget
                 end
             end
         end
+        
         function datout = datseg(obj, seg, npoints)
             % datout = datseg(obj,[tstart tstop])
             % Return dat object with only the given time segment of data
@@ -553,8 +555,6 @@ classdef dat %< hgsetget
             end
         end
         
-        
-        
         function datout = dateventtocont(obj, npointsorsamplerate, tstart, tend)
             %    dateventtocont(obj, samplerate) Uses tstart and tend from
             %    obj
@@ -584,6 +584,7 @@ classdef dat %< hgsetget
             datout = dat(currdata, [obj.chanlabel '_cont'], obj.chanval, fs, tstart, tend, obj.units);
             
         end
+        
         function datrange = datrange(obj,chan)
             % datRange Returns range (y-span) of data in specified channel
             %   chan is optional
@@ -600,6 +601,7 @@ classdef dat %< hgsetget
             end
             datrange = [min(datCurr.data) max(datCurr.data)];
         end
+        
         function datout = smooth(obj,varargin)
             % Smooths data in the dat structure DATIN
             % DATOUT = datsmooth(DATIN, [SPAN], [CHANS])
@@ -630,6 +632,7 @@ classdef dat %< hgsetget
                 end
             end
         end
+        
         function datout = datsmooth(obj,varargin)
             % Smooths data in the dat structure DATIN
             % DATOUT = datsmooth(DATIN, [SPAN], [CHANS])
@@ -640,6 +643,7 @@ classdef dat %< hgsetget
             
             datout = smooth(obj,varargin{:});
         end
+        
         function datout = datbin(obj, binwidth)
             % Returns a dat structure with binned data
             % Specify binwidth in seconds
@@ -657,6 +661,7 @@ classdef dat %< hgsetget
             datout.data = databinned;
             datout.samplerate = 1/binwidth;
         end
+        
         function datout = downsample(obj, varargin)
             % datDownsample Downsample input signal
             % downsample(datin, n)
@@ -722,7 +727,6 @@ classdef dat %< hgsetget
             end
         end
         
-        
         function datout = datlowpass(datin, fc)
             % datlowpass(datin, fc)
             % Filter dat channel with a lowpass butterworth filter
@@ -781,7 +785,6 @@ classdef dat %< hgsetget
             t = t(:);
         end
         
-        
         function data = dattimeind(obj,t)
             % data = dattimeind(obj,t)
             % Returns data point at specified time. obj must be 1 channel
@@ -802,6 +805,7 @@ classdef dat %< hgsetget
             pwr = abs(x(1:nhalf));
             freq = (0:nhalf-1)'*obj.samplerate/n;
         end
+        
         function varargout = plot(obj, varargin)
             %  datPlot   Simple plotting function.
             %   datPlot(obj) plots all channels in the dat structure
@@ -968,10 +972,10 @@ classdef dat %< hgsetget
             end
             
         end % function datplot
+        
         function datplot(obj,varargin)
             plot(obj,varargin);
         end
-        
         
         function datout = deriv(obj)
             datout = obj;
@@ -1012,9 +1016,11 @@ classdef dat %< hgsetget
                 datout(i).data = obj(i).data + num;
             end
         end
+        
         function datout = minus(obj,a)
             datout = plus(obj,-a);
         end
+        
         function datout = uminus(obj)
             datout = obj;
             for i = 1:numel(obj)
@@ -1023,6 +1029,7 @@ classdef dat %< hgsetget
                 end
             end
         end
+        
         function datout = times(obj,a)
             if ~isa(obj,'dat')
                 temp = a;
@@ -1038,9 +1045,11 @@ classdef dat %< hgsetget
                 end
             end
         end
+        
         function datout = mtimes(obj, a)
             datout = times(obj, a);
         end
+        
         function datout = mrdivide(obj,a)
             datout = obj;
             for i = 1:numel(obj)
@@ -1051,16 +1060,18 @@ classdef dat %< hgsetget
                 end
             end
         end
+        
         function datout = mldivide(obj,a)
             datout = mrdivide(obj,a);
         end
+        
         function datout = ldivide(obj,a)
             datout = mrdivide(obj,a);
         end
+        
         function datout = rdivide(obj,a)
             datout = mrdivide(obj,a);
         end
-        
         
         function output  = get(datin, name)
             

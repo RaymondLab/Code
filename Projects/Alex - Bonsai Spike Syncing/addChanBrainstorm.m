@@ -28,6 +28,39 @@ bb = bb ./ 1000;
 aa = aa ./ 1000;
 
 eventDiff = (bb - TTLpos);
+%% Frames testing 2
+timeStamps = dataTable.Var1;
+sampleLen = timeStamps(2:end)-timeStamps(1:end-1);
+% hist(sampleLen, 750)
+meanFR = mean(sampleLen);
+stdFR = std(sampleLen);
+% vline(meanFR, 'r')
+% vline(meanFR-stdFR, ':r');
+% vline(meanFR+stdFR, ':r');
+% vline(meanFR-2*stdFR, ':r');
+% vline(meanFR+2*stdFR, ':r');
+% vline(meanFR-3*stdFR, ':r');
+% vline(meanFR+3*stdFR, ':r');
+
+
+%% Frames testing 
+% frames = dataTable.Var2 ./ 1000;
+% downJumpLocs = zeros(length(frames)-1,1);
+% 
+% for i = 1:length(frames)-1
+%     if frames(i) - frames(i+1) > 0
+%         downJumpLocs(i) = 1;
+%     end
+% end
+% 
+% [a, b] = find(downJumpLocs);
+% posSlopeLengths = a(2:end) - a(1:end-1);
+% for i = 1:length(a)
+%     
+% end
+
+
+
 %% debug plotting
 figure()
 ha = tight_subplot(2,1,[0 0],[.03 .03],[.03 .03]);
@@ -52,25 +85,25 @@ ylim([-.5 1.5])
 newSmrHandle = smrCopy(smrFile, '_FP');
 
 % Add fist channel
-data = [];
-samplerate = 20000;
+data = dataTable.Var3;
+samplerate = 1000/meanFR;
 title = 'chan1';
 units = 'n/a';
 smrAddChan(newSmrHandle, data, samplerate, title, units);
 
 % Add Second Channel
-data = [];
-samplerate = 20000;
+data = dataTable.Var4;
+samplerate = 1000/meanFR;
 title = 'chan2';
 units = 'n/a';
 smrAddChan(newSmrHandle, data, samplerate, title, units);
 
 % Add Third Channel
-data = [];
-samplerate = 20000;
-title = 'chan3';
-units = 'n/a';
-smrAddChan(newSmrHandle, data, samplerate, title, units);
+% data = [];
+% samplerate = 20000;
+% title = 'chan3';
+% units = 'n/a';
+% smrAddChan(newSmrHandle, data, samplerate, title, units);
 
 %% tidy up
 CEDS64CloseAll();

@@ -17,28 +17,31 @@ function [beh, shiftAmt, shiftConfidence] = opensingleMAXEDIT(filename, ephys_ex
 
     %% Opens Cntrlx file in Matlab and saves as "behavior"
     chanAmt = 7; %6: Jennifer, 7: Akira
-    filename
+    filename;
     behavior = readcxdata(filename, 0, chanAmt);
+    if isempty(behavior.data)
+        return
+    end
     
     %% Flip data for elvis so that contra is up and ipsi is down
     if ~isempty(regexp(filename,'da','once'))
         behavior.data = -behavior.data;
     end
     
-    if ~isempty(behavior.data)
-        %disp('a')
-    end
-    
     % Assigns structures in "behavior" to specific signals
     bSamplerate = 500;
     eSamplerate = 50000;
     %eSamplerate = 1000;
-    hgpos = behavior.data(1,:);% *12.5 * dt;
-    vepos = behavior.data(2,:);% *12.5 * dt;
-    hevel = behavior.data(3,:);% *0.09189;
-    htpos = behavior.data(4,:);% *12.5 * dt;
-    hhvel = behavior.data(5,:);% *0.09189;
-    hdvel = behavior.data(6,:);% *0.09189;
+    hgpos = behavior.data(1,:) *12.5 *(1/bSamplerate);
+    vepos = behavior.data(2,:) *12.5 *(1/bSamplerate);
+    hevel = behavior.data(3,:) *0.09189;
+    htpos = behavior.data(4,:) *12.5 *(1/bSamplerate);
+    hhvel = behavior.data(5,:) *0.09189;
+    hdvel = behavior.data(6,:) *0.09189;
+    if chanAmt == 7
+        unknown = behavior.data(7,:);
+    end
+    
   
     % Fix the offset of hhvel
     hhvel = hhvel-mean(hhvel);
@@ -118,12 +121,15 @@ function [beh, shiftAmt, shiftConfidence] = opensingleMAXEDIT(filename, ephys_ex
     beh(end+1) = dat(hevel,'Horz Eye Pos',   3,bSamplerate,tstart, tend,'deg/s');
     beh(end+1) = dat(htpos,'Horz Target Pos',4,bSamplerate,tstart, tend,'deg');
     beh(end+1) = dat(hhvel,'Horz Head Vel',  5,bSamplerate,tstart, tend,'deg/s');
-    beh(end+1) = dat(hdvel,'Horz d Vel',     6,bSamplerate,tstart, tend,'deg/s');
+    beh(end+1) = dat(hdvel,'Horz d Vel (eye2)',     6,bSamplerate,tstart, tend,'deg/s');
     beh(end+1) = dat(htvel,'Horz Target Vel',7,bSamplerate,tstart, tend,'deg/s');
     if ephys_exists
-        beh(end+1) = dat(ephys, 'Ephys',7,50000,timeEphys(1),timeEphys(end),'mV?');
+        beh(end+1) = dat(ephys, 'Ephys',8,50000,timeEphys(1),timeEphys(end),'mV?');
     else
-        beh(end+1) = dat([], 'Ephys',7,50000,tstart,tend,'mV?');
+        beh(end+1) = dat([], 'Ephys',8,50000,tstart,tend,'mV?');
     end
-    beh(end+1) = dat(timeofsimplespikes,'ss', 8,'event',tstart, tend,'s');
-    beh(end+1) = dat(timeofcomplexspikes,'cs',9,'event',tstart, tend,'s');
+    if chanAmt == 7
+        beh(end+1) = dat(unknown, 'Unknown',9,bSamplerate, tstart, tend,'?');
+    end
+    beh(end+1) = dat(timeofsimplespikes,'ss', 10,'event',tstart, tend,'s');
+    beh(end+1) = dat(timeofcomplexspikes,'cs',11,'event',tstart, tend,'s');
