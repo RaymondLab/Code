@@ -17,13 +17,11 @@ var sinAmpDrum := 10;
 
 'Chair converstion factors
 var ChairDegreesPerSecond2Voltage := 0.0098255; 'Chair velocity to voltage (Scale)  * Doubled after fixing scaling (10 V MaxVoltage) 12/10/15 HP
-var ChairDegreesPerSecondOffsetDefault :=  .06;         'Chair velocity to voltage (offset)  *** Input default Chair offset here
-var ChairDegreesPerSecondOffset :=  .06;         'Starting value, is updated repeatedly
+var ChairDegreesPerSecondOffset :=  .06;         'Chair velocity to voltage (offset)  *** Input default Chair offset here
 
 'Drum conversion factors
 var DrumDegreesPerSecond2Voltage := 0.005;      'Drum velocity to voltage (Scale)
-var DrumDegreesPerSecondOffsetDefault := .246;        'Drum velocity to voltage (offset)   *** Input default Drum offset here
-var DrumDegreesPerSecondOffset := .246;         'Starting value, is updated repeatedly
+var DrumDegreesPerSecondOffset := .246;        'Drum velocity to voltage (offset)   *** Input default Drum offset here
 
 'Channel 1: Scaling to display the drum COMMAND signal
 var DrumVoltage2Velocity := -1/DrumDegreesPerSecond2Voltage;                'Voltage to Drum Velocity (Scale)
@@ -52,11 +50,3 @@ var DrumPosReadoutOffset := .719269;                  'Drum position readout off
 'Channel 5/6: Eye position readout
 var EyeVoltage2Position := 1;                   'Voltage to Eye Position (Scale)  %*** 20 HP 6/3
 var EyeVoltage2PositionC := 0;                  'Voltage to Eye Position (offset)
-
-'Default servo direction for chair and drum -- 1 or -1'
-var ChairResetDirection := -1;
-var DrumResetDirection := -1;
-
-'Scale factor for amplitude of sine wave drift'
-var ChairDriftFactor := .04;
-var DrumDriftFactor := 0.0; 'need to take measurements for drum'

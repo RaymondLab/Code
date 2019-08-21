@@ -382,7 +382,7 @@ for count = 1:nSegs
         % plot
         plot(cycleTime, eyeVel_good_cycleMean,'b'); hold on
         plot(cycleTime, eyeVel_des_cycleMean, 'g');
-        plot(cycleTime, eyeVel_des_cycleFit, 'r');
+        %plot(cycleTime, eyeVel_des_cycleFit, 'r');
         plot(cycleTime, plotStim, 'k');
         hline(0,'--k');
         

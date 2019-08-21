@@ -110,13 +110,6 @@ for count = 1:nSegs
         
         % Store Processed Trace
         eyeVel_proc_des = eyeVel_proc;
-        
-        % For Sriram - To extract individual eye Vel at individual times
-        %if count == 2 || count == 3 || count == 4 || count == 59 || count == 60 || count == 61
-        %    csvwrite(['OKR-', num2str(count-1), ' drum.xls'], drumVel);
-        %end
-        
-            
         eyeVel_proc_des(omitH) = NaN;
     end
     
