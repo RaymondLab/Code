@@ -42,6 +42,26 @@ end_light_loc = SampleKeyTimes(strfind(SampleKeys, 'Lllsl23l')+1);
 
 % find final start point
 last_loc = SampleKeyTimes(strfind(SampleKeys, 'L0l')+1);
+last_start = last_loc - 60;
+
+other_ends = [];
+other_starts = [];
+
+for i = 1:length(start_dark_loc)
+  other_ends(length(other_ends)+1) = start_dark_loc(i)+60;
+end
+
+for i = 1:length(end_dark_loc)
+  other_starts(length(other_starts)+1) = end_dark_loc(i) - 60;
+end
+
+for i = 1:length(start_light_loc)
+  other_ends(length(other_ends)+1) = start_light_loc(i) + 60;
+end
+
+for i = 1:length(end_light_loc)
+  other_starts(length(other_starts)+1) = end_light_loc(i) - 60;
+end
 
 % light on training
 %start_SLs_loc = SampleKeyTimes(strfind(SampleKeys, 'SLs'));
@@ -77,8 +97,8 @@ else
 end
 
 %% Combine
-startTimes = sort([start_dark_loc start_light_loc start_special])';
-endTimes = sort([end_dark_loc end_light_loc end_special last_loc])';
+startTimes = sort([start_dark_loc start_light_loc start_special other_starts last_start])';
+endTimes = sort([end_dark_loc end_light_loc end_special last_loc other_ends])';
 
 
 %% Take the Experiment start time listed in the excel file, and remove incorrect segments

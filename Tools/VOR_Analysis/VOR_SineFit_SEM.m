@@ -81,6 +81,8 @@ for count = 1:nSegs
     headVel = datchandata(dataseg,'hhvel');
     drumVel = datchandata(dataseg,'htvel');
     eyeVel = datchandata(dataseg,'hevel');
+    %veltau = 5;
+    %eyeVel = movingslopeCausal(datchandata(data,'hepos'),round(samplerate*veltau)*samplerate);
     eyePos = datchandata(dataseg,'hepos');
 
     % define vector of time
@@ -111,8 +113,9 @@ for count = 1:nSegs
 
     amps_this_seg = []
     for i = 2:length(seg_means)
-        amp_temp = abs((seg_means(i) - seg_means(i-1)));
-        if amp_temp  > 0
+        if TF(i) == 1
+          amp_temp = abs((seg_means(i) - seg_means(i-1)));
+          if amp_temp  > 0
             sac_amps(length(sac_amps)+1) = amp_temp;
             amps_this_seg(length(amps_this_seg)+1) = amp_temp;
             if mod(count, 2) == 0
@@ -120,11 +123,15 @@ for count = 1:nSegs
             else
                 sac_amps_dark(length(sac_amps_dark)+1) = amp_temp;
             end
+          end
         end
     end
+
+    % want to use velocities * sample time to figure out average size of saccades
+
     fig_title = ['segment', string(count)];
-    %addHistogram(amps_this_seg, count, join(fig_title));
-    addLinePlot(amps_this_seg, count);
+    addHistogram(amps_this_seg, count, join(fig_title));
+    %addLinePlot(amps_this_seg, count);
 
 
 
@@ -560,8 +567,8 @@ function [h] = addHistogram(amps, segNum, t)
     hold on;
     h = histogram(amps, 'DisplayStyle', 'stairs');
     title('distribution by segment');
-    h.Normalization = 'probability';
-    h.BinLimits = [0.0, 2.0];
+    %h.Normalization = 'probability';
+    h.BinLimits = [0.0, 10.0];
     h.BinWidth = 0.0200;
     h.EdgeColor = chooseColor(segNum);
 
@@ -594,7 +601,7 @@ function [c] = chooseColor(segNum)
     elseif segNum == 3
         c = 'green';
     elseif segNum == 4
-        c = 'yellow';
+        c = 'black';
     elseif segNum == 5
         c = 'cyan';
     elseif segNum == 6

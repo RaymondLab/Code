@@ -156,8 +156,8 @@ save(fullfile(params.folder, 'result'), 'result','T');
 
 function [h] = makeHistogram(amps, color)
     h = histogram(amps, 'DisplayStyle', 'stairs');
-    h.Normalization = 'probability';
-    h.BinLimits = [0.0, 2.0];
+    %h.Normalization = 'probability';
+    h.BinLimits = [0.0, 10.0];
     h.BinWidth = 0.0200;
     h.EdgeColor = color;
 
