@@ -49,11 +49,6 @@
             VAR    V53,PulseHPe=500  ; Half Period duration
             VAR    V54,evNcyc=1      ; Pulses occur every X cycles
 
-            VAR    V65,drumDir=1   ; default drum direction
-            VAR    V67,nullEye=0     ; default null eye position = 0
-            VAR    V68,gain=.5       ; default gain
-            VAR    V69,leak=-1       ; -1 for leak, 1 for instability
-
 ;-----------------------------------------------------------------------------
 ; LOOP: our idle loop.
 ;-----------------------------------------------------------------------------
@@ -76,7 +71,7 @@ INIT:   'I  RATE   0,0             ;stop cosine on drum
             DAC    0,DrumOff       ;stop the drum
             DAC    1,Chairoff      ;stop the chair
             DIGOUT [00000000]      ;stop any pulses
-            ;JUMP   KDRUM          ;return chair to zero
+            JUMP   KDRUM          ;return chair to zero
 
 ;-----------------------------------------------------------------------------
 ; QUIT: Stops all movement on drum and chair
@@ -103,10 +98,10 @@ KCHAIR1:    CHAN   V8,4            ;Get value of channel 3 (chair pos)***3to4 HP
 
 KCHAIR2:    BLE    V8,vdac16(0.01),KCHAIREX ;check if we're within our epsilon
             BNE    V9,0,KCHAIR3    ;check if it was negative.
-            DAC    1,0.02          ;vel for positive pos
+            DAC    1,-0.02          ;vel for positive pos
             JUMP   KCHAIR1
 
-KCHAIR3:    DAC    1,-0.02         ;vel for negative pos
+KCHAIR3:    DAC    1,0.02         ;vel for negative pos
             JUMP   KCHAIR1
 
 KCHAIREX:   DAC    1,Chairoff      ;Stop the chair
@@ -128,36 +123,17 @@ KDRUM2:     BLE    V8,vdac16(0.01),KDRUMEX
                                     ;check if we're within our epsilon
                                     ;if so, exit
             BNE    V9,0,KDRUM3     ;check if position was negative
-            DAC    0,-0.02         ;vel for positive pos
+            DAC    0,0.02         ;vel for positive pos
             JUMP   KDRUM1
 
-KDRUM3:     DAC    0,0.02          ;vel for negative position
+KDRUM3:     DAC    0,-0.02          ;vel for negative position
             JUMP   KDRUM1
 
 
 KDRUMEX:    DAC    0,DrumOff       ;Exit KDRUM
             JUMP   LOOP            ;Drum stopped
 
-;-----------------------------------------------------------------------------
-;TRACK: Make the drum track the eye position
-;Change velocity proportionally to eye offset
-;-----------------------------------------------------------------------------
-TRACK: 'R   CHAN   V8,5            ;Get position of eye1
-            CHAN   V9,6            ;Get position of eye2
-            ADD    V8,V9,0,1       ;take average of eye positions
 
-            SUB    V8,nullEye      ;find difference w null pos
-            MUL    V8,gain         ;multiply by gain
-
-            MUL    V8,leak         ;multiply by -1 for leak
-                                   ;multiply by 1 for instability
-            MUL    V8,drumDir
-            DAC    0,V8            ;set velocity
-;-----------------------------------------------------------------------------
-;TRACK: Make the drum track the eye position
-;Change velocity proportionally to eye offset
-;-----------------------------------------------------------------------------
-TRACKOFF: 'r DAC 0,DrumOff               ;turn off drum
 ;-----------------------------------------------------------------------------
 ;Set step command to move chair and drum without stimulation
 ;-----------------------------------------------------------------------------

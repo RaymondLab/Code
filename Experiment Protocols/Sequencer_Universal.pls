@@ -49,10 +49,9 @@
             VAR    V53,PulseHPe=500  ; Half Period duration
             VAR    V54,evNcyc=1      ; Pulses occur every X cycles
 
-            VAR    V65,drumDir=1   ; default drum direction
-            VAR    V67,nullEye=0     ; default null eye position = 0
-            VAR    V68,gain=.5       ; default gain
-            VAR    V69,leak=-1       ; -1 for leak, 1 for instability
+            VAR    V66,initVel=0.02   ; velocity to rotate chair and drum
+            VAR    V65,initDirD=1    ; default direction for drum to move
+            VAR    V55,initDirC=1   ; default direction for chair to move
 
 ;-----------------------------------------------------------------------------
 ; LOOP: our idle loop.
@@ -76,7 +75,7 @@ INIT:   'I  RATE   0,0             ;stop cosine on drum
             DAC    0,DrumOff       ;stop the drum
             DAC    1,Chairoff      ;stop the chair
             DIGOUT [00000000]      ;stop any pulses
-            ;JUMP   KDRUM          ;return chair to zero
+            JUMP   KCHAIR          ;return chair to zero
 
 ;-----------------------------------------------------------------------------
 ; QUIT: Stops all movement on drum and chair
@@ -96,6 +95,7 @@ KCHAIR:     RATE   1,0             ;stop cosine on chair
 
 KCHAIR1:    CHAN   V8,4            ;Get value of channel 3 (chair pos)***3to4 HP 1/10/14
             MOVI   V9,0            ;Intialize v9 to 0 (0=false) >Returning chair.
+            ABS    initVel,initVel
 
             BGT    V8,0,KCHAIR2    ;get absolute value by negating if under 0
             NEG    V8,V8           ;it was < 0 so we negate it.
@@ -103,10 +103,15 @@ KCHAIR1:    CHAN   V8,4            ;Get value of channel 3 (chair pos)***3to4 HP
 
 KCHAIR2:    BLE    V8,vdac16(0.01),KCHAIREX ;check if we're within our epsilon
             BNE    V9,0,KCHAIR3    ;check if it was negative.
-            DAC    1,0.02          ;vel for positive pos
+            MUL    initVel,initDirC         ;make vel go default direction
+            DAC    1,initVel           ;vel for positive pos
+            ABS    initVel,initVel
             JUMP   KCHAIR1
 
-KCHAIR3:    DAC    1,-0.02         ;vel for negative pos
+KCHAIR3:    MUL    initVel,initDirC        ;make vel go default direction
+            NEG    initVel,initVel        ;get negative of default direction
+            DAC    1,initVel          ;vel for negative pos
+            ABS    initVel,initVel
             JUMP   KCHAIR1
 
 KCHAIREX:   DAC    1,Chairoff      ;Stop the chair
@@ -120,6 +125,8 @@ KDRUM:      RATE   0,0             ;stop sine on drum
 
 KDRUM1:     CHAN   V8,3            ;Get position of drum from Ch 3 * 14 to 3 HP 1/10/14
             MOVI   V9,0            ;Initiliaze v9 to 0 (false)
+            ABS    initVel,initVel
+
             BGT    V8,0,KDRUM2     ;get absolute value of position by negating if under 0
             NEG    V8,V8           ;it was < 0 so we negate it.
             MOVI   V9,1            ;and then remember that it was negative
@@ -128,36 +135,20 @@ KDRUM2:     BLE    V8,vdac16(0.01),KDRUMEX
                                     ;check if we're within our epsilon
                                     ;if so, exit
             BNE    V9,0,KDRUM3     ;check if position was negative
-            DAC    0,-0.02         ;vel for positive pos
+            MUL    initVel,initDirD         ;make vel go default direction
+            NEG    initVel,initVel        ;get negative of default direction
+            DAC    0,initVel           ;vel for positive pos
             JUMP   KDRUM1
 
-KDRUM3:     DAC    0,0.02          ;vel for negative position
+KDRUM3:     MUL    initVel,initDirD        ;make vel go default direction
+            DAC    0,initVel          ;vel for negative position
             JUMP   KDRUM1
 
 
 KDRUMEX:    DAC    0,DrumOff       ;Exit KDRUM
             JUMP   LOOP            ;Drum stopped
 
-;-----------------------------------------------------------------------------
-;TRACK: Make the drum track the eye position
-;Change velocity proportionally to eye offset
-;-----------------------------------------------------------------------------
-TRACK: 'R   CHAN   V8,5            ;Get position of eye1
-            CHAN   V9,6            ;Get position of eye2
-            ADD    V8,V9,0,1       ;take average of eye positions
 
-            SUB    V8,nullEye      ;find difference w null pos
-            MUL    V8,gain         ;multiply by gain
-
-            MUL    V8,leak         ;multiply by -1 for leak
-                                   ;multiply by 1 for instability
-            MUL    V8,drumDir
-            DAC    0,V8            ;set velocity
-;-----------------------------------------------------------------------------
-;TRACK: Make the drum track the eye position
-;Change velocity proportionally to eye offset
-;-----------------------------------------------------------------------------
-TRACKOFF: 'r DAC 0,DrumOff               ;turn off drum
 ;-----------------------------------------------------------------------------
 ;Set step command to move chair and drum without stimulation
 ;-----------------------------------------------------------------------------
@@ -336,19 +327,26 @@ STEPZ:  'u  DAC    0,SAmpD              ;Turn on drum
 ;-----------------------------------------------------------------------------
 ;SINEON: Set sine command to DRUM Velocity DAC0 & to CHAIR Velocity DAC1
 ;-----------------------------------------------------------------------------
-SINEON: 'S  SZ     1,ChrAmp        ;set cosine amplitude
+SINEON: 'S  SZ     0,DrumAmp       ;set cosine amplitude
+            OFFSET 0,DrumOff       ;cosine offset
+            ANGLE  0,DrumPh        ;cosine phase
+
+            SZ     1,ChrAmp        ;set cosine amplitude
             OFFSET 1,Chairoff      ;cosine offset
             ANGLE  1,ChrPh         ;cosine phase
 
+            RATE   0,DrumFreq      ;set rate and start cosine
             RATE   1,ChrFreq       ;set rate and start cosine
 
 OFFST1:     WAITC  1,OFFST1
+            OFFSET 0,DrumOff
             OFFSET 1,Chairoff
 
-            JUMP   KDRUM1            ;set loop to continue sine function > Sine running.
+            JUMP   OFFST1            ;set loop to continue sine function > Sine running.
 
 SINEOFF: 's RATE   0,0             ;stop cosine on drum
             RATE   1,0             ;stop cosine on chair
+            DAC    0,DrumOff       ;stop the drum
             DAC    1,Chairoff      ;stop the chair
 
             JUMP   KCHAIR          ;return chair to zero
@@ -422,7 +420,6 @@ SPULSE1:    MOV    V10,PulseNum
 
 W1:         WAITC  7,W1            ;Wait for next cosine cycle
             DBNZ   V11,W1
-
 SPULSE2:    DIGOUT [.....1..]      ; 1
             DELAY  PulseDur        ;DELAY takes up 1 ms itself
             DIGOUT [.....0..]      ; 0

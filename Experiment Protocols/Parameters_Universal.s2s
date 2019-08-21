@@ -11,6 +11,7 @@ var sinPhDrum := 90;
 var actualDrumPh;
 var sineOn% := 0;
 
+
 '--------------------------------------------------------------------------------
 ' STEP PARAMETERS
 '--------------------------------------------------------------------------------
@@ -482,10 +483,9 @@ Proc WindowConfig()
   SampleComment$(heposCh2%, "Eye Position 2");
 
   'Channel 7 UCOMMENT THIS FOR EPHYS
-  'SampleWaveform(7,6,1000);
-  'SampleCalibrate(7,"V",1,0);
-  'SampleTitle$(7,"phys");
-  'SampleComment$(7, "phys");
+  SampleTalker(7,"LS7366", 0);
+  SampleTitle$(7, "Drum_P");
+  SampleComment$(7,"Drum Position");
 
   'Channel 8
   SampleWaveform(hhvelCh%,7,1000);
