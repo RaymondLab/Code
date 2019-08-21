@@ -114,9 +114,9 @@ for i = 1:4
         
         % Block % Filter
         sumStruct(j).BadSegCnt = sum(sacFrac > str2double(answer{4})/100);
-        if sumStruct(j).BadSegCnt > answer{3}
+        if sumStruct(j).BadSegCnt > str2double(answer{3})
             Gains(:) = NaN;
-            sumStruct(j).removed = 1;            
+            sumStruct(j).removed = 1;    
         end
         
         %% Rel Gain or Raw Gain
