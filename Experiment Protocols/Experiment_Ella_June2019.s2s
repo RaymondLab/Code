@@ -2,7 +2,7 @@
 ' Rig-Specific parameters file Location
 '--------------------------------------------------------------------------------
 'D019
-#include "C:\\Users\\tstay\\Documents\\RaymondLabCode\\Experiment Protocols\\Parameters_D006_Ella.s2s"
+#include "C:\\Users\\raymondlab\\Documents\\Code\\Experiment Protocols\\Parameters_D006_Ella.s2s"
 
 '''D253
 ''#include "C:\\Users\\RaymondLab\\Documents\\Code\\Experiment Protocols\\Parameters_D253_Ella.s2s"
@@ -11,7 +11,7 @@
 ' Universal Parameters File Location
 '--------------------------------------------------------------------------------
 ''#include "C:\\Users\\Raymond Lab\\Documents\\Code\\Experiment Protocols\\Parameters_Universal_Ella.s2s"
-#include "C:\\Users\\tstay\\Documents\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal_Ella.s2s"
+#include "C:\\Users\\raymondlab\\Documents\\Code\\Experiment Protocols\\Parameters_Universal_Ella.s2s"
 
 
 '--------------------------------------------------------------------------------
@@ -56,12 +56,11 @@ Func ToolbarIdle%()
 
           ' MISC GAP A - runs at beginning and end
           case test% = 0 then
-              SampleKey("0");
               startTracking% := 0;
-              SampleKey("r");
+              ToolbarTrackEyeOff%();
+              'SampleKey("r");
               goalTime := MaxTime() + 5;
               SampleKey("x");
-              ToolbarSineStop%(); Yield();
               ToolbarLightOff%(); Yield();
               ToolbarInit%(); Yield();
 
@@ -95,16 +94,15 @@ Func ToolbarIdle%()
                   test% := 0;
               endcase
               SampleKey("X");
-              ToolbarSineStart%(); Yield();
 
           ' BLOCK: GAP A
           case test% = 1 then
               SampleKey("1");
               goalTime := MaxTime() + 5;
-              SampleKey("x"); 'do i need this?'
+              SampleKey("x");
               startTracking% := 0;
-              SampleKey("r");
-              ToolbarSineStop%(); Yield();
+              ToolbarTrackEyeOff%();
+              'SampleKey("r");
               ToolbarLightOff%(); Yield();
               ToolbarInit%(); Yield();
               test% := 6;
@@ -120,7 +118,7 @@ Func ToolbarIdle%()
           case test% = 3 then
               SampleKey("3");
               goalTime := MaxTime() + runLength;
-
+              Yield(.3);
               'update the gain'
               if rep% > 0 then
                 gain := gain + incrementSize;
@@ -134,10 +132,10 @@ Func ToolbarIdle%()
               endif;
               SampleKey("X");
               ToolbarLightOn%(); Yield(.1);
-              'ToolbarSineStart%(); Yield(.1);
-
+              'findNullEye();
+              nullEyePos := 0;
+              var preTime := MaxTime();
               startTracking% := 1;
-              SampleKey("R");
 
         endcase;
       endif;

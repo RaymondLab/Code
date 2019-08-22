@@ -76,7 +76,7 @@ INIT:   'I  RATE   0,0             ;stop cosine on drum
             DAC    0,DrumOff       ;stop the drum
             DAC    1,Chairoff      ;stop the chair
             DIGOUT [00000000]      ;stop any pulses
-            ;JUMP   KDRUM          ;return chair to zero
+            JUMP   LOOP          ;return chair to zero
 
 ;-----------------------------------------------------------------------------
 ; QUIT: Stops all movement on drum and chair
@@ -377,10 +377,10 @@ SETOFF: 'A  OFFSET 0,DrumOff
 ;-----------------------------------------------------------------------------
 ; LIGHTON: modified 1/20/14 for Rig D019
 LIGHTON: 'L DIGOUT [.......1]
-            JUMP   OFFST1    ;LOOP
+            JUMP   LOOP    ;LOOP
 
 LIGHTOFF: 'l DIGOUT [.......0]
-            JUMP   OFFST1    ;LOOP
+            JUMP   LOOP    ;LOOP
 
 ;-----------------------------------------------------------------------------
 ; LASERON: turn on both lasers

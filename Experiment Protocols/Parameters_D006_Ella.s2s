@@ -3,7 +3,7 @@
 '--------------------------------------------------------------------------------
 ' SEQUENCER FILE LOCATION
 '--------------------------------------------------------------------------------
-var SequencerFile$ := "C:\\Users\\tstay\\Documents\\RaymondLabCode\\Experiment Protocols\\Sequencer_D019_Ella";
+var SequencerFile$ := "C:\\Users\\raymondlab\\Documents\\Code\\Experiment Protocols\\Sequencer_D019_Ella";
 
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS
@@ -16,18 +16,18 @@ var sinAmpDrum := 10;
 '--------------------------------------------------------------------------------
 
 'Chair converstion factors
-var ChairDegreesPerSecond2Voltage := -0.2 ; ' -0.01;   'Chair velocity to voltage (Scale)
+var ChairDegreesPerSecond2Voltage := 1 ; ' -0.01;   'Chair velocity to voltage (Scale)
 var ChairDegreesPerSecondOffset :=  -0.1 ; '-.15;         'Chair velocity to voltage (offset)  *** Input default Chair offset here
 var ChairDegreesPerSecondOffsetDefault := -0.1;
 
 'Drum conversion factors
-var DrumDegreesPerSecond2Voltage := 0.95;    'Drum velocity to voltage (Scale)
+var DrumDegreesPerSecond2Voltage := 1;'0.5;    'Drum velocity to voltage (Scale)
 var DrumDegreesPerSecondOffset := 0;        'Drum velocity to voltage (offset)   *** Input default Drum offset here
 var DrumDegreesPerSecondOffsetDefault := 0;
 
 
 'Channel 1: Scaling to display the drum COMMAND signal
-var DrumVoltage2Velocity := -1/DrumDegreesPerSecond2Voltage;                'Voltage to Drum Velocity (Scale)
+var DrumVoltage2Velocity := 1;''-30;''-1/DrumDegreesPerSecond2Voltage;                'Voltage to Drum Velocity (Scale)
 var DrumVoltage2VelocityC := 0;                 'Voltage to Drum Velocity (offset)
 
 'Channel 2: Scaling to display the chair COMMAND signal
@@ -41,8 +41,8 @@ var ChairVelReadoutScale := -100.3;           '
 var ChairVelReadoutOffset := -.1548;
 
 'Chair position readout
-var ChairPosReadoutScale := 8.495;              'Voltage to Chair Position (Scale)
-var ChairPosReadoutOffset := .1167;                 'Voltage to Chair Position (offset)
+var ChairPosReadoutScale := 1;'8.495;              'Voltage to Chair Position (Scale)
+var ChairPosReadoutOffset := 0;''.1167;                 'Voltage to Chair Position (offset)
 
 'Drum velocity readout
 var DrumVelReadoutScale := 9.33112;
