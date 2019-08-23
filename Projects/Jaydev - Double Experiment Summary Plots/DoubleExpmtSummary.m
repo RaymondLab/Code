@@ -4,11 +4,11 @@ warning off
 prompt = {'Path: ', 'R^2 Threshold: ', 'Block Number: ', 'Removed Data Percentage: ', 'Gain Type (1 = norm, 2 = raw}'};
 dlgTitle = "Input: ";
 dims = [1 35];
-definput = {'D:\My Drive\Expmt Data\2019_08_19 - Jaydev Double Experiments', ...
-            '.5', ...
-            '5', ...
-            '30', ...
-            '2'};
+definput = {'C:\Users\jaydev\Desktop\1_Jaydev_Bhateja\Delta07 Project\Cohort 4\Pretraining', ...
+            '.4', ...
+            '2', ...
+            '50', ...
+            '1'};
 
 answer = inputdlg(prompt, dlgTitle, dims, definput);
 b = 1;
@@ -56,6 +56,8 @@ for i = 1:4
     figure('units','normalized','outerposition',[0 0 1 1])
     ha = tight_subplot(1,1,[.03 .03],[.05 .03],[.03 .03]);
     v = 1;
+    sumStruct = [];
+    LegCell = {};
     
     for j = 1:length(mList)
         
@@ -281,8 +283,10 @@ for i = 1:4
         segAmt = length(Gains(plotSegsAll));
         
         if isnan(Gains(1))
+            goodExpmt(b) = 0;
             plot(1:segAmt, Gains(plotSegsAll)); hold on
         else
+            goodExpmt(b) =1;
             A(v) =  plot(1:segAmt, Gains(plotSegsAll)); hold on
             v = v + 1;
         end
@@ -304,7 +308,7 @@ for i = 1:4
     %xlabel('tmpts')
     box off
     xticks(1:segAmt)
-    xticklabels({'0', '0', '0', 'BL', '10', '20', '30', '30', '30', 'Mid', '40', '50', '60', '60', '60', 'End'})
+    xticklabels({'0', '0', '0', 'Beg', '10', '20', '30', '30', '30', 'Mid', '40', '50', '60', '60', '60', 'End'})
     xlim([.8 segAmt+.2])
     
     
@@ -313,7 +317,7 @@ for i = 1:4
     % Orientation Parameters
     textGap = .0299;
     yAlign = 2.5;
-    xAlignTop = 1.725;
+    xAlignTop = max(ylim)-.025;
     FontSize = 9;
     
     % Make Text Notes - Keep spacing in mind!! Not handled by matlab, so I
@@ -371,7 +375,7 @@ for i = 1:4
     savefig([Label, '.fig'])
 end
                       
-T = table(name', expmtType', ...
+T = table(name', expmtType', goodExpmt(2:end)', ...
         t0a_nrmGain', t0b_nrmGain', t0c_nrmGain', tbl_nrmGain', t10_nrmGain', t20_nrmGain', t30a_nrmGain', t30b_nrmGain', t30c_nrmGain', tmid_nrmGain', t40_nrmGain', t50_nrmGain', t60a_nrmGain', t60b_nrmGain', t60c_nrmGain', tend_nrmGain', ...
         t0a_rawGain', t0b_rawGain', t0c_rawGain', tbl_rawGain', t10_rawGain', t20_rawGain', t30a_rawGain', t30b_rawGain', t30c_rawGain', tmid_rawGain', t40_rawGain', t50_rawGain', t60a_rawGain', t60b_rawGain', t60c_rawGain', tend_rawGain', ...
         t0a_rSquare', t0b_rSquare', t0c_rSquare', tbl_rSquare', t10_rSquare', t20_rSquare', t30a_rSquare', t30b_rSquare', t30c_rSquare', tmid_rSquare', t40_rSquare', t50_rSquare', t60a_rSquare', t60b_rSquare', t60c_rSquare', tend_rSquare', ...
@@ -381,16 +385,15 @@ T = table(name', expmtType', ...
         t5_rSquare', t15_rSquare', t25_rSquare', t35_rSquare', t45_rSquare', t55_rSquare', ...
         t5_badsegm', t15_badsegm', t25_badsegm', t35_badsegm', t45_badsegm', t55_badsegm', ...                           
         'VariableNames', ...
-        {'name', 'expmtType', ...
-        't0a_nrmGain', 't0b_nrmGain', 't0c_nrmGain', 'tbl_nrmGain', 't10_nrmGain', 't20_nrmGain', 't30a_nrmGain', 't30b_nrmGain', 't30c_nrmGain', 'tmid_nrmGain', 't40_nrmGain', 't50_nrmGain', 't60a_nrmGain', 't60b_nrmGain', 't60c_nrmGain', 'tend_nrmGain', ...
-        't0a_rawGain', 't0b_rawGain', 't0c_rawGain', 'tbl_rawGain', 't10_rawGain', 't20_rawGain', 't30a_rawGain', 't30b_rawGain', 't30c_rawGain', 'tmid_rawGain', 't40_rawGain', 't50_rawGain', 't60a_rawGain', 't60b_rawGain', 't60c_rawGain', 'tend_rawGain', ...
+        {'Name', 'expmtType', 'goodExpmt', ...
+        'N01', 'N02', 'N03', 'NBeg', 'N10', 'N20', 'N301', 'N302', 'N303', 'NMid', 'N40', 'N50', 'N601', 'N602', 'N603', 'NEnd', ...
+        'R01', 'R02', 'R03', 'RBeg', 'R10', 'R20', 'R301', 'R302', 'R303', 'RMid', 'R40', 'R50', 'R601', 'R602', 'R603', 'REnd', ...
         't0a_rSquare', 't0b_rSquare', 't0c_rSquare', 'tbl_rSquare', 't10_rSquare', 't20_rSquare', 't30a_rSquare', 't30b_rSquare', 't30c_rSquare', 'tmid_rSquare', 't40_rSquare', 't50_rSquare', 't60a_rSquare', 't60b_rSquare', 't60c_rSquare', 'tend_rSquare', ...
         't0a_badsegm', 't0b_badsegm', 't0c_badsegm',                't10_badsegm', 't20_badsegm', 't30a_badsegm', 't30b_badsegm', 't30c_badseg',                  't40_badsegm', 't50_badsegm', 't60a_badsegm', 't60b_badsegm', 't60c_badsegm', ...
-        't5_nrmGain', 't15_nrmGain', 't25_nrmGain', 't35_nrmGain', 't45_nrmGain', 't55_nrmGain', ...
-        't5_rawGain', 't15_rawGain', 't25_rawGain', 't35_rawGain', 't45_rawGain', 't55_rawGain', ...
+        'N5', 'N15', 'N25', 'N35', 'N45', 'N55', ...
+        'R5', 'R15', 'R25', 'R35', 'R45', 'R55', ...
         't5_rSquare', 't15_rSquare', 't25_rSquare', 't35_rSquare', 't45_rSquare', 't55_rSquare', ...
-        't5_badsegm', 't15_badsegm', 't25_badsegm', 't35_badsegm', 't45_badsegm', 't55_badsegm'});
-   
+        't5_badsegm', 't15_badsegm', 't25_badsegm', 't35_badsegm', 't45_badsegm', 't55_badsegm'});   
 
 
 writetable(T, 'AllMiceBigChart.xlsx')
@@ -400,14 +403,14 @@ cd(answer{1})
 for d = 1:25
     
     if d < 10
-        if any(contains(T.name, ['0', num2str(d)]))
+        if any(contains(T.Name, ['0', num2str(d)]))
             filename = ['Mouse_', num2str(d), '.xlsx'];
-            writetable(T(contains(T.name, ['0', num2str(d)]), :), filename)
+            writetable(T(contains(T.Name, ['0', num2str(d)]), :), filename)
         end
         
-    elseif any(contains(T.name, num2str(d)))
+    elseif any(contains(T.Name, num2str(d)))
         filename = ['Mouse_', num2str(d), '.xlsx'];
-        writetable(T(contains(T.name, ['0', num2str(d)]), :), filename)
+        writetable(T(contains(T.Name, ['0', num2str(d)]), :), filename)
     end
 
 end
