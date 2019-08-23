@@ -60,6 +60,7 @@ for i = 1:4
     for j = 1:length(mList)
         
         dataTable = readtable(fullfile(mList(j).folder, mList(j).name));
+        disp(['     ', mList(j).name])
         
         % Update name for plotting ease
         newName = mList(j).name(18:19);
@@ -98,12 +99,12 @@ for i = 1:4
             meanRsquare_End = sum(Rsquare(ends) .* (1-sacFrac(ends))) / sum(1-sacFrac(ends));
             
             % Combine (for long expmt)
-            Gains = [Gains(1:3); meanGain_Baseline; Gains(4:11); meanGain_Mid; Gains(12:end); meanGain_End];
+            Gains   = [Gains(1:3);   meanGain_Baseline;    Gains(4:11);   meanGain_Mid;    Gains(12:end);   meanGain_End];
             Rsquare = [Rsquare(1:3); meanRsquare_Baseline; Rsquare(4:11); meanRsquare_Mid; Rsquare(12:end); meanRsquare_End];
             plotSegsAll = logical([plotSegs(1:3); 1; plotSegs(4:11); 1; plotSegs(12:end); 1]);
         else
             % Combine (for short expmt)
-            Gains = [Gains(1:3); meanGain_Baseline; Gains(4:11); meanGain_Mid];
+            Gains =   [Gains(1:3);   meanGain_Baseline;    Gains(4:11);   meanGain_Mid];
             Rsquare = [Rsquare(1:3); meanRsquare_Baseline; Rsquare(4:11); meanRsquare_Mid];
             plotSegsAll = logical([plotSegs(1:3); 1; plotSegs(4:11); 1]);
         end
@@ -141,32 +142,50 @@ for i = 1:4
             t60c_rawGain(b) = Gains(21);
             tend_rawGain(b) = Gains(22);
         catch
+            t35_rawGain(b) = NaN;
+            t40_rawGain(b) = NaN;
+            t45_rawGain(b) = NaN;
+            t50_rawGain(b) = NaN;
+            t55_rawGain(b) = NaN;
+            t60a_rawGain(b) = NaN;
+            t60b_rawGain(b) = NaN;
+            t60c_rawGain(b) = NaN;
+            tend_rawGain(b) = NaN;
         end
 
-        t0a_normGain(b) = Gains(1) ./ meanGain_Baseline;
-        t0b_normGain(b) = Gains(2) ./ meanGain_Baseline;
-        t0c_normGain(b) = Gains(3) ./ meanGain_Baseline;
-        tbl_normGain(b) = Gains(4) ./ meanGain_Baseline;
-        t5_normGain(b) = Gains(5) ./ meanGain_Baseline;
-        t10_normGain(b) = Gains(6) ./ meanGain_Baseline;
-        t15_normGain(b) = Gains(7) ./ meanGain_Baseline;
-        t20_normGain(b) = Gains(8) ./ meanGain_Baseline;
-        t25_normGain(b) = Gains(9) ./ meanGain_Baseline;
-        t30a_normGain(b) = Gains(10) ./ meanGain_Baseline;
-        t30b_normGain(b) = Gains(11) ./ meanGain_Baseline;
-        t30c_normGain(b) = Gains(12) ./ meanGain_Baseline;
-        tmid_normGain(b) = Gains(13) ./ meanGain_Baseline;
+        t0a_nrmGain(b) = Gains(1) ./ meanGain_Baseline;
+        t0b_nrmGain(b) = Gains(2) ./ meanGain_Baseline;
+        t0c_nrmGain(b) = Gains(3) ./ meanGain_Baseline;
+        tbl_nrmGain(b) = Gains(4) ./ meanGain_Baseline;
+        t5_nrmGain(b) = Gains(5) ./ meanGain_Baseline;
+        t10_nrmGain(b) = Gains(6) ./ meanGain_Baseline;
+        t15_nrmGain(b) = Gains(7) ./ meanGain_Baseline;
+        t20_nrmGain(b) = Gains(8) ./ meanGain_Baseline;
+        t25_nrmGain(b) = Gains(9) ./ meanGain_Baseline;
+        t30a_nrmGain(b) = Gains(10) ./ meanGain_Baseline;
+        t30b_nrmGain(b) = Gains(11) ./ meanGain_Baseline;
+        t30c_nrmGain(b) = Gains(12) ./ meanGain_Baseline;
+        tmid_nrmGain(b) = Gains(13) ./ meanGain_Baseline;
         try
-            t35_normGain(b) = Gains(14) ./ meanGain_Baseline;
-            t40_normGain(b) = Gains(15) ./ meanGain_Baseline;
-            t45_normGain(b) = Gains(16) ./ meanGain_Baseline;
-            t50_normGain(b) = Gains(17) ./ meanGain_Baseline;
-            t55_normGain(b) = Gains(18) ./ meanGain_Baseline;
-            t60a_normGain(b) = Gains(19) ./ meanGain_Baseline;
-            t60b_normGain(b) = Gains(20) ./ meanGain_Baseline;
-            t60c_normGain(b) = Gains(21) ./ meanGain_Baseline;
-            tend_normGain(b) = Gains(22) ./ meanGain_Baseline;
+            t35_nrmGain(b) = Gains(14) ./ meanGain_Baseline;
+            t40_nrmGain(b) = Gains(15) ./ meanGain_Baseline;
+            t45_nrmGain(b) = Gains(16) ./ meanGain_Baseline;
+            t50_nrmGain(b) = Gains(17) ./ meanGain_Baseline;
+            t55_nrmGain(b) = Gains(18) ./ meanGain_Baseline;
+            t60a_nrmGain(b) = Gains(19) ./ meanGain_Baseline;
+            t60b_nrmGain(b) = Gains(20) ./ meanGain_Baseline;
+            t60c_nrmGain(b) = Gains(21) ./ meanGain_Baseline;
+            tend_nrmGain(b) = Gains(22) ./ meanGain_Baseline;
         catch
+            t35_nrmGain(b) = NaN;
+            t40_nrmGain(b) = NaN;
+            t45_nrmGain(b) = NaN;
+            t50_nrmGain(b) = NaN;
+            t55_nrmGain(b) = NaN;
+            t60a_nrmGain(b) = NaN;
+            t60b_nrmGain(b) = NaN;
+            t60c_nrmGain(b) = NaN;
+            tend_nrmGain(b) = NaN;
         end
 
         t0a_rSquare(b) = Rsquare(1);
@@ -193,35 +212,50 @@ for i = 1:4
             t60c_rSquare(b) = Rsquare(21);
             tend_rSquare(b) = Rsquare(22);
         catch
+            t35_rSquare(b) = NaN;
+            t40_rSquare(b) = NaN;
+            t45_rSquare(b) = NaN;
+            t50_rSquare(b) = NaN;
+            t55_rSquare(b) = NaN;
+            t60a_rSquare(b) = NaN;
+            t60b_rSquare(b) = NaN;
+            t60c_rSquare(b) = NaN;
+            tend_rSquare(b) = NaN;
         end
 
-        t0a_badseg(b) = sacFrac((1)) > str2double(answer{4})/100;
-        t0b_badseg(b) = sacFrac((2)) > str2double(answer{4})/100;
-        t0c_badseg(b) = sacFrac((3)) > str2double(answer{4})/100;
-        %tbl_badseg(b) = sacFrac((4)) > str2double(answer{4})/100;
-        t5_badseg(b) = sacFrac((4))  > str2double(answer{4})/100;
-        t10_badseg(b) = sacFrac((5)) > str2double(answer{4})/100;
-        t15_badseg(b) = sacFrac((6)) > str2double(answer{4})/100;
-        t20_badseg(b) = sacFrac((7)) > str2double(answer{4})/100;
-        t25_badseg(b) = sacFrac((8)) > str2double(answer{4})/100;
-        t30a_badseg(b) = sacFrac((9)) > str2double(answer{4})/100;
-        t30b_badseg(b) = sacFrac((10)) > str2double(answer{4})/100;
-        t30c_badseg(b) = sacFrac((11)) > str2double(answer{4})/100;
-        %tmid_badseg(b) = sacFrac((13)) > str2double(answer{4})/100;
+        t0a_badsegm(b) = sacFrac((1)) > str2double(answer{4})/100;
+        t0b_badsegm(b) = sacFrac((2)) > str2double(answer{4})/100;
+        t0c_badsegm(b) = sacFrac((3)) > str2double(answer{4})/100;
+        t5_badsegm(b) = sacFrac((4))  > str2double(answer{4})/100;
+        t10_badsegm(b) = sacFrac((5)) > str2double(answer{4})/100;
+        t15_badsegm(b) = sacFrac((6)) > str2double(answer{4})/100;
+        t20_badsegm(b) = sacFrac((7)) > str2double(answer{4})/100;
+        t25_badsegm(b) = sacFrac((8)) > str2double(answer{4})/100;
+        t30a_badsegm(b) = sacFrac((9)) > str2double(answer{4})/100;
+        t30b_badsegm(b) = sacFrac((10)) > str2double(answer{4})/100;
+        t30c_badsegm(b) = sacFrac((11)) > str2double(answer{4})/100;
         try
-            t35_badseg(b) = sacFrac((14)) > str2double(answer{4})/100;
-            t40_badseg(b) = sacFrac((15)) > str2double(answer{4})/100;
-            t45_badseg(b) = sacFrac((16)) > str2double(answer{4})/100;
-            t50_badseg(b) = sacFrac((17)) > str2double(answer{4})/100;
-            t55_badseg(b) = sacFrac((18)) > str2double(answer{4})/100;
-            t60a_badseg(b) = sacFrac((19)) > str2double(answer{4})/100;
-            t60b_badseg(b) = sacFrac((20)) > str2double(answer{4})/100;
-            t60c_badseg(b) = sacFrac((21)) > str2double(answer{4})/100;
-            %tend_badseg(b) = sacFrac((22)) > str2double(answer{4})/100;
+            t35_badsegm(b) = sacFrac((12)) > str2double(answer{4})/100;
+            t40_badsegm(b) = sacFrac((13)) > str2double(answer{4})/100;
+            t45_badsegm(b) = sacFrac((14)) > str2double(answer{4})/100;
+            t50_badsegm(b) = sacFrac((15)) > str2double(answer{4})/100;
+            t55_badsegm(b) = sacFrac((16)) > str2double(answer{4})/100;
+            t60a_badsegm(b) = sacFrac((17)) > str2double(answer{4})/100;
+            t60b_badsegm(b) = sacFrac((18)) > str2double(answer{4})/100;
+            t60c_badsegm(b) = sacFrac((19)) > str2double(answer{4})/100;
+
         catch
+            t35_badsegm(b) = 0;
+            t40_badsegm(b) = 0;
+            t45_badsegm(b) = 0;
+            t50_badsegm(b) = 0;
+            t55_badsegm(b) = 0;
+            t60a_badsegm(b) = 0;
+            t60b_badsegm(b) = 0;
+            t60c_badsegm(b) = 0;
         end
         b = b+1;
-%         
+        
         %% Rel Gain or Raw Gain
         if answer{5} == '1'
             Gains = Gains ./ meanGain_Baseline;
@@ -334,20 +368,48 @@ for i = 1:4
     k = k + 1;
     text(yAlign+1.5, xAlignTop-(k*textGap), ['Seg % Cutoff: ', answer{4}], 'FontSize', FontSize)
     
+    savefig([Label, '.fig'])
 end
-T = table(name', expmtType', t0a_normGain', t0b_normGain', t0c_normGain', tbl_normGain', t5_normGain', t10_normGain', t15_normGain', t20_normGain', t25_normGain', t30a_normGain', t30b_normGain', t30c_normGain', tmid_normGain', ...
-                           t0a_rawGain', t0b_rawGain', t0c_rawGain', tbl_rawGain', t5_rawGain', t10_rawGain', t15_rawGain', t20_rawGain', t25_rawGain', t30a_rawGain', t30b_rawGain', t30c_rawGain', tmid_rawGain', ...
-                           t0a_rSquare', t0b_rSquare', t0c_rSquare', tbl_rSquare', t5_rSquare', t10_rSquare', t15_rSquare', t20_rSquare', t25_rSquare', t30a_rSquare', t30b_rSquare', t30c_rSquare', tmid_rSquare', ...
-                           t0a_badseg', t0b_badseg', t0c_badseg', t5_badseg', t10_badseg', t15_badseg', t20_badseg', t25_badseg', t30a_badseg', t30b_badseg', t30c_badseg', ...
-                           'VariableNames', ...
-                           {'name', 'expmtType', 't0a_normGain', 't0b_normGain', 't0c_normGain', 'tbl_normGain', 't5_normGain', 't10_normGain', 't15_normGain', 't20_normGain', 't25_normGain', 't30a_normGain', 't30b_normGain', 't30c_normGain', 'tmid_normGain', ...
-                           't0a_rawGain', 't0b_rawGain', 't0c_rawGain', 'tbl_rawGain', 't5_rawGain', 't10_rawGain', 't15_rawGain', 't20_rawGain', 't25_rawGain', 't30a_rawGain', 't30b_rawGain', 't30c_rawGain', 'tmid_rawGain', ...
-                           't0a_rSquare', 't0b_rSquare', 't0c_rSquare', 'tbl_rSquare', 't5_rSquare', 't10_rSquare', 't15_rSquare', 't20_rSquare', 't25_rSquare', 't30a_rSquare', 't30b_rSquare', 't30c_rSquare', 'tmid_rSquare', ...
-                           't0a_badseg', 't0b_badseg', 't0c_badseg', 't5_badseg', 't10_badseg', 't15_badseg', 't20_badseg', 't25_badseg', 't30a_badseg', 't30b_badseg', 't30c_badseg'});
-                       
-% for d = 1:25
-%     if any(contains(T.name, num2str(d)))
-%     end
-% end
+                      
+T = table(name', expmtType', ...
+        t0a_nrmGain', t0b_nrmGain', t0c_nrmGain', tbl_nrmGain', t10_nrmGain', t20_nrmGain', t30a_nrmGain', t30b_nrmGain', t30c_nrmGain', tmid_nrmGain', t40_nrmGain', t50_nrmGain', t60a_nrmGain', t60b_nrmGain', t60c_nrmGain', tend_nrmGain', ...
+        t0a_rawGain', t0b_rawGain', t0c_rawGain', tbl_rawGain', t10_rawGain', t20_rawGain', t30a_rawGain', t30b_rawGain', t30c_rawGain', tmid_rawGain', t40_rawGain', t50_rawGain', t60a_rawGain', t60b_rawGain', t60c_rawGain', tend_rawGain', ...
+        t0a_rSquare', t0b_rSquare', t0c_rSquare', tbl_rSquare', t10_rSquare', t20_rSquare', t30a_rSquare', t30b_rSquare', t30c_rSquare', tmid_rSquare', t40_rSquare', t50_rSquare', t60a_rSquare', t60b_rSquare', t60c_rSquare', tend_rSquare', ...
+        t0a_badsegm', t0b_badsegm', t0c_badsegm',               t10_badsegm', t20_badsegm', t30a_badsegm', t30b_badsegm', t30c_badsegm',                 t40_badsegm', t50_badsegm', t60a_badsegm', t60b_badsegm', t60c_badsegm', ...
+        t5_nrmGain', t15_nrmGain', t25_nrmGain', t35_nrmGain', t45_nrmGain', t55_nrmGain', ...
+        t5_rawGain', t15_rawGain', t25_rawGain', t35_rawGain', t45_rawGain', t55_rawGain', ...
+        t5_rSquare', t15_rSquare', t25_rSquare', t35_rSquare', t45_rSquare', t55_rSquare', ...
+        t5_badsegm', t15_badsegm', t25_badsegm', t35_badsegm', t45_badsegm', t55_badsegm', ...                           
+        'VariableNames', ...
+        {'name', 'expmtType', ...
+        't0a_nrmGain', 't0b_nrmGain', 't0c_nrmGain', 'tbl_nrmGain', 't10_nrmGain', 't20_nrmGain', 't30a_nrmGain', 't30b_nrmGain', 't30c_nrmGain', 'tmid_nrmGain', 't40_nrmGain', 't50_nrmGain', 't60a_nrmGain', 't60b_nrmGain', 't60c_nrmGain', 'tend_nrmGain', ...
+        't0a_rawGain', 't0b_rawGain', 't0c_rawGain', 'tbl_rawGain', 't10_rawGain', 't20_rawGain', 't30a_rawGain', 't30b_rawGain', 't30c_rawGain', 'tmid_rawGain', 't40_rawGain', 't50_rawGain', 't60a_rawGain', 't60b_rawGain', 't60c_rawGain', 'tend_rawGain', ...
+        't0a_rSquare', 't0b_rSquare', 't0c_rSquare', 'tbl_rSquare', 't10_rSquare', 't20_rSquare', 't30a_rSquare', 't30b_rSquare', 't30c_rSquare', 'tmid_rSquare', 't40_rSquare', 't50_rSquare', 't60a_rSquare', 't60b_rSquare', 't60c_rSquare', 'tend_rSquare', ...
+        't0a_badsegm', 't0b_badsegm', 't0c_badsegm',                't10_badsegm', 't20_badsegm', 't30a_badsegm', 't30b_badsegm', 't30c_badseg',                  't40_badsegm', 't50_badsegm', 't60a_badsegm', 't60b_badsegm', 't60c_badsegm', ...
+        't5_nrmGain', 't15_nrmGain', 't25_nrmGain', 't35_nrmGain', 't45_nrmGain', 't55_nrmGain', ...
+        't5_rawGain', 't15_rawGain', 't25_rawGain', 't35_rawGain', 't45_rawGain', 't55_rawGain', ...
+        't5_rSquare', 't15_rSquare', 't25_rSquare', 't35_rSquare', 't45_rSquare', 't55_rSquare', ...
+        't5_badsegm', 't15_badsegm', 't25_badsegm', 't35_badsegm', 't45_badsegm', 't55_badsegm'});
+   
+
+
+writetable(T, 'AllMiceBigChart.xlsx')
+    
+cd(answer{1})
+
+for d = 1:25
+    
+    if d < 10
+        if any(contains(T.name, ['0', num2str(d)]))
+            filename = ['Mouse_', num2str(d), '.xlsx'];
+            writetable(T(contains(T.name, ['0', num2str(d)]), :), filename)
+        end
+        
+    elseif any(contains(T.name, num2str(d)))
+        filename = ['Mouse_', num2str(d), '.xlsx'];
+        writetable(T(contains(T.name, ['0', num2str(d)]), :), filename)
+    end
+
+end
     
 disp('Done!')
