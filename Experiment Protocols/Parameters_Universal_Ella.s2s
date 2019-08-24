@@ -60,10 +60,10 @@ var everyNCycles := 1;
 '--------------------------------------------------------------------------------
 ' EXPERIMENT PARAMETERS
 '--------------------------------------------------------------------------------
-var nBlocks% := 4;                 'Number of run-test blocks in exmpt
+var nBlocks% := 6;                 'Number of run-test blocks in exmpt
 var nTestreps% := 1;               'Number of times to repeat 40 sec test
-var runLength := 30;             'Seconds to run protocol in each block(300 for 5 min)
-var testLength := 20;             'Seconds to test
+var runLength := 300;             'Seconds to run protocol in each block(300 for 5 min)
+var testLength := 90;             'Seconds to test
 var expmtLoc% := 1;
 var prePostNum := 1;
 var trainLoc% := 1;
@@ -92,7 +92,7 @@ var eyePos := 0;
 var preTest% := 1; 'variable to check if test was run for first time to take baseline eye position'
 var LeakInstabilityScale := -1; '-1 for leak, 1 for instability'
 var leakOrInstability;
-var incrementSize := .005;
+var incrementSize := .0025;
 var bestChannel := 0;
 var eyeScaleFactor := 1;
 
@@ -423,14 +423,14 @@ End
 'Try to figure out how to change gain'
 Func trackEye%()
   prevTime := MaxTime();
-  var currEyePos := ChanValue(htposCh%, prevTime); 'CHANGE THIS FOR DEV'
+  var currEyePos := ChanValue(heposCh1%, prevTime); 'CHANGE THIS FOR DEV'
   if bestChannel = 2 then
     currEyePos := ChanValue(heposCh2%, prevTime);
   endif;
-  var currEyePosScaled := currEyePos * eyeScaleFactor;
+  var currEyePosScaled := currEyePos;
 
   var degreeDiffScaled := (currEyePos - nullEyePos) * gain; 'MAKE SURE THIS IS HOW WE GET THAT DEGREE VALUE'
-  DrumDegreesPerSecondOffset := (degreeDiffScaled) * DrumResetDirection * LeakInstabilityScale;
+  DrumDegreesPerSecondOffset := (degreeDiffScaled) * DrumResetDirection * LeakInstabilityScale * eyeScaleFactor;
   'make sure that the drum is going the right way'
   SetSequencerValues();
   Return(1);
@@ -480,9 +480,12 @@ End
 
 Func findNullEye()
   prevTime := MaxTime();
-  var chan1Mean := ChanMeasure(hhposCh%, 2, prevTime-20, prevTime);
+  var chanMean := ChanValue(heposCh1%, prevTime); 'CHANGE THIS FOR DEV'
+  if bestChannel = 2 then
+    chanMean := ChanValue(heposCh2%, prevTime);
+  endif;
   'var chan2Mean := ChanMeasure(heposCh2%, 2, prevTime-testLength, prevTime);
-  nullEyePos := chan1Mean;' + chan2Mean) / 2;
+  nullEyePos := chanMean;' + chan2Mean) / 2;
   SetSequencerValues();
 End
 
@@ -504,14 +507,14 @@ Func ToolbarNullEyeReset%()
 End
 
 Func ToolbarTrackEyeOn%()
-  'SampleKey( "R" );
+  SampleKey( "R" );
   Toolbarset(TrackPos,"Track Off", ToolbarTrackEyeOff%);
   startTracking% := 1;
   Return( 1 );
 End
 
 Func ToolbarTrackEyeOff%()
-  'SampleKey( "r" );
+  SampleKey( "r" );
   Toolbarset(TrackPos,"Track On", ToolbarTrackEyeOn%);
   startTracking% := 0;
   DrumDegreesPerSecondOffset := 0;

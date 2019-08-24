@@ -93,16 +93,14 @@ Func ToolbarIdle%()
                   prePostNum := prePostNum + 1;
                   test% := 0;
               endcase
-              SampleKey("X");
 
           ' BLOCK: GAP A
           case test% = 1 then
+              SampleKey("x");
               SampleKey("1");
               goalTime := MaxTime() + 5;
-              SampleKey("x");
               startTracking% := 0;
               ToolbarTrackEyeOff%();
-              'SampleKey("r");
               ToolbarLightOff%(); Yield();
               ToolbarInit%(); Yield();
               test% := 6;
@@ -132,8 +130,8 @@ Func ToolbarIdle%()
               endif;
               SampleKey("X");
               ToolbarLightOn%(); Yield(.1);
-              'findNullEye();
-              nullEyePos := 0;
+              findNullEye();
+              'nullEyePos := 0;
               var preTime := MaxTime();
               startTracking% := 1;
 
