@@ -60,10 +60,10 @@ var everyNCycles := 1;
 '--------------------------------------------------------------------------------
 ' EXPERIMENT PARAMETERS
 '--------------------------------------------------------------------------------
-var nBlocks% := 6;                 'Number of run-test blocks in exmpt
-var nTestreps% := 1;               'Number of times to repeat 40 sec test
-var runLength := 300;             'Seconds to run protocol in each block(300 for 5 min)
-var testLength := 90;             'Seconds to test
+var nBlocks% := 2;                 'Number of run-test blocks in exmpt
+var nTestreps% := 2;               'Number of times to repeat 40 sec test
+var runLength := 900;             'Seconds to run protocol in each block(300 for 5 min)
+var testLength := 300;             'Seconds to test
 var expmtLoc% := 1;
 var prePostNum := 1;
 var trainLoc% := 1;
@@ -86,7 +86,7 @@ var startTracking% := 0;
 var delta := .001; 'TEMPORARY VALUE'
 var saccadeThreshold := 1; 'TEMPORARY VALUE'
 var gain := .005;  'TEMPORARY VALUE'
-var gainCeiling := .02; 'TEMPORARY VALUE'
+var gainCeiling := .0075; 'TEMPORARY VALUE'
 var nullEyePos := 0;
 var eyePos := 0;
 var preTest% := 1; 'variable to check if test was run for first time to take baseline eye position'
@@ -441,13 +441,12 @@ Func ToolbarTrackConfig%() 'All of the values in here are guesses - may have to 
   DlgCreate("Eye Tracking settings");  'Start new dialog
   DlgReal(1,"Delta (s)",.000001,10);
   DlgReal(2,"Gain start value",.0001, 10);
-  DlgReal(3,"Gain end value",.0001, 10);
-  DlgReal(4,"Size of increments",.001, 1);
-  DlgList(5, "Train for leak or instability", "Leak|Instability");
-  DlgReal(6, "Null eye pos (for development)",-50,50);
-  DlgReal(7, "Which eye channel?", 0, 2); 'if 0, average channels
-  DlgReal(8, "What is the calibration scale factor?", -100, 100);
-  DlgShow(delta, gain, gainCeiling, incrementSize, leakOrInstability, nullEyePos, bestChannel, eyeScaleFactor);
+  DlgReal(3,"Size of increments",.001, 1);
+  DlgList(4, "Train for leak or instability", "Leak|Instability");
+  DlgReal(5, "Null eye pos (for development)",-50,50);
+  DlgReal(6, "Which eye channel?", 0, 2); 'if 0, average channels
+  DlgReal(7, "What is the calibration scale factor?", -100, 100);
+  DlgShow(delta, gain, incrementSize, leakOrInstability, nullEyePos, bestChannel, eyeScaleFactor);
 
   SetTrackingSettings%();
   SetSequencerValues();
@@ -465,27 +464,18 @@ Func SetTrackingSettings%()
     LeakInstabilityScale := 1;
   endcase
 
-  'set number of blocks to go through before incrementing
-  'for this to really work the numbers have to be set such that everything ends up as a whole number'
-  'instead change it so you give a min and a max and an increment size and it defines the number of blocks from that'
-  if incrementSize = 0 or gainCeiling <= gain then
-    nBlocks% := 1;
-  else
-    nBlocks% := (gainCeiling - gain + incrementSize) / incrementSize;
-  endif;
-
   SetSequencerValues();
   Return(1);
 End
 
 Func findNullEye()
   prevTime := MaxTime();
-  var chanMean := ChanValue(heposCh1%, prevTime); 'CHANGE THIS FOR DEV'
+  'update for median instead of mean'
+  var chanMean := ChanMeasure(heposCh1%, 2, prevTime-290, prevTime);
   if bestChannel = 2 then
-    chanMean := ChanValue(heposCh2%, prevTime);
+    chanMean := ChanMeasure(heposCh2%, 2, prevTime-290, prevTime);
   endif;
-  'var chan2Mean := ChanMeasure(heposCh2%, 2, prevTime-testLength, prevTime);
-  nullEyePos := chanMean;' + chan2Mean) / 2;
+  nullEyePos := chanMean;
   SetSequencerValues();
 End
 

@@ -69,7 +69,7 @@ Func ToolbarIdle%()
                 Return(1);
               endif
 
-              test% := 7;
+              test% := 7; 'skip runflash'
 
           ' MISC GAP B - flash before test
           case test% = 7 then
@@ -81,14 +81,14 @@ Func ToolbarIdle%()
           ' MISC TEST - pre- and post-testing
           case test% = 4 then
               SampleKey("4");
+              ToolbarLightOff%();
+              startTracking% := 1;
+              ToolbarTrackEyeOn%();
               goalTime := MaxTime() + testLength;
-
-              'FIGURE OUT WHAT HAPPENS IN TESTING FOR THIS PROTOCOL AND PUT IT HERE'
-
               docase 'prePostNum starts at 1, so 1st case is continuing experiment, second is ending experiment'
                 case prePostNum = 1 then
                   prePostNum := prePostNum + 1;
-                  test% := 1;
+                  test% := 3;
                 case prePostNum = 2 then
                   prePostNum := prePostNum + 1;
                   test% := 0;
@@ -97,10 +97,8 @@ Func ToolbarIdle%()
           ' BLOCK: GAP A
           case test% = 1 then
               SampleKey("x");
-              SampleKey("1");
-              goalTime := MaxTime() + 5;
+              goalTime := MaxTime() + 120;
               startTracking% := 0;
-              ToolbarTrackEyeOff%();
               ToolbarLightOff%(); Yield();
               ToolbarInit%(); Yield();
               test% := 6;
@@ -115,9 +113,13 @@ Func ToolbarIdle%()
           ' BLOCK: TRAIN
           case test% = 3 then
               SampleKey("3");
+              SampleKey("X");
               goalTime := MaxTime() + runLength;
               Yield(.3);
               'update the gain'
+              if rep% = 0 then
+                findNullEye();
+              endif;
               if rep% > 0 then
                 gain := gain + incrementSize;
               endif;
@@ -128,11 +130,8 @@ Func ToolbarIdle%()
               else
                   test% := 1;
               endif;
-              SampleKey("X");
               ToolbarLightOn%(); Yield(.1);
-              findNullEye();
               'nullEyePos := 0;
-              var preTime := MaxTime();
               startTracking% := 1;
 
         endcase;
