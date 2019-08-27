@@ -20,7 +20,7 @@ Max Gagnon 8/6/18
 
 %% === Import start/stop times from .smr file ========================== %%
 
-[params.segStarts, params.segEnds] = extractSineSegs_SEM(params.folder);
+[params.segStarts, params.segEnds] = extractSineSegs_SEM_firstlast(params.folder);
 
 %% === Import Time Segments ============================================ %%
 T = readtable(fullfile(params.folder,[params.file '.xlsx']));
@@ -115,6 +115,10 @@ end
 % Calculate scaled eye position
 heposdata = scaleCh1*datchandata(data,'hepos1') + scaleCh2*datchandata(data,'hepos2');
 
+% add eye position data to excel sheet
+fileID = fopen('2019_08_05_3_hepos.txt', 'w');
+fprintf(fileID, '%f \n', heposdata);
+
 % Create and add 'horizontal eye position' channel to channel list
 data(end+1) = dat(heposdata,'hepos',[],fs,data(1).tstart,data(1).tend,'deg');
 
@@ -124,6 +128,12 @@ data(end) = datlowpass(data(end),100);
 % Calculate eye velocity for plotting
 veltau = .01;
 hevel = movingslopeCausal(datchandata(data,'hepos'),round(fs*veltau))*fs;
+
+% add eye velocity to excel sheet
+fileID = fopen('2019_08_05_3_hevel.txt', 'w');
+fprintf(fileID, '%f \n', hevel);
+
+doTableStuff(hevel);
 
 % Create and add 'horiontal eye velocity' channel to channel list
 data(end+1) = dat(hevel,'hevel',[],fs,data(1).tstart,data(1).tend,'deg/s');
@@ -135,7 +145,7 @@ sac_amps_light = [];
 sac_amps_dark = [];
 [result, sac_amps, sac_amps_light, sac_amps_dark] = VOR_SineFit_SEM(data, frequency, labels, timepts, params, sac_amps, sac_amps_light, sac_amps_dark);
 
-figure(2); clf;
+figure(9); clf;
 dark = makeHistogram(sac_amps_dark, 'blue');
 title('saccade distribution');
 
@@ -156,8 +166,8 @@ save(fullfile(params.folder, 'result'), 'result','T');
 
 function [h] = makeHistogram(amps, color)
     h = histogram(amps, 'DisplayStyle', 'stairs');
-    %h.Normalization = 'probability';
-    h.BinLimits = [0.0, 10.0];
+    h.Normalization = 'probability';
+    h.BinLimits = [0.0, 3.0];
     h.BinWidth = 0.0200;
     h.EdgeColor = color;
 
@@ -168,4 +178,51 @@ function [s] = makeStemPlot(amps, color)
     end
     [N, e] = histcounts(amps, edges);
     s = stem(e(1:100), N);
-    s.Color = color;
+
+function doTableStuff(hevel)
+    % import data from CSV file
+    % DATA FORMAT: base time, amplitude, event time
+    saccadeData = csvread('heposData2.csv', 1, 0);
+    %saccadeDataNeg = csvread('posNegative.csv', 1, 0)
+    arrayLen = size(saccadeData,1);
+    %negArrayLen = size(saccadeDataNeg, 1);
+    %first make vector with duration by subtracting column3 - column1
+    saccadeDurations = zeros(arrayLen,1);
+    for i = 1:arrayLen
+        saccadeDurations(i) = saccadeData(i,3) - saccadeData(i,1);
+        if saccadeDurations(i) > 100
+            saccadeDurations(i) = NaN;
+        end
+    end
+    %negDurations = zeros(negArrayLen,1);
+    %for i = 1:negArrayLen
+    %    negDurations(i) = saccadeDataNeg(i,3) - saccadeDataNeg(i,1);
+    %end
+    %saccadeDurations = vertcat(saccadeDurations, -1.*negDurations);
+    %now add in all of the velocities
+    % WILL NEED TO UPDATE FOR NEGATIVE EVENTS ALSO
+    peakVelos = zeros(arrayLen,1);
+    for j = 1:arrayLen
+        maxVel = max(hevel(saccadeData(j,1):saccadeData(j,3)));
+        peakVelos(j) = maxVel;
+    end
+    %peakVelosNeg = zeros(negArrayLen,1);
+    %for j = 1:negArrayLen
+    %    minVel = min(hevel(saccadeDataNeg(j,1):saccadeDataNeg(j,3)));
+    %    peakVelosNeg(j) = minVel;
+    %end
+    %peakVelos = vertcat(peakVelos, -1.*peakVelosNeg);
+    %now we graph amp vs peak velocity and duration vs peak velocity
+    figure(1); clf;
+    %s = scatter(vertcat(saccadeData(:,2), saccadeDataNeg(:,2)), peakVelos);
+    s = scatter(saccadeData(:,2), peakVelos);
+    title('Amplitude vs. Peak Velocity');
+    xlabel('Amplitude (deg)');
+    ylabel('Peak Velocity (deg/s)');
+
+    figure(2); clf;
+    %s2 = scatter(vertcat(saccadeData(:,2), saccadeDataNeg(:,2)),saccadeDurations);
+    s2 = scatter(saccadeData(:,2),saccadeDurations);
+    title('Amplitude vs. Duration');
+    xlabel('Amplitude (deg)');
+    ylabel('Duration (ms)');

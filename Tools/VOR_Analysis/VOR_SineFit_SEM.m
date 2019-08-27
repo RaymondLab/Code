@@ -58,7 +58,7 @@ end
 samplerate = data(1).samplerate;
 presaccadeN = round(params.saccadePre*samplerate);
 postsaccadeN = round(params.saccadePost*samplerate);
-figure(1); clf;
+figure(3); clf;
 
 %% === Cycle through each segment ====================================== %%
 for count = 1:nSegs
@@ -112,25 +112,35 @@ for count = 1:nSegs
     %end
 
     amps_this_seg = []
-    for i = 2:length(seg_means)
-        if TF(i) == 1
-          amp_temp = abs((seg_means(i) - seg_means(i-1)));
-          if amp_temp  > 0
-            sac_amps(length(sac_amps)+1) = amp_temp;
-            amps_this_seg(length(amps_this_seg)+1) = amp_temp;
-            if mod(count, 2) == 0
-                sac_amps_light(length(sac_amps_light)+1) = amp_temp;
-            else
-                sac_amps_dark(length(sac_amps_dark)+1) = amp_temp;
-            end
-          end
-        end
+     for i = 2:length(seg_means)
+         if TF(i) == 1
+             amp_temp = abs((seg_means(i) - seg_means(i-1)));
+             if amp_temp  > 0
+                 sac_amps(length(sac_amps)+1) = amp_temp;
+                 amps_this_seg(length(amps_this_seg)+1) = amp_temp;
+                 if mod(count, 2) == 0
+                     sac_amps_light(length(sac_amps_light)+1) = amp_temp;
+                 else
+                     sac_amps_dark(length(sac_amps_dark)+1) = amp_temp;
+                 end
+             end
+         end
+     end
+%     for i = 2:length(seg_means)
+%         amp_temp = eyeVel(i);
+%         sac_amps(length(sac_amps)+1) = amp_temp;
+%         amps_this_seg(length(amps_this_seg)+1) = amp_temp;
+%         if mod(count, 2) == 0
+%             sac_amps_light(length(sac_amps_light)+1) = amp_temp;
+%         else
+%             sac_amps_dark(length(sac_amps_dark)+1) = amp_temp;
+%         end
+%     end
+    fig_title = count/2;
+    if mod(count,2) == 1 && count ~= 1
+        %figure(); clf;
     end
-
-    % want to use velocities * sample time to figure out average size of saccades
-
-    fig_title = ['segment', string(count)];
-    addHistogram(amps_this_seg, count, join(fig_title));
+    %addHistogram(amps_this_seg, count, fig_title, mod(count,2));
     %addLinePlot(amps_this_seg, count);
 
 
@@ -206,20 +216,6 @@ for count = 1:nSegs
         end
     end
 
-
-
-    %% === DISTRIBUTION findChangePts ========================= %%
-    % calculate the distribution of saccades by using the isChange function
-    % to find places where the data deviates largely from the mean. then,
-    % use the S1 vector to find the slopes of all of the areas that quickly
-    % deviated from the mean. Finally, FIND SOME WAY TO STORE LENGTH OF THESE
-    % DEVIATIONS, THEN MULTIPLY BY THE SLOPE TO FIND AMPLITUDE
-
-    % use findChangePts to find change points
-
-    % multiply by the length of each change (for delta pos) or differentiate that vector (?)
-
-    % create a histogram of the velocities/amplitudes
 
     %% === Calculate Fits ============================================== %%
     % fit data using a linear regression (data specified by 'keep_'index)
@@ -563,19 +559,24 @@ if 0
     tic; print(sp2, fullfile(params.folder, [params.file '_subplot2.pdf']),'-dpdf', '-r250'); toc
 end
 
-function [h] = addHistogram(amps, segNum, t)
+function [h] = addHistogram(amps, segNum, t, firstLast)
     hold on;
     h = histogram(amps, 'DisplayStyle', 'stairs');
-    title('distribution by segment');
+    darkLight = ' dark';
+    if mod(t, 2) == 1
+        darkLight = ' light';
+    end
+    titl = [string(t), darkLight];
+    title(t);
     %h.Normalization = 'probability';
-    h.BinLimits = [0.0, 10.0];
+    h.BinLimits = [0.0, 3.0];
     h.BinWidth = 0.0200;
-    h.EdgeColor = chooseColor(segNum);
+    h.EdgeColor = chooseColor(segNum,firstLast);
 
     hold on;
     %calculate Mean
     mu = median(amps);
-    line([mu, mu], ylim, 'LineWidth', 2, 'Color', chooseColor(segNum));
+    line([mu, mu], ylim, 'LineWidth', 2, 'Color', chooseColor(segNum,firstLast));
 
 % not used
 function [s] = addLinePlot(amps, segNum)
@@ -589,21 +590,26 @@ function [s] = addLinePlot(amps, segNum)
     %s.Color = chooseColor(segNum);
     %s.LineStyle = 'none';
     p = plot(e(1:100), N);
-    p.Color = chooseColor(segNum);
+    p.Color = chooseColor(segNum,2);
     hold on;
     mu = median(amps);
-    line([mu, mu], ylim, 'LineWidth', 2, 'Color', chooseColor(segNum));
+    line([mu, mu], ylim, 'LineWidth', 2, 'Color', chooseColor(segNum,2));
 
-function [c] = chooseColor(segNum)
-    c = 'blue';
-    if segNum == 2
+function [c] = chooseColor(segNum, scale)
+    if scale == 0
+        c = 'blue';
+    elseif scale == 1
         c = 'red';
-    elseif segNum == 3
-        c = 'green';
-    elseif segNum == 4
-        c = 'black';
-    elseif segNum == 5
-        c = 'cyan';
-    elseif segNum == 6
-        c = 'magenta';
     end
+%    c = 'blue';
+%    if scale + 1 <= segNum && segNum <= scale*2
+%        c = 'red';
+%    elseif scale*2+1 <= segNum && segNum <= 3*scale
+%        c = 'green';
+%    elseif scale*3+1 <= segNum && segNum <= scale*4
+%        c = 'yellow';
+%    elseif scale*4+1 <= segNum && segNum <= scale*5
+%        c = 'cyan';
+%    elseif scale*5+1 <= segNum && segNum <= scale*6
+%        c = 'magenta';
+%    end
