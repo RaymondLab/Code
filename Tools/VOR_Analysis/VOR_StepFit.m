@@ -115,7 +115,7 @@ for count = 1:nSegs
         cycleLength = cycleLength + 4;
     end
     cycleTime = (1:cycleLength)/samplerate;
-
+    
     %% === Desaccade/Process =========================================== %%
     
     % Find Initial Fit --> Not really needed, hope to remove eventually
@@ -238,21 +238,26 @@ for count = 1:nSegs
     %% === Calculate Average and More ================================== %%
     startpt = max(1,round(mod(-referece_angle,360)/360 * samplerate/freq));
     %startpt = round(cycleLength/8);%max(1,round(mod(-referece_angle,360)/360 * samplerate/freq))
-    stim_loc_seg = zeros(length(eyeVel_des), 1);
-    stim_loc_seg(round(sort([TTL3_on; TTL3_off; TTL4_on; TTL4_off]) * samplerate)) = 1;
+    stim3_loc_seg = zeros(length(eyeVel_des), 1);
+    stim4_loc_seg = zeros(length(eyeVel_des), 1);
+
+    stim3_loc_seg(round(sort([TTL3_on; TTL3_off]) * samplerate)) = 1;
+    stim4_loc_seg(round(sort([TTL4_on; TTL4_off]) * samplerate)) = 1;
     
     [eyeVel_des_mat, eyeVel_des_cycleMean] = VOR_breakTrace(cycleLength, startpt, eyeVel_des);
     [~, headVel_cycleMean]                 = VOR_breakTrace(cycleLength, startpt, headVel);
     [~, drumVel_cycleMean]                 = VOR_breakTrace(cycleLength, startpt, drumVel);
     [omit_mat, ~]                          = VOR_breakTrace(cycleLength, startpt, double(omitCenters));
     [~, idealEye_cycleMean]                = VOR_breakTrace(cycleLength, startpt, idealEyeVel);
-    [stim_loc_mat, ~]                      = VOR_breakTrace(cycleLength, startpt, stim_loc_seg);
-
+    [stim3_loc_mat, ~]                     = VOR_breakTrace(cycleLength, startpt, stim3_loc_seg);
+    [stim4_loc_mat, ~]                     = VOR_breakTrace(cycleLength, startpt, stim4_loc_seg);
+    
     % Calculate Extras
     badCycles = any(omit_mat,2);
     goodCount = sum(~badCycles);
     eyeVel_des_Sem = nanstd(eyeVel_des_mat)./sqrt(sum(~isnan(eyeVel_des_mat)));
-    stim_loc_cycle = any(stim_loc_mat);
+    stim3_loc_cycle = any(stim3_loc_mat);
+    stim4_loc_cycle = any(stim4_loc_mat);
     
     if goodCount > 0
         eyeVel_good_cycleMean = nanmean(eyeVel_des_mat(~badCycles,:), 1);
@@ -336,8 +341,8 @@ for count = 1:nSegs
         
         % if stim exists, plot
         if any(TTL3_on)
-            patch(x3, y3, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
-            patch(x4, y4, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
+            patch(x3, y3, 'g', 'FaceAlpha',.075, 'LineStyle', 'none');
+            patch(x4, y4, 'r', 'FaceAlpha',.075, 'LineStyle', 'none');
         end
         
         % Plot motor steps
@@ -381,22 +386,32 @@ for count = 1:nSegs
 
         % plot
         plot(cycleTime, eyeVel_good_cycleMean,'b'); hold on
-        plot(cycleTime, eyeVel_des_cycleMean, 'g');
+        %plot(cycleTime, eyeVel_des_cycleMean, 'g');
         %plot(cycleTime, eyeVel_des_cycleFit, 'r');
         plot(cycleTime, plotStim, 'k');
         hline(0,'--k');
         
-        % if stim, plot it
-        if any(stim_loc_cycle)
-            xcycle = [find(stim_loc_cycle)/samplerate]';
-            xcycle = [xcycle(1) xcycle(3); xcycle(2), xcycle(4); xcycle(2), xcycle(4); xcycle(1), xcycle(3)];
+        % plot stim from TTL3
+        if any(stim3_loc_cycle)
+            xcycle = [find(stim3_loc_cycle)/samplerate]';
+            xcycle = [xcycle(1); xcycle(2); xcycle(2); xcycle(1)];
             ycycle = [min(ylim);min(ylim);max(ylim);max(ylim)];
             ycycle = repmat(ycycle,[1 size(xcycle, 2)]);
-            patch(xcycle, ycycle, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
+            patch(xcycle, ycycle, 'r', 'FaceAlpha',.075, 'LineStyle', 'none');
             R.xcycle{count} = xcycle;
             R.ycycle{count} = ycycle;
         end
         
+        % plot stim from TTL4
+        if any(stim4_loc_cycle)
+            xcycle = [find(stim4_loc_cycle)/samplerate]';
+            xcycle = [xcycle(1); xcycle(2); xcycle(2); xcycle(1)];
+            ycycle = [min(ylim);min(ylim);max(ylim);max(ylim)];
+            ycycle = repmat(ycycle,[1 size(xcycle, 2)]);
+            patch(xcycle, ycycle, 'g', 'FaceAlpha',.075, 'LineStyle', 'none');
+            R.xcycle{count} = xcycle;
+            R.ycycle{count} = ycycle;
+        end
         
         % Cosmetics
         box off
@@ -409,14 +424,16 @@ for count = 1:nSegs
         
         if count == nSegs
             xlabel('Time (s)');    
-        end 
+        end
         
         % Add quick reference text
-        text(max(cycleTime)*1.05, ylimits(2), ['Good Cycles: ', num2str(goodCount), '/', num2str(length(badCycles))],'FontSize',7);
-        text(max(cycleTime)*1.05, ylimits(2)-5, ['Rel Gain: ' num2str(eyeVel_rel_gain)], 'Fontsize', 7);
-        text(max(cycleTime)*1.05, ylimits(2)-10, ['Eye Amp: ', num2str(eyeVel_amp,3)],'FontSize',7);
-        text(max(cycleTime)*1.05, ylimits(2)-15, ['Rel. Phase: ', num2str(eyeVel_rel_phase,3)],'FontSize',7);
-        text(max(cycleTime)*1.05, ylimits(2)-20, ['Stim: ', stimType],'FontSize',7);
+        ylimRange = ylimits(2) - ylimits(1);
+        text(max(cycleTime)*1.05, ylimits(2)-.1*ylimRange, ['Good Cycles: ', num2str(goodCount), '/', num2str(length(badCycles))],'FontSize',7);
+        text(max(cycleTime)*1.05, ylimits(2)-.2*ylimRange, ['Rel Gain: ' num2str(eyeVel_rel_gain)], 'Fontsize', 7);
+        text(max(cycleTime)*1.05, ylimits(2)-.3*ylimRange, ['Eye Amp: ', num2str(eyeVel_amp,3)],'FontSize',7);
+        text(max(cycleTime)*1.05, ylimits(2)-.4*ylimRange, ['Rel. Phase: ', num2str(eyeVel_rel_phase,3)],'FontSize',7);
+        text(max(cycleTime)*1.05, ylimits(2)-.5*ylimRange, ['Stim: ', stimType],'FontSize',7);
+        text(max(cycleTime)*1.05, ylimits(2)-.6*ylimRange, ['r^2: ', num2str(stat(1))],'FontSize',7);
 
         % Manual y axis b/c matlab is literal garbage
         yticks([min(ylim) 0 max(ylim)])

@@ -165,19 +165,14 @@ for i = 1:4
     
     % Make Text Notes - Keep spacing in mind!! Not handled by matlab, so I
     % do it manually.
-    
-    %text(yAlign, xAlignTop-(k*textGap), '    nm     gain   r^2  BS', 'FontSize', FontSize)
-    %k = k + 1;
-    
+
     for z = 1:length(sumStruct)
         
         if ~sumStruct(z).removed
             Gstrnum = num2str(sumStruct(z).blGains);
             Rstrnum = num2str(sumStruct(z).blrSquare);
             BCstrnum = num2str(sumStruct(z).BadSegCnt);
-            %text(yAlign, xAlignTop-(k*textGap), [sumStruct(z).name, '   ', Gstrnum(1:4), '   ', Rstrnum(1:4), '   ', BCstrnum], 'FontSize', FontSize)
             LegCell(z) = {[sumStruct(z).name, '   ', Gstrnum(1:4), '   ', Rstrnum(1:4), '   ', BCstrnum]};
-            %k = k + 1;
         end
     end
     
@@ -201,7 +196,6 @@ for i = 1:4
             Rstrnum = num2str(sumStruct(z).blrSquare);
             BCstrnum = num2str(sumStruct(z).BadSegCnt);
             text(yAlign, xAlignTop-(k*textGap), [sumStruct(z).name, '   ', Gstrnum(1:4), '   ', Rstrnum(1:4), '   ', BCstrnum], 'FontSize', FontSize)
-            %LegCell(z) = {[sumStruct(z).name, '   ', Gstrnum(1:4), '   ', Rstrnum(1:4), '   ', BCstrnum]};
             k = k + 1;
         end
     end
