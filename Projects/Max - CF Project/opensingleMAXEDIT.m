@@ -11,13 +11,17 @@
 %       15.1, eye should not overshoot target
 %       2. Using 100 Hz low pass filtered eye velocity instead of 25 Hz
 %       3. Option to load or not load CS
+
+%    ch1: hgpos
+%    ch2: hevel
+%    ch4: hhvel
+%    ch6: htpos
 % 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [beh, shiftAmt, shiftConfidence] = opensingleMAXEDIT(filename, ephys_exists, full_ephys)
 
     %% Opens Cntrlx file in Matlab and saves as "behavior"
     chanAmt = 7; %6: Jennifer, 7: Akira
-    filename;
     behavior = readcxdata(filename, 0, chanAmt);
     if isempty(behavior.data)
         return
@@ -115,6 +119,7 @@ function [beh, shiftAmt, shiftConfidence] = opensingleMAXEDIT(filename, ephys_ex
     bSamplerate = 500;
     htvel = movingslopeCausal(htpos,round(bSamplerate*veltau))*bSamplerate;
     
+
     % Store data
     beh        = dat(hgpos,'Horz Gaze Vel',  1,bSamplerate,tstart, tend,'deg');
     beh(end+1) = dat(vepos,'Vert Eye Pos',   2,bSamplerate,tstart, tend,'deg');
