@@ -30,7 +30,7 @@ classdef chanData
             
             if strcmp(self.whoseData, 'Akira')
                 eFile = strrep(bFileName, 'unit', 'U');
-            elseif strmp(self.whoseData, 'Jennifer')
+            elseif strcmp(self.whoseData, 'Jennifer')
                 eFile = strrep(bFileName, 'da', 'du');
             else
             end
@@ -85,7 +85,7 @@ classdef chanData
         function plotAllChans(~, datObj)
             figure(1); clf
             ha = tight_subplot(9,1,[.03 .03],[.03 .03],[.03 .03]);
-            for i = 1:9
+            for i = 1:8
                 
                 axes(ha(i));
                 
@@ -161,22 +161,22 @@ classdef chanData
             end
             disp(['     -', self.expmt_table.SineStep{expmtRow}]);
             
-            % What kind of Sine? 
-            if contains(self.expmt_table.SineStep{expmtRow}, 'Sine')
-                % Input for Sine/Step Information
-                answer = questdlg('Expmt Type?', ...
-                    'Dessert Menu', ...
-                    'OKR','VORD', 'Unknown', 'Unknown');
-                if contains(answer, 'Unknown')
-                    answer = questdlg('Exmpt Type?', ...
-                        'Dessert Menu', ...
-                        'x0', 'x2', 'Unknown', 'Unknown');
-                end
-                
-                % Save StimType information
-                self.expmt_table.StimType{expmtRow} = answer;
-                disp(['     -Stim Type: ', answer]);
-            end
+%             % What kind of Sine? 
+%             if contains(self.expmt_table.SineStep{expmtRow}, 'Sine')
+%                 % Input for Sine/Step Information
+%                 answer = questdlg('Expmt Type?', ...
+%                     'Dessert Menu', ...
+%                     'OKR','VORD', 'Unknown', 'Unknown');
+%                 if contains(answer, 'Unknown')
+%                     answer = questdlg('Exmpt Type?', ...
+%                         'Dessert Menu', ...
+%                         'x0', 'x2', 'Unknown', 'Unknown');
+%                 end
+%                 
+%                 % Save StimType information
+%                 self.expmt_table.StimType(expmtRow) = answer;
+%                 disp(['     -Stim Type: ', answer]);
+%             end
             
 
         end

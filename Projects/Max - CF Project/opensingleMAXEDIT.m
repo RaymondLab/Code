@@ -21,7 +21,7 @@
 function [beh, shiftAmt, shiftConfidence] = opensingleMAXEDIT(filename, ephys_exists, full_ephys)
 
     %% Opens Cntrlx file in Matlab and saves as "behavior"
-    chanAmt = 7; %6: Jennifer, 7: Akira
+    chanAmt = 6; %6: Jennifer, 7: Akira
     behavior = readcxdata(filename, 0, chanAmt);
     if isempty(behavior.data)
         return
@@ -75,7 +75,7 @@ function [beh, shiftAmt, shiftConfidence] = opensingleMAXEDIT(filename, ephys_ex
         sumofthings = nan(length(ephys),1);
 
         for x = 1:length(ephys)
-            if max(eventsSampleTime + x) > length(ephys)
+            if max(eventsSampleTime + x) > 100000
                 break
             end
             sumofthings(x) = sum(ephys(eventsSampleTime + x));
