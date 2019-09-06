@@ -7,7 +7,7 @@ A.excelFile = 'C:\Users\Public\RaymondLabCode\Projects\Max - CF Project\Monkey M
 %A.excelFile = 'C:\Users\Public\RaymondLabCode\Projects\Max - CF Project\Monkey Metadata by Max (Akira).xlsx';
 A.expmt_table = readtable(A.excelFile);
 
-A.expmtDataFolder = 'D:\My Drive\Expmt Data\2019_05 - Max Climbing Fiber\Initial Data for testing';
+A.expmtDataFolder = 'G:\My Drive\Expmt Data\2019_05 - Max Climbing Fiber\Initial Data for testing';
 %A.expmtDataFolder = 'G:\My Drive\Expmt Data\2019_05 - Akira and Sriram Complex Spikes';
 
 %bFiles = dir([ExpmtDataFolder '\**\*.0*']);
@@ -28,11 +28,11 @@ A.bFiles(contains({A.bFiles.name}, {'.zip'})) = [];
 for j = 1:length(A.bFiles)
     
     disp([A.bFiles(j).name, '(', num2str(j), '/', num2str(length(A.bFiles)), ')'])
-    % If the file is an ephys or oddly named file, skip it - Jennifer 
-     if length(A.bFiles(j).name) ~= 11
-       continue
-     end
-     
+    % If the file is an ephys or oddly named file, skip it - Jennifer
+    if length(A.bFiles(j).name) ~= 11
+        continue
+    end
+    
     %if ~contains({A.bFiles(j).name}, {'unit'})
     if ~contains({A.bFiles(j).name}, {'da'})
         disp('     -Not Behavior File')
@@ -58,16 +58,18 @@ for j = 1:length(A.bFiles)
     end
     
     %% plotAllChans
-    A.plotAllChans(beh);
+    %A.plotAllChans(beh);
     
     %% save Ephys Shift Val
-    %A = A.findEphysAllignment(beh, expmtRow, shiftConfidence);
+    A = A.findEphysAllignment(beh, expmtRow, shiftConfidence);
     %A.plot2(beh);
     
-    %% Find the Stim Type
-    A = A.findStimType(expmtRow);
-    
-    
+    % Find the Stim Type
+    %A = A.findStimType(expmtRow);
+    %[A, peakFreqEstimate] = A.findExpmtFreq(beh, expmtRow);
+    %A.plotPowerSpec(beh);
+    %A = A.findAmpPhase(beh, peakFreqEstimate, expmtRow);
+
     fclose('all');
 end
 

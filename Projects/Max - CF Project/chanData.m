@@ -53,7 +53,7 @@ classdef chanData
             end
         end
         
-        function [self, peakFreqEstimate] = findExpmtFreq(self, datObj)
+        function [self, peakFreqEstimate] = findExpmtFreq(self, datObj, expmtRow)
             maxFreqLoc = [0,0,0,0,0; 0,0,0,0,0];
             for i = 1:8
                 
@@ -66,7 +66,7 @@ classdef chanData
                 P2 = abs(Y/L);
                 P1 = P2(1:floor(L/2+1));
                 P1(2:end-1) = 2*P1(2:end-1);
-                f = beh(i).samplerate*(0:(L/2))/L;
+                f = datObj(i).samplerate*(0:(L/2))/L;
                 
                 if sum(P1 == max(P1)) == 1
                     maxFreqLoc(1, i) = f(P1 == max(P1));
@@ -79,6 +79,11 @@ classdef chanData
                 peakFreqEstimate = round(peakFreqEstimate * 2)/2;
                 self.expmt_table.Freq_Duration(expmtRow) = peakFreqEstimate;
                 disp(['     -Freq Est: ', num2str(peakFreqEstimate)]);
+            else
+                peakFreqEstimate = NaN;
+                self.expmt_table.Freq_Duration(expmtRow) = NaN;
+                disp(['     -Freq Est: ', 'NaN']);
+                
             end
         end
         
@@ -119,8 +124,8 @@ classdef chanData
                 
         function plotPowerSpec(~, datObj)
             figure(99);clf
-            za = tight_subplot(8,1,[.03 .03],[.03 .03],[.03 .03]);
-            for i = 1:8
+            za = tight_subplot(9,1,[.03 .03],[.03 .03],[.03 .03]);
+            for i = 1:7
                 
                 L = length(datObj(i).data);
                 Y = fft(datObj(i).data);
@@ -181,7 +186,12 @@ classdef chanData
 
         end
         
-        function self = findAmpPhase(self, datObj)
+        function self = findAmpPhase(self, datObj, peakFreqEstimate, expmtRow)
+            
+            % Make sure you have a peakFreqEstimate value
+            if isnan(peakFreqEstimate)
+                return
+            end
             
             % Generate Fit
             for i = 1:8
@@ -190,7 +200,7 @@ classdef chanData
                 end
                 
                 segLength = length(datObj(i).data);
-                segTime = (1:segLength)/samplerate;
+                segTime = (1:segLength)/datObj(i).samplerate;
                 freq = peakFreqEstimate;
                 y1 = sin(2*pi*freq*segTime(:));
                 y2 = cos(2*pi*freq*segTime(:));
@@ -280,9 +290,6 @@ classdef chanData
             
             
         end
-        
-        
-        
         
     end
 end

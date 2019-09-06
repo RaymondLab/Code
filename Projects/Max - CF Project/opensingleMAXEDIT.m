@@ -75,7 +75,7 @@ function [beh, shiftAmt, shiftConfidence] = opensingleMAXEDIT(filename, ephys_ex
         sumofthings = nan(length(ephys),1);
 
         for x = 1:length(ephys)
-            if max(eventsSampleTime + x) > 100000
+            if max(eventsSampleTime + x) > 400000
                 break
             end
             sumofthings(x) = sum(ephys(eventsSampleTime + x));
