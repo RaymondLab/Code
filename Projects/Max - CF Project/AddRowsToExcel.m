@@ -12,11 +12,8 @@ A.expmtDataFolder = 'G:\My Drive\Expmt Data\2019_05 - Max Climbing Fiber\Initial
 
 %bFiles = dir([ExpmtDataFolder '\**\*.0*']);
 A.bFiles = dir([A.expmtDataFolder '\**\*']);
-A.whoseData = 'Akira';
+%A.whoseData = 'Akira';
 A.whoseData = 'Jennifer';
-
-%figure(1); clf
-%ha = tight_subplot(8,1,[.03 .03],[.03 .03],[.03 .03]);
 
 %% Filters
 % Remove directories
@@ -45,24 +42,26 @@ for j = 1:length(A.bFiles)
     %% Find Ephys
     [A, ephys_exists, ePath] = A.findEphys(A.bFiles(j).name, expmtRow);
     
-    if ~ephys_exists
-        continue
-    end
+    %if ~ephys_exists
+    %    continue
+    %end
     
     %% Open File
     try
-        [beh, shiftAmt, shiftConfidence] = opensingleMAXEDIT(bPath, ephys_exists, ePath);
+        [beh, shiftAmt, shiftConfidence] = opensingleMAXEDIT(bPath, 0, ePath);
     catch
         disp('     -Failed to Open. Skipped')
         continue
     end
     
     %% plotAllChans
-    %A.plotAllChans(beh);
+    A.plotAllChans(beh);
+    A.plot2(beh);
     
+    A = A.findStimType(expmtRow);
     %% save Ephys Shift Val
-    A = A.findEphysAllignment(beh, expmtRow, shiftConfidence);
-    %A.plot2(beh);
+    %A = A.findEphysAllignment(beh, expmtRow, shiftConfidence);
+    
     
     % Find the Stim Type
     %A = A.findStimType(expmtRow);

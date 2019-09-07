@@ -14,7 +14,7 @@ function chanData = maestro2dat(filename, samplerate)
         return
     end
     
-    timeVec = 0:1/eSamplerate:(length(ephys)-1)/eSamplerate;
+    timeVec = 0:1/samplerate:(length(ephys)-1)/samplerate;
     tstart = timeVec(1);
     tend   = timeVec(end);
     

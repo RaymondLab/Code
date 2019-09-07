@@ -63,15 +63,15 @@ function chanData = cx2dat(filename, chanAmt, samplerate)
     end
     
     %% Store data in dat format
-    chanData        = dat(hgpos,'Horz Gaze Vel',    1,bSamplerate,tstart, tend,'deg');
-    chanData(end+1) = dat(vepos,'Vert Eye Pos',     2,bSamplerate,tstart, tend,'deg');
-    chanData(end+1) = dat(hevel,'Horz Eye Pos',     3,bSamplerate,tstart, tend,'deg/s');
-    chanData(end+1) = dat(htpos,'Horz Target Pos',  4,bSamplerate,tstart, tend,'deg');
-    chanData(end+1) = dat(hhvel,'Horz Head Vel',    5,bSamplerate,tstart, tend,'deg/s');
-    chanData(end+1) = dat(hdvel,'Horz d Vel (eye2)',6,bSamplerate,tstart, tend,'deg/s');
-    chanData(end+1) = dat(htvel,'Horz Target Vel',  7,bSamplerate,tstart, tend,'deg/s');
+    chanData        = dat(hgpos,'Horz Gaze Vel',    1,samplerate,tstart, tend,'deg');
+    chanData(end+1) = dat(vepos,'Vert Eye Pos',     2,samplerate,tstart, tend,'deg');
+    chanData(end+1) = dat(hevel,'Horz Eye Pos',     3,samplerate,tstart, tend,'deg/s');
+    chanData(end+1) = dat(htpos,'Horz Target Pos',  4,samplerate,tstart, tend,'deg');
+    chanData(end+1) = dat(hhvel,'Horz Head Vel',    5,samplerate,tstart, tend,'deg/s');
+    chanData(end+1) = dat(hdvel,'Horz d Vel (eye2)',6,samplerate,tstart, tend,'deg/s');
+    chanData(end+1) = dat(htvel,'Horz Target Vel',  7,samplerate,tstart, tend,'deg/s');
     if chanAmt == 7
-        chanData(end+1) = dat(unknown, 'Unknown',   8,bSamplerate, tstart, tend,'?');
+        chanData(end+1) = dat(unknown, 'Unknown',   8,samplerate, tstart, tend,'?');
     end
     chanData(end+1) = dat(timeofsimplespikes,'ss',  9,'event',tstart, tend,'s');
     chanData(end+1) = dat(timeofcomplexspikes,'cs', 10,'event',tstart, tend,'s');
