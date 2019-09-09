@@ -1,4 +1,4 @@
-function [startTimes, endTimes] = extractSegmentTimes(folder, params)
+function [startTimes, endTimes] = extractSegmentTimes(folder)
 %% setup
 [~, file] = fileparts(folder);
 chanlist = readSpikeFile(fullfile(folder,[file '.smr']),[]);
@@ -14,13 +14,9 @@ starts = SampleKeyTimes(strfind(SampleKeys, 'Xx'));
 ends = SampleKeyTimes(strfind(SampleKeys, 'Xx')+1);
 
 %% Combine
-startTimes = sort([start_Ss_loc start_SLs_loc start_SLL_loc start_SPs_loc start_SPL_loc start_special])';
-endTimes = sort([end_Ss_loc end_SLs_loc end_SLL_loc end_SPs_loc end_SPL_loc end_special])';
+startTimes = sort(starts)';
+endTimes = sort(ends)';
 
-if contains(params.analysis, 'Default (Sine Only)')
-    startTimes = sort(starts)';
-    endTimes = sort(ends)';
-end
 
 %% Take the Experiment start time listed in the excel file, and remove incorrect segments
 
@@ -37,5 +33,7 @@ if length(segment_Names) < length(endTimes)
 end
 
 %% place start and end times into the excel file
-xlswrite(fullfile(folder,[file '.xlsx']), startTimes, 'Sheet1', 'D2')
-xlswrite(fullfile(folder,[file '.xlsx']), endTimes, 'Sheet1', 'E2')
+if ~isempty(startTimes) && ~isempty(endTimes)
+    xlswrite(fullfile(folder,[file '.xlsx']), startTimes, 'Sheet1', 'D2')
+    xlswrite(fullfile(folder,[file '.xlsx']), endTimes, 'Sheet1', 'E2')
+end
