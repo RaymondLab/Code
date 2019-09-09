@@ -1,0 +1,111 @@
+Procedures for building MEX functions READCXDATA/EDITCXDATA for various supported OS platforms
+
+Last Updated: 02dec2015
+
+Scott Ruffner
+
+Below are general instructions on building the Maestro-related MEX functions READCXDATA() and EDITCXDATA(). READCXDATA()
+is an essential tool for Maestro users, as it reads and parses a Maestro data file and stores its content in a Matlab
+structure so that users can develop scripts to automate analysis of large numbers of data files. EDITCXDATA() is used
+less frequently, mostly to append the results of offline spike-sorting to the original data file.
+
+As of Aug 2014, the Lisberger lab plans to support building READCXDATA() and EDITCXDATA() for the following OSes; note 
+the MEX file extensions specific to each platform:
+   Linux 64-bit:      .mexa64
+   Windows 64-bit:    .mexw64
+   Intel OS X 64-bit: .mexmaci64
+Note that support for the 32-bit OSes has now been dropped. If someone needs a 32-bit build, they will need to compile it 
+themselves using the source code, which can be downloaded from the Maestro online guide.
+
+To build the MEX function for a particular OS, you must have Matlab installed for that OS and run the MEX compiler on 
+the relevant code. As of Aug 2014, I used Matlab 2012b to build the MEX files for Linux 64-bit, and Matlab 2013a to 
+build the MEX files for OSX 64-bit.
+
+Since READ/EDITCXDATA is built so infrequently, each new build tends to be an “adventure” because of compatibility
+issues between Matlab, OS, and compiler versions. Be sure to check the list of supported and compatible compilers for
+the version of Matlab you’re using and the OS platform you’re targeting. Things tend to be especially tricky on Mac OS X.
+Matlab relies on command-line tools supplied with Apple’s Xcode, which is constantly being updated.
+
+Instructions:
+
+1) Start MATLAB and make the READCXDATA source code directory the current directory.
+
+2) Build the MEX functions using the following commands:
+    mex readcxdata.c pertmgr.c noisyem.c
+    mex editcxdata.c
+    
+NOTE that, for the Linux 64-bit build, I've specified a custom MEX options file in the build commands:
+    mex readcxdata.c pertmgr.c noisyem.c -f /home/sruffner/matlab/mexopts_v7.sh
+    mex editcxdata.c -f /home/sruffner/matlab/mexopts_v7.sh
+This file is essentially the default options file, with the '-ansi' flag removed from the CFLAGS and CXXFLAGS macros
+so that GCC will accept the C++-style comment delimiters that appear throughout the READ/EDITCXDATA source code.
+I'm not sure if this is still necessary when building for Linux 64-bit (try to build without the custom MEX options and
+see if it works!); it is NOT necessary for any of the other OS target platforms.
+
+2a) (11aug2014) Upon upgrading Mac OSX from 10.7 to 10.9 (Mavericks), MEX no longer worked when invoked on the Matlab
+command line as above. Two fixes were necessary. I had to replace all instances of '10.7' in the Matlab-supplied mexopts.sh 
+file (at $MATLABPkg/bin/mexopts.sh) with '10.8', as the 10.7 sdk no longer exists in Mavericks. In addition, I had to add 
+define the symbol 'char16_t' to eliminate a compiler error: mex -Dchar16_t=UINT16_t readcxdata.c pertmgr.c noisyem.c
+
+2b) (01dec2015) For this build, Mac OS X is at 10.10.3 (Yosemite), and Xcode is version 6.3.2. The MEX build failed in
+R2013a (could not find clang tool). Note that R2013a is only compatible with Xcode 4.3+. I tried downloading Xcode 4.6
+and using that with R2013a, but it still did not work. I read that the command-line tools may no longer be distributed
+with Xcode, so perhaps that was the issue. Still, I noted that Xcode 4.6 crashed when I tried to run it on Yosemite. 
+The MEX build was successful in R2014b, even though Mathworks does not indicate compatibility with Xcode 6.3.2. I made
+a similar change to the default mexopts.sh file for R2014b, but did NOT have to define the symbol ‘char16_t’.
+
+
+3) Keeping track of releases.  Releases are maintained in the READCXDATA source code directory $CXDATAHOME, specifically
+at $CXDATAHOME/releases/vDDMMMYYYY, where DDMMMYYYY is the date of the release. Include the following files in each
+release directory:
+    readcxdata.mexa64, editcxdata.mexa64
+    readcxdata.mexw64, editcxdata.mexw64
+    readcxdata.mexmaci64, editcxdata.mexmaci64
+    cxdata_mex_vDDmmmYYYY.zip
+    cxdata_src_vDDmmmYYYY.zip
+The first ZIP file contains all of the different MEX files listed before it, while the second contains all of the source
+code files required to build the two MEX functions. To create the second archive, simply ZIP together all of the files 
+in $CXDATAHOME (but not in its subdirectories!). Recommend saving prior releases for at least 3 years. It's probably a 
+good idea to include a short "readme" text file in the release directory that explains the changes included in the 
+release and the current version of Maestro at the time of the release.
+
+3a) NOTE, when using right-click “Compress” to ZIP files in Mac OSX, a hidden folder called __MACOSX is added to the ZIP
+archive. This hidden folder has caused problems on Windows. To get rid of it, run: zip -d archiveName.zip __MACOSX\/*
+
+
+4) Upload the ZIP files listed in (3) to the "Downloads" page of the online Maestro UG and notify users of the new 
+release. Be sure to update the UG to reflect any significant changes in the new release.
+
+
+5) HOWTO on building READCXDATA on remote OS platforms (for the most recent build):
+   a) MEXA64: Used Matlab 2012b on lennon.dhe.duke.edu. Matlab versions prior to R2012b no longer work, because they were
+designed to work with older versions of the Linux GCC compiler. To remote onto lennon, I used the VPN client to tunnel into 
+Duke’s intranet. Then I could sftp onto lennon (port# 7777 !!), upload the modified code files to the readcxdata folder on my account in the Lisberger lab. I then SSH’d onto lennon (again, port # 7777), cd’d to the directory, and compiled the MEXA64 
+files. I have to use the special mex options file for it to work. Finally, I used the SFTP connection to download the just-built 
+MEX files onto my local machine. Here’s a list of commands:
+
+> cd matlabstuff/readcxdata
+> sftp -P 7777 sruffner@lennon.dhe.duke.edu
+sftp> cd projects/matlabstuff/readcxdata
+sftp> put -P *.h
+sftp> put -P *.c
+sftp> quit
+> ssh -p 7777 sruffner@lennon.dhe.duke.edu
+ssh> cd projects/matlabstuff/readcxdata
+ssh> /usr/local/MATLAB/R2012b/bin/mex readcxdata.c pertmgr.c noisyem.c -f /home/sruffner/matlab/mexopts_v7.sh
+ssh> /usr/local/MATLAB/R2012b/bin/mex editcxdata.c -f /home/sruffner/matlab/mexopts_v7.sh
+ssh> exit
+> sftp -P 7777 sruffner@lennon.dhe.duke.edu
+sftp> cd projects/matlabstuff/readcxdata
+sftp> get -P *.mexa64
+sftp> quit
+
+   b) MEXMACI64: Used Matlab R2014b on my own IMac: OS X 10.10.3, Xcode 6.3.2. Executed mex from the Matlab command line, with 
+READCXDATA source code directory as the current directory. See (2b).
+
+   c) MEXW64: I tunneled into the Duke VPN and used the Microsoft Remote Desktop client to log onto the DataNav portal server
+machine (datanav.dhe.duke.edu) in the Lisberger lab. This is a 64-bit Windows 7 workstation with Matlab R2012b installed. The build
+requires the Microsoft SDK 7.1 compiler, which does not come with Matlab but is part of the .NET4 framework and is a free download
+from Microsoft. Used MRD folder redirection so that I can copy source code files from my iMac to the remote Windows workstation, 
+then copy the MEXW64 files back. NOTE that the build message indicated that MS Visual Studio 2010 runtime libraries must be 
+available on the computer on which the MEX function is run. 

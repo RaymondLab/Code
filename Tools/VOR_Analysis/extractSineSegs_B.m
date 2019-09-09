@@ -57,7 +57,7 @@ if length(segment_Names) < length(endTimes)
 end
 
 %% place start and end times into the excel file
-if ~isempty(startTimes) && ~isempty(endTimes)
+if ~isempty(startTimes)
     xlswrite(fullfile(folder,[file '.xlsx']), startTimes, 'Sheet1', 'D2')
     xlswrite(fullfile(folder,[file '.xlsx']), endTimes, 'Sheet1', 'E2')
 end

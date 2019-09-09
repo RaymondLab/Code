@@ -30,16 +30,18 @@ goodRows = ~isnan(table2array(T(:,2)));
 params.segAmt = sum(goodRows);
 T = T(goodRows,:);
 
-% New Version
-[params.segStarts, params.segEnds] = extractSegmentTimes(params.folder);
+
+% Used for some of Jaydev & Sriram's Experiments Summer 2019
+[params.segStarts, params.segEnds] = extractSineSegs_B(params.folder);
+
 if length(params.segStarts) ~= params.segAmt
     
     % Old Version
     [params.segStarts, params.segEnds] = extractSineSegs(params.folder);
     if length(params.segStarts) ~= params.segAmt
         
-        % Used for some of Jaydev & Sriram's Experiments Summer 2019
-        [params.segStarts, params.segEnds] = extractSineSegs_B(params.folder, params);
+        % New Version
+        [params.segStarts, params.segEnds] = extractSegmentTimes(params.folder);
         if length(params.segStarts) ~= params.segAmt
             error(sprintf(['\n\n\nSegment Count Error \n', ...
                'Segments Listed in Excel File: ', num2str(params.segAmt), '\n', ...
@@ -94,10 +96,11 @@ data = rawdata;
 fs = data(1).samplerate;
 
 % Add a drum velocity channel if needed
-if isempty(datchan(data,'htvel'))
+if isempty(datchan(data,'htvel')) || max(datchandata(data,'htvel'))<.1
+    data(datchanind(data,'htvel')) = [];
     ind = datchanind(data,'htpos');
     if ~isempty(ind)
-        data(end+1) = dat(smooth([diff(smooth(data(ind).data,50)); 0],50)*fs,'htvel',[],fs,data(ind).params.segStarts,data(ind).tend,'deg/s');
+        data(end+1) = dat(smooth([diff(smooth(data(ind).data,50)); 0],50)*fs,'htvel',[],fs,data(ind).tstart,data(ind).tend,'deg/s');
     end
 end
 
@@ -105,7 +108,9 @@ end
 if isempty(datchan(data,'hhvel')) || max(datchandata(data,'hhvel'))<.1
     data(datchanind(data,'hhvel')) = [];
     ind = datchanind(data,'hhpos');
-    data(end+1) = dat(smooth([diff(smooth(data(ind).data,50,'moving')); 0],50,'moving')*fs,'hhvel',[],fs,data(ind).params.segStarts,data(ind).tend,'deg/s');
+    if ~isempty(ind)
+        data(end+1) = dat(smooth([diff(smooth(data(ind).data,50)); 0],50)*fs,'hhvel',[],fs,data(ind).tstart,data(ind).tend,'deg/s');
+    end
 end
 
 %% === Scale Eye Chans and Calculate Eye Velocity ====================== %%
@@ -140,7 +145,11 @@ hevel = movingslopeCausal(datchandata(data,'hepos'),round(fs*veltau))*fs;
 data(end+1) = dat(hevel,'hevel',[],fs,data(1).tstart,data(1).tend,'deg/s');
 
 %% === Run Sine Analysis for Each Relevant Segment ===================== %%
-result = VOR_SineFit(data, frequency, labels, timepts, params);
+if strcmp(params.analysis, 'Amin_GC_Steps')
+    result = VOR_StepFit(data, frequency, labels, timepts, params);
+else
+    result = VOR_SineFit(data, frequency, labels, timepts, params);
+end
 
 % Append results to Excel
 xlswrite(fullfile(params.folder,[params.file '.xlsx']),result.data(:,4:end),'Sheet1','J2');

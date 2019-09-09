@@ -148,7 +148,6 @@ classdef chanData
         
         function self = findStimType(self, expmtRow)
             % Sine or Step?
-            
             if contains(self.expmt_table.SineStep{expmtRow}, 'Not Measured')
                 
                 % Input for Sine/Step Information
@@ -167,22 +166,22 @@ classdef chanData
             end
             disp(['     -', self.expmt_table.SineStep{expmtRow}]);
             
-            % What kind of Sine? 
-            if contains(self.expmt_table.SineStep{expmtRow}, 'Sine')
-                % Input for Sine/Step Information
-                answer = questdlg('Expmt Type?', ...
-                    'Dessert Menu', ...
-                    'OKR','VORD', 'Unknown', 'Unknown');
-                if contains(answer, 'Unknown')
-                    answer = questdlg('Exmpt Type?', ...
-                        'Dessert Menu', ...
-                        'x0', 'x2', 'Unknown', 'Unknown');
-                end
-                
-                % Save StimType information
-                self.expmt_table.StimType{expmtRow} = answer;
-                disp(['     -Stim Type: ', answer]);
-            end
+%             % What kind of Sine? 
+%             if contains(self.expmt_table.SineStep{expmtRow}, 'Sine')
+%                 % Input for Sine/Step Information
+%                 answer = questdlg('Expmt Type?', ...
+%                     'Dessert Menu', ...
+%                     'OKR','VORD', 'Unknown', 'Unknown');
+%                 if contains(answer, 'Unknown')
+%                     answer = questdlg('Exmpt Type?', ...
+%                         'Dessert Menu', ...
+%                         'x0', 'x2', 'Unknown', 'Unknown');
+%                 end
+%                 
+%                 % Save StimType information
+%                 self.expmt_table.StimType(expmtRow) = answer;
+%                 disp(['     -Stim Type: ', answer]);
+%             end
             
 
         end
@@ -263,7 +262,7 @@ classdef chanData
             timeVec = 0:( 1/samplerate ):( length(datObj(7).data)-1 )/samplerate;
             plot(timeVec, datObj(7).data, 'r');
             
-            legend({'Head', 'Target'})
+            legend({'Head', '
             % Gaze Vel
             %samplerate = datObj(1).samplerate;
             %timeVec = 0:( 1/samplerate ):( length(datObj(1).data)-1 )/samplerate;

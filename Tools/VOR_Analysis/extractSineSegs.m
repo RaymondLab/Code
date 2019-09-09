@@ -28,6 +28,13 @@ rawrecData = importSpike(fullfile(folder,[file '.smr']),chanindsAll(4));
 SampleKeys = strcat(rawdata.samplerate(any(rawdata.samplerate == ['S' 's' 'L' 'P'], 2))');
 SampleKeyTimes = rawdata.data(any(rawdata.samplerate == ['S' 's' 'L' 'P'], 2))';
 
+% exit if nothing found
+if isempty(SampleKeys)
+    startTimes = [];
+    endTimes = [];
+    return
+end
+
 % find the correct start/stop patterns
 start_Ss_loc = SampleKeyTimes(strfind(SampleKeys, 'Ss'));
 end_Ss_loc = SampleKeyTimes(strfind(SampleKeys, 'Ss')+1);

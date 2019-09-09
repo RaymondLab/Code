@@ -5,12 +5,10 @@ clear;clc;close all
 dbstop if error
 
 % Load file 19 11 31 3
-folder = 'C:\Users\maxwellg\Desktop\290119-selected (2) - Copy';
+folder = 'G:\My Drive\Expmt Data\MultiElectrode Data\In_vivo_Cerebellar_Vermis_Exp3and4\New folder';
 
 % Remove everything that is not an .rhs file
-cd(folder)
-seg_file_names = dir;
-seg_file_names(~contains({seg_file_names.name}, '190129_150035.rhs')) = [];
+recFiles = dir([folder '\**\*.rhs']);
 
 % Window around Stim Artifcats to remove
 tbefore = 0;
@@ -19,13 +17,14 @@ tafter = 30000; % 30,000 = 1 second
 % Window order 2.0
 order = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, ...
          2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32];
+     
 %% Go through each file found in directory
-for i = 1:length(seg_file_names) 
+for i = 1:length(recFiles) 
     
     % open .rhs file
     try
         clear amplifier_data
-        read_Intan_RHS2000_file(folder, seg_file_names(i).name)
+        read_Intan_RHS2000_file(recFiles(1).folder, recFiles(1).name)
     catch
         warning(['File Error: ', seg_file_names(i).name])
         continue
@@ -35,7 +34,7 @@ for i = 1:length(seg_file_names)
     q = figure('units','normalized','outerposition',[-0.0042 0.0267 1.0083 0.9800]);
     %q.Visible = 'off';
     %ha = tight_subplot(16,2,[0 0],[0 0],[0 0]);
-    ha = tight_subplot(4,1,[0 0],[0 0],[0 0]);
+    ha = tight_subplot(16,2,[0 0],[0 0],[0 0]);
     data_filt = ones(size(amplifier_data));
     
     % Find Stim locations
@@ -43,7 +42,7 @@ for i = 1:length(seg_file_names)
     stimStarts = stimAll(1:6:end);
      num = 1;
     % Plot each Channel
-    for j = [19 11 31 3]       
+    for j = 1:32      
         % If Stim Artifacts, replace with mean(data)
         if ~isempty(stimStarts)
             meanVal = mean(amplifier_data(j,:));
@@ -62,11 +61,11 @@ for i = 1:length(seg_file_names)
         data_filt(j,:) = filtfilt(bb,aa,amplifier_data(j,:));
         
         % Comb Filter
-        fo = 60;  
-        q = 35; 
-        bw = (fo/(samplerate/2))/q;
-        [b,a] = iircomb(samplerate/fo,bw,'notch');
-        data_filt(j,:) = filtfilt(b,a,data_filt(j,:));
+%         fo = 60;  
+%         tt = 35; 
+%         bw = (fo/(samplerate/2))/tt;
+%         [b,a] = iircomb(samplerate/fo,bw,'notch');
+%         data_filt(j,:) = filtfilt(b,a,data_filt(j,:));
         
         % OPTIONAL - to remove 60Hz noise (plus harmonics) VERY SLOW!
         % Bandstop 60, 120, 180, 240, 300, etc...
@@ -94,14 +93,15 @@ for i = 1:length(seg_file_names)
         box(ha(num),'off')
         ha(num).FontSize = 6;    
         num = num + 1;
+        xlim([35 36])
     end 
     
     % more Cosmetics
     q.Visible = 'on';
     linkaxes(ha)
-    xlim([45.311007 45.373007])
+    %xlim([35 36])
     ylim([-2700 2000])
-    disp(seg_file_names(i).name)
+    disp(recFiles(i).name)
     
     % OPTIONAL Power Spectrum
     %freqSpec(amplifier_data, 30000)

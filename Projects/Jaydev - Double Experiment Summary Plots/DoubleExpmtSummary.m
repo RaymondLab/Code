@@ -824,10 +824,7 @@ for i = a:4
     
     % Make Text Notes - Keep spacing in mind!! Not handled by matlab, so I
     % do it manually.
-    
-    %text(yAlign, xAlignTop-(k*textGap), '    nm     gain   r^2  BS', 'FontSize', FontSize)
-    %k = k + 1;
-    
+
     for z = 1:length(sumStruct)
         if ~sumStruct(z).removed
             Gstrnum = num2str(sumStruct(z).blGains);
