@@ -362,6 +362,7 @@ for count = 1:nSegs
         text(max(cycleTime)*1.05, ylimits(2)-.4*ylimRange, ['Rel. Phase: ', num2str(eyeVel_rel_phase,3)],'FontSize',7);
         text(max(cycleTime)*1.05, ylimits(2)-.5*ylimRange, ['Stim: ', stimType],'FontSize',7);
         text(max(cycleTime)*1.05, ylimits(2)-.6*ylimRange, ['r^2: ', num2str(stat(1))],'FontSize',7);
+        text(max(cycleTime)*1.05, ylimits(2)-.7*ylimRange, ['sacFrac: ', num2str(mean(omitH))],'FontSize',7);
 
         % Manual y axis b/c matlab is literal garbage
         yticks([min(ylim) 0 max(ylim)])
