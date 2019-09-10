@@ -7,7 +7,7 @@ A.excelFile = 'C:\Users\Public\RaymondLabCode\Projects\Max - CF Project\Monkey M
 %A.excelFile = 'C:\Users\Public\RaymondLabCode\Projects\Max - CF Project\Monkey Metadata by Max (Akira).xlsx';
 A.expmt_table = readtable(A.excelFile);
 
-A.expmtDataFolder = 'G:\My Drive\Expmt Data\2019_05 - Max Climbing Fiber\Initial Data for testing';
+A.expmtDataFolder = 'D:\My Drive\Expmt Data\2019_05 - Max Climbing Fiber\Initial Data for testing';
 %A.expmtDataFolder = 'G:\My Drive\Expmt Data\2019_05 - Akira and Sriram Complex Spikes';
 
 %bFiles = dir([ExpmtDataFolder '\**\*.0*']);
@@ -42,27 +42,32 @@ for j = 1:length(A.bFiles)
     %% Find Ephys
     [A, ephys_exists, ePath] = A.findEphys(A.bFiles(j).name, expmtRow);
     
-    %if ~ephys_exists
-    %    continue
-    %end
+    if ~ephys_exists
+       continue
+    end
     
     %% Open File
     try
-        [beh, shiftAmt, shiftConfidence] = opensingleMAXEDIT(bPath, 0, ePath);
+        [beh, shiftAmt, shiftConfidence] = opensingleMAXEDIT(bPath, ephys_exists, ePath);
     catch
         disp('     -Failed to Open. Skipped')
         continue
     end
     
     %% plotAllChans
-    A.plotAllChans(beh);
-    A.plot2(beh);
-    
-    A = A.findStimType(expmtRow);
+%     if ~contains(A.expmt_table.SineStep{expmtRow}, 'Step')
+%         if contains(A.expmt_table.StimType{expmtRow}, 'Unknown') || contains(A.expmt_table.StimType{expmtRow}, 'Not Measured')
+%             A.plotAllChans(beh);
+%             A.plot2(beh);
+% 
+%             A = A.findStimType(expmtRow);
+%         end
+%     end-
     %% save Ephys Shift Val
     %A = A.findEphysAllignment(beh, expmtRow, shiftConfidence);
     
-    
+    %A.plotAllChans(beh);
+    A.plotEphys(beh);
     % Find the Stim Type
     %A = A.findStimType(expmtRow);
     %[A, peakFreqEstimate] = A.findExpmtFreq(beh, expmtRow);

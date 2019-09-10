@@ -147,9 +147,10 @@ classdef chanData
         end
         
         function self = findStimType(self, expmtRow)
-            % Sine or Step?
+            %% Sine or Step?
             
-            if contains(self.expmt_table.SineStep{expmtRow}, 'Not Measured')
+            % Only ask if we don't know
+            if contains(self.expmt_table.SineStep{expmtRow}, 'Not Measured') || contains(self.expmt_table.SineStep{expmtRow}, 'Unknown')
                 
                 % Input for Sine/Step Information
                 answer = questdlg('Sine or Step?', ...
@@ -167,21 +168,29 @@ classdef chanData
             end
             disp(['     -', self.expmt_table.SineStep{expmtRow}]);
             
-            % What kind of Sine? 
+            %% What kind Stim?
+            
+            % Sine
             if contains(self.expmt_table.SineStep{expmtRow}, 'Sine')
-                % Input for Sine/Step Information
-                answer = questdlg('Expmt Type?', ...
-                    'Dessert Menu', ...
-                    'OKR','VORD', 'Unknown', 'Unknown');
-                if contains(answer, 'Unknown')
-                    answer = questdlg('Exmpt Type?', ...
-                        'Dessert Menu', ...
-                        'x0', 'x2', 'Unknown', 'Unknown');
-                end
                 
-                % Save StimType information
-                self.expmt_table.StimType{expmtRow} = answer;
-                disp(['     -Stim Type: ', answer]);
+                % Only ask if we don't know
+                if contains(self.expmt_table.StimType{expmtRow}, 'Unknown') || contains(self.expmt_table.StimType{expmtRow}, 'Not Measured')
+                    
+                    % Input for Sine/Step Information
+                    answer = questdlg('Expmt Type?', ...
+                        'Dessert Menu', ...
+                        'OKR','VORD', 'Unknown', 'Unknown');
+                    if contains(answer, 'Unknown')
+                        answer = questdlg('Exmpt Type?', ...
+                            'Dessert Menu', ...
+                            'x0', 'x2', 'Unknown', 'Unknown');
+                    end
+
+                    % Save StimType information
+                    self.expmt_table.StimType{expmtRow} = answer;
+                    disp(['     -Stim Type: ', answer]);
+                end
+                    
             end
             
 
@@ -253,25 +262,24 @@ classdef chanData
             pa = tight_subplot(2,1,[.03 .03],[.03 .03],[.03 .03]);
             
             axes(pa(1))
-            % Head Vel
-            samplerate = datObj(5).samplerate;
-            timeVec = 0:( 1/samplerate ):( length(datObj(5).data)-1 )/samplerate;
-            plot(timeVec, datObj(5).data, 'b'); hold on
-            
             % Target Vel
             samplerate = datObj(7).samplerate;
             timeVec = 0:( 1/samplerate ):( length(datObj(7).data)-1 )/samplerate;
-            plot(timeVec, datObj(7).data, 'r');
+            plot(timeVec, datObj(7).data, 'r'); hold on
             
-            legend({'Head', 'Target'})
+            % Head Vel
+            samplerate = datObj(5).samplerate;
+            timeVec = 0:( 1/samplerate ):( length(datObj(5).data)-1 )/samplerate;
+            plot(timeVec, datObj(5).data, 'b'); 
+            
+            legend({'Target', 'Head'})
             % Gaze Vel
             %samplerate = datObj(1).samplerate;
             %timeVec = 0:( 1/samplerate ):( length(datObj(1).data)-1 )/samplerate;
             %plot(timeVec, datObj(1).data, 'k');
             
-            
             ylim([-50 50])
-            xlim([0 30])
+            xlim([0 5])
             title('Vel')
             
             axes(pa(2))
@@ -285,13 +293,24 @@ classdef chanData
             timeVec = 0:( 1/samplerate ):( length(datObj(3).data)-1 )/samplerate;
             plot(timeVec, datObj(3).data, 'k'); hold on
             ylim([-30 30])
-            xlim([0 30])
+            xlim([0 5])
             title('Pos')
             
             
             
             
         end
+        
+        function plotEphys(self, datObj)
+            ephysPlot = tight_subplot(1,1,[.03 .03],[.03 .03],[.03 .03]);
+            ephysChan = datObj(contains({datObj.chanlabel}, 'Ephys'));
+            
+            samplerate = ephysChan.samplerate;
+            timeVec = 0:( 1/samplerate ):( length(ephysChan.data)-1 )/samplerate;
+            plot(timeVec, ephysChan.data);
+            
+        end
+        
         
     end
 end
