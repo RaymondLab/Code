@@ -28,6 +28,13 @@ rawrecData = importSpike(fullfile(folder,[file '.smr']),chanindsAll(4));
 SampleKeys = strcat(rawdata.samplerate(any(rawdata.samplerate == ['S' 's' 'L' 'P'], 2))');
 SampleKeyTimes = rawdata.data(any(rawdata.samplerate == ['S' 's' 'L' 'P'], 2))';
 
+% exit if nothing found
+if isempty(SampleKeys)
+    startTimes = [];
+    endTimes = [];
+    return
+end
+
 % find the correct start/stop patterns
 start_Ss_loc = SampleKeyTimes(strfind(SampleKeys, 'Ss'));
 end_Ss_loc = SampleKeyTimes(strfind(SampleKeys, 'Ss')+1);
@@ -35,7 +42,8 @@ end_Ss_loc = SampleKeyTimes(strfind(SampleKeys, 'Ss')+1);
 % light on training
 start_SLs_loc = SampleKeyTimes(strfind(SampleKeys, 'SLs'));
 start_SLs_loc = [start_SLs_loc SampleKeyTimes(strfind(SampleKeys, 'SLs')+1)];
-end_SLs_loc = SampleKeyTimes(strfind(SampleKeys, 'SLs')+2);
+end_SLs_loc = SampleKeyTimes(strfind(SampleKeys, 'SLs')+2); %Normal
+%end_SLs_loc = SampleKeyTimes(strfind(SampleKeys, 'SLs')+3); %Dark Resting
 end_SLs_loc = [end_SLs_loc SampleKeyTimes(strfind(SampleKeys, 'SLs')+1)];
 
 start_SLL_loc = SampleKeyTimes(strfind(SampleKeys, 'SLL'));
@@ -85,5 +93,7 @@ if length(segment_Names) < length(endTimes)
 end
 
 %% place start and end times into the excel file
-xlswrite(fullfile(folder,[file '.xlsx']), startTimes, 'Sheet1', 'D2')
-xlswrite(fullfile(folder,[file '.xlsx']), endTimes, 'Sheet1', 'E2')
+if ~isempty(startTimes) && ~isempty(endTimes)
+    xlswrite(fullfile(folder,[file '.xlsx']), startTimes, 'Sheet1', 'D2')
+    xlswrite(fullfile(folder,[file '.xlsx']), endTimes, 'Sheet1', 'E2')
+end

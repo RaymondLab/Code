@@ -56,11 +56,8 @@ function singleAnalysis(params)
         case 'Dark Rearing + Generalization'
             fprintf('Running: Dark Rearing Generalization Analysis\n')
             VOR_DarkRearingGeneralization(params)
-        case 'Amin_GC_Steps'
-            fprintf('Running: Amin''s Granule Cell Step Analysis\n')
-            VOR_Default_Step(params);
         otherwise
-            fprintf('Running: Default Sine Analysis\n')
+            fprintf('Running: Basic Overview\n')
             params = VOR_Default(params);
     end
 
@@ -71,8 +68,8 @@ function singleAnalysis(params)
     
     switch params.analysis
         case 'Amin_GC_Steps'
-            fprintf('Running: GC Step Summary')
-            VOR_Summary_Amin_gcStep(params)
+            %fprintf('Running: GC Step Summary')
+            %VOR_Summary_Amin_gcStep(params)
             
         case 'Sriram_OKR'
             fprintf('Running: Fit Subtraction Analysis\n')

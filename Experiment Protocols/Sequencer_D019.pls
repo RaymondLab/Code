@@ -47,7 +47,6 @@
             VAR    V51,PulseWaV=966  ; pulse wait V
             VAR    V52,PulsePer=1000 ; pulse period duration
             VAR    V53,PulseHPe=500  ; Half Period duration
-            VAR    V54,evNcyc=1      ; Pulses occur every X cycles
 
 ;-----------------------------------------------------------------------------
 ; LOOP: our idle loop.
@@ -401,11 +400,8 @@ SPULSE0: 'P SZ     0,DrumAmp       ;set cosine amplitude
 
 
 SPULSE1:    MOV    V10,PulseNum
-            MOV    V11,evNcyc
 
 W1:         WAITC  7,W1            ;Wait for next cosine cycle
-            DBNZ   V11,W1
-
 SPULSE2:    DIGOUT [.....1..]      ; 1
             DELAY  PulseDur        ;DELAY takes up 1 ms itself
             DIGOUT [.....0..]      ; 0

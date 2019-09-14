@@ -5,87 +5,100 @@ clear;clc;close all
 
 
 %% Setup
-ExpmtDataFolder = 'D:\NOT FROM SERVER FOR KYLE\2019_05 - Max Climbing Fiber\Initial Data for testing\D1_1995';
-%ExpmtDataFolder = 'G:\My Drive\Expmt Data\2019_05 - Akira and Sriram Complex Spikes';
+%ExpmtDataFolder = 'G:\My Drive\Expmt Data\2019_05 - Max Climbing Fiber\Initial Data for testing';
+ExpmtDataFolder = 'G:\My Drive\Expmt Data\2019_05 - Akira and Sriram Complex Spikes';
 bFiles = dir([ExpmtDataFolder '\**\*.0*']);
-bFiles(~contains({bFiles.name}, '303')) = [];
+%bFiles(~contains({bFiles.name}, 'unit')) = [];
 
-plot1 = 0; % overview
-
+%% Match the corresponding ephys folders with thier motor folders
 for j = 1:length(bFiles)
-    %% Match the corresponding ephys folders with thier motor folders
     
+    % Check if behavior files has a corresponding ephys file
     ephys_exists = 0;
-    ePath = [];
+    full_ephys = [];
     
     % Jennifer's naming Scheme
-    eFile = strrep(bFiles(j).name, 'da', 'du');
-    eFile = strrep(eFile, '.0', '.');
+    %eFolder_temp = strrep(files_m(j).folder, 'da', 'du');
+    %eFolder_temp = [eFolder_temp, 'un'];
+    %eFile_temp = files_m(j).name;
+    %eFile_temp = strrep(eFile_temp, 'da', 'du');
+    %eFile_temp = strrep(bFiles(j).name, '.0', '.');
+    %full_ephys = fullfile(eFolder_temp, eFile_temp);
 
-    % Akira's Naming Scheme
-    %if ~contains(bFiles(j).name, 'unit')
-    %    continue
-    %end
+    if ~contains(bFiles(j).name, 'unit')
+        continue
+    end
     % Akira's Ephys naming Scheme
-    %eFile = strrep(bFiles(j).name, '.0', '.');
-    %eFile = strrep(eFile, 'unit', 'U');
+     eFile = strrep(bFiles(j).name, '.0', '.');
+     eFile = strrep(eFile, 'unit', 'U');
      
-    % Search through lisberger files to see if ephys exists
-    ephys_loc = find(contains({bFiles.name}, eFile));
-    
-    %% Extract Data
-    % ephys Data 
+     ephys_loc = find(contains({bFiles.name}, eFile));
+     
+    % Does this file exist? 
     if ephys_loc > 0
         ephys_exists = 1;
-        ePath = fullfile(bFiles(ephys_loc).folder, bFiles(ephys_loc).name)
-    else
-        warning([eFile ': No Ephys'])
-        continue
+        full_ephys = fullfile(bFiles(ephys_loc).folder, bFiles(ephys_loc).name)
     end
+
+    full_behavior = fullfile(bFiles(j).folder, bFiles(j).name)
     
-    % behavior Data
+    % Extract behavior Data
     try
-        bPath = fullfile(bFiles(j).folder, bFiles(j).name)
-        beh = opensingleMAXEDIT(bPath, ephys_exists, ePath);
+        beh = opensingleMAXEDIT(full_behavior, ephys_exists, full_ephys);
     catch
-        warning([bPath, ' Failed'])
+        warning([full_behavior, ' Failed'])
         continue
     end
     
-    %% Plots
+    % Plot
+    figure(1); clf
+    ha = tight_subplot(8,1,[.03 .03],[.03 .03],[.03 .03]);
     
-    % Figure 1: Overview of each channel
-    if plot1
-        figure(1); clf
-        ha = tight_subplot(8,1,[.03 .03],[.03 .03],[.03 .03]);
-        for q = 1:11
-
-            axes(ha(q))
-
-            if isempty(beh(q).data)
-                title([beh(q).chanlabel, ' is empty'])
-                continue
-            end
-
-            samplerate = beh(q).samplerate;
-            timeVec = 0:( 1/samplerate ):( length(beh(q).data)-1 )/samplerate;
-
-            % Plot
-            plot(timeVec, beh(q).data)
-            title(beh(q).chanlabel)
-
-            % Only show Tick labels on bottom (Epyhs Channel)
-            if q ~= length(ha)
-                xticks([]);
-            end
+    for q = 1:8
+        
+        axes(ha(q))
+        if isempty(beh(q).data)
+            title([beh(q).chanlabel, ' is empty'])
+            continue
         end
-        linkaxes(ha, 'x')
+
+        samplerate = beh(q).samplerate;
+        timeVec = beh(q).tstart:(1/samplerate):beh(q).tend;
+
+        % Plot
+        plot(timeVec, beh(q).data)
+        title(beh(q).chanlabel)
+
+        % only show Tick labels on bottom
+        if q ~= length(ha)
+            xlimMax = max(timeVec);
+            xticks([]);
+            xticklabels([]);
+        else
+            vline(beh(end-1).data(1:20));
+            figure(4);clf
+            fa = tight_subplot(2,1,[0 0],[.03 .03],[.03 .03]);
+            axes(fa(1))
+            plot(timeVec, beh(q).data)
+            xlim([0 .5])
+            axes(fa(2))
+            vline(beh(end-1).data(1:50));
+            xlim([0 .5])
+            figure(1)
+        end
     end
-    
+
+    linkaxes(ha, 'x')
+    %xlim([0 .5])
+    disp(length(beh(8).data) / length(beh(1).data))
+
+    figure(2)
+    title(bFiles(j).name)
+    disp(timeVec(1))
+    figure(4)
     if ephys_loc > 0
-        %allignEventsAndEphys(beh(q).data, beh(end-1).data, samplerate, 2);
+        disp('apple')
     end
-    
     clc
     fclose('all')
 end

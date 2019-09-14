@@ -110,13 +110,6 @@ for count = 1:nSegs
         
         % Store Processed Trace
         eyeVel_proc_des = eyeVel_proc;
-        
-        % For Sriram - To extract individual eye Vel at individual times
-        %if count == 2 || count == 3 || count == 4 || count == 59 || count == 60 || count == 61
-        %    csvwrite(['OKR-', num2str(count-1), ' drum.xls'], drumVel);
-        %end
-        
-            
         eyeVel_proc_des(omitH) = NaN;
     end
     
@@ -192,30 +185,30 @@ for count = 1:nSegs
     % Chair/VOR Stimulus
     if headVel_amp > 3
         reference_amp = headVel_amp;
-        referece_angle = headVel_angle;
+        reference_angle = headVel_angle;
         idealEyeVel = drumVel-headVel;
     % Drum/OKR Stimulus
     elseif drumVel_amp > 3
         reference_amp = drumVel_amp;
-        referece_angle = drumVel_angle;
+        reference_angle = drumVel_angle;
         idealEyeVel = drumVel;
     % No Motor Stimulus
     else
         reference_amp = 1;
-        referece_angle = 0;
+        reference_angle = 0;
         idealEyeVel = zeros(1,segLength);
     end
 
     % eye calculations relative to drum/chair
     eyeVel_rel_gain = eyeVel_amp/reference_amp;
-    eyeVel_rel_phase = (eyeVel_phase - referece_angle);
+    eyeVel_rel_phase = (eyeVel_phase - reference_angle);
     eyeVel_rel_phase = mod(eyeVel_rel_phase,360) - 180;
     eyeVel_des_cycleFit = sin(2*pi*freq*cycleTime + deg2rad(eyeVel_rel_phase+180))*eyeVel_amp;
     warning on
     
     %% === Calculate Average and More ================================== %%
 
-    startpt = max(1,round(mod(-referece_angle,360)/360 * samplerate/freq));
+    startpt = max(1,round(mod(-reference_angle,360)/360 * samplerate/freq));
     
     [eyeVel_des_mat, eyeVel_des_cycleMean] = VOR_breakTrace(cycleLength, startpt, eyeVel_des);
     [~, headVel_cycleMean]                 = VOR_breakTrace(cycleLength, startpt, headVel);
@@ -369,6 +362,7 @@ for count = 1:nSegs
         text(max(cycleTime)*1.05, ylimits(2)-.4*ylimRange, ['Rel. Phase: ', num2str(eyeVel_rel_phase,3)],'FontSize',7);
         text(max(cycleTime)*1.05, ylimits(2)-.5*ylimRange, ['Stim: ', stimType],'FontSize',7);
         text(max(cycleTime)*1.05, ylimits(2)-.6*ylimRange, ['r^2: ', num2str(stat(1))],'FontSize',7);
+        text(max(cycleTime)*1.05, ylimits(2)-.7*ylimRange, ['sacFrac: ', num2str(mean(omitH))],'FontSize',7);
 
         % Manual y axis b/c matlab is literal garbage
         yticks([min(ylim) 0 max(ylim)])
