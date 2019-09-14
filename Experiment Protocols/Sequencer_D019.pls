@@ -70,7 +70,7 @@ INIT:   'I  RATE   0,0             ;stop cosine on drum
             RATE   1,0             ;stop cosine on chair
             DAC    0,DrumOff       ;stop the drum
             DAC    1,Chairoff      ;stop the chair
-            DIGOUT [00000000]      ;stop any pulses
+            DIGOUT [000.0000]      ;stop any pulses
             JUMP   KCHAIR          ;return chair to zero
 
 ;-----------------------------------------------------------------------------
@@ -479,3 +479,10 @@ SPULSE5:    DIGOUT [......1.]
 ;----------------------------------------------------
 KPULSE2: 'v DIGOUT [......0.]      ;set digital outputs low
             JUMP   INIT
+
+;-----------------------------------------------------------------------------
+FPULSE1: 'H DIGOUT  [...1....]
+            JUMP   LOOP
+
+FPULSE2: 'h DIGOUT  [...0....]
+            JUMP   LOOP
