@@ -546,6 +546,8 @@ Proc WindowConfig()
 
   'Show certain channels in a particular order
   ChanShow(1,2,3,4,5,6,7,8,9,10,11,12,13,14,30,31);
+  'ChanShow(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,30,31); 'Alex Fanning
+
   'ChanSelect(13,1);    'Select channel 13
   'ChanOrder(4,1,-3);   'Move selected channels
   '-----------------------------------------
@@ -570,7 +572,6 @@ Proc WindowConfig()
   ' Channel order
   ChanOrder(0, -1, "5, 4, 8, 13, 3, 2, 1, 12, 11, 10, 9, 30, 31");
   'ChanOrder(0, -1, "5, 4, 8, 13, 3, 2, 1, 12, 11, 10, 9, 30, 31, 15"); 'Alex Fanning
-    'ChanShow(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,30,31); 'Alex Fanning
 
   ' Background Colour'
   ViewColour(0,5);
