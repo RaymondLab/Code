@@ -2,20 +2,18 @@
 ' Rig-Specific parameters file Location
 '--------------------------------------------------------------------------------
 'D006
-#include "C:\\Users\\tstay\\Documents\\RaymondLabCode\\Experiment Protocols\\Parameters_D006.s2s"
+''#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D006.s2s"
 
 'D019
-'#include "C:\\Users\\amins\\Documents\\RL_Code\\Experiment Protocols\\Parameters_D019.s2s"
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D019.s2s"
 
 'D253
-'#include "C:\\Users\\amins\\Documents\\RL_Code\\Experiment Protocols\\Parameters_D253.s2s"
+''#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D253.s2s"
 
 '--------------------------------------------------------------------------------
 ' Universal Parameters File Location
 '--------------------------------------------------------------------------------
-#include "C:\\Users\\tstay\\Documents\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal.s2s"
-
-'#include "C:\\Users\\amins\\Documents\\RL_Code\\Experiment Protocols\\Parameters_Universal.s2s"
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal.s2s"
 
 '--------------------------------------------------------------------------------
 ' MAIN PROGRAM
