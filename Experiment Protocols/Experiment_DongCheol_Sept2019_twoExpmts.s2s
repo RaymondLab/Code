@@ -1,0 +1,193 @@
+'--------------------------------------------------------------------------------
+' Rig-Specific parameters file Location
+'--------------------------------------------------------------------------------
+'D019
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D019.s2s"
+
+'D253
+'#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D253.s2s"
+
+'--------------------------------------------------------------------------------
+' Universal Parameters File Location
+'--------------------------------------------------------------------------------
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal.s2s"
+var ExpPart := 1;
+
+'--------------------------------------------------------------------------------
+' MAIN PROGRAM
+'--------------------------------------------------------------------------------
+ToolbarConfig();
+nBlocks% := 3;
+runLength := 600;
+'--------------------------------------------------------------------------------
+' Toolbar Callbacks
+'--------------------------------------------------------------------------------
+Func ToolbarIdle%()
+
+  ' Check a valid sampling view is running
+  var currView := ViewKind();
+  if  currView <> 0 then
+      return 1;
+  endif;
+
+  ' Keep sine wave from drifting!!!
+  if MaxTime() > (prevTime + 1/sinHzChair) then
+    if driftFix = 1 then
+      driftFix%();
+    endif;
+  endif;
+
+  'If an experiment is running:
+  if runExpmt% = 1 then
+
+    'Check the time. Seconds is the current time - compare it to the goal time of each segment
+    if  MaxTime() > goalTime then
+
+      docase
+        ' GAP A
+        case test% = 0 then
+          SampleKey("0");
+          SampleKey("x");
+          goalTime := MaxTime() + 5;
+          ToolbarInit%(); Yield();
+          test% := 1;
+
+        ' GAP B
+        case test% = 1 then
+          SampleKey("1");
+          goalTime := MaxTime() + 5;
+          ToolbarInit%(); Yield();
+
+          if rep% = nBlocks% then
+            expmtLoc% := 1;
+
+            prePostNum := 1;
+            ExpPart := ExpPart + 1;
+            if ExpPart = 3 then
+              prePostNum := 0;
+            endif
+            rep% := 0;
+            testrep% := 0;
+          endif
+
+          ' Go to Pre/Post or Train/Test Section
+          docase
+            ' PRE & POST Tests
+            case expmtLoc% = 1 then
+              test% := 2;
+            ' TEST/TRAIN Blocks
+            case expmtLoc% = 2 then
+              test% := 3;
+          endcase
+
+          ' If you have already done the test/train blocks, quit instead.
+          if prePostNum > 2 and ExpPart = 3 then
+            ToolbarQuitExpmt%();
+            Return(1);
+          endif
+
+          runFlash(); Yield();
+          ToolbarInit%(); Yield();
+
+        ' PRE AND POST TEST
+        case test% = 2 then
+          SampleKey("2");
+          SampleKey("X");
+          goalTime := MaxTime() + testLength;
+          prePostNum := prePostNum + 1;
+          test% := 0;
+
+          if prePostNum > 2 then
+            expmtLoc% := 2;
+          else
+            expmtLoc% := 1;
+          endif
+
+          ToolbarSineStart%();
+
+        ' BLOCK: TEST
+        case test% = 3 then
+          SampleKey("3");
+          SampleKey("X");
+          goalTime := MaxTime() + testLength;
+          testrep% := testrep% + 1;
+
+          if testrep% = nTestreps% then
+            test% := 4;
+          else
+            test% := 0;
+          endif;
+
+          ToolbarSineStart%(); Yield();
+
+        ' BLOCK: TRAIN
+        case test% = 4 then
+              SampleKey("4");
+              SampleKey("x");
+              SampleKey("X");
+              goalTime := MaxTime() + runLength;
+              rep% := rep% + 1;
+              testrep% := 0;
+
+              docase
+                case ExpPart = 1 then
+                  ToolbarLightOn%();
+
+                ' Dark Resting
+                case ExpPart = 2 and expmtMode = 0 then
+                  SampleKey("8");
+                  ToolbarSineStop%();
+
+                ' Vestibular
+                case ExpPart = 2 and expmtMode = 1 then
+                  SampleKey("8");
+
+              endcase;
+
+              test% := 0;
+
+          endcase;
+
+    endif;
+  endif;
+
+
+  Return(1);
+End
+
+'--------------------------------------------------------------------------------
+'Configure expmt settings window
+'--------------------------------------------------------------------------------
+Func ToolbarConfigExpmt%()
+  DlgCreate("Experiment settings");  'Start new dialog
+  DlgInteger(1,"Number of run-test blocks",0,100,0,0,1);
+  DlgInteger(2,"Number of tests per block",1,100,0,0,1);    'set to 0 if not using Chair
+  DlgReal(3,"Run length (s)",0,5000);
+  DlgReal(4,"Test length (s)",0,5000);
+  DlgList(5,"Expmt mode", "Dark Resting|Vestibular");
+  DlgInteger(6,"Light flash on?)",0,1,0,0,"0|1");
+  DlgReal(7,"Test stim and bilat (0 or 1)",0,1);
+
+  DlgShow(nBlocks%, nTestreps%, runLength, testLength, expmtMode, flashon%,testStim);
+
+  docase
+    case expmtMode = 0 then      'Dark Resting
+        sinPhDrum := -90;
+        sinPhChair := 90;
+        sinAmpChair := 10;
+        sinAmpDrum := 10;
+    case expmtMode = 1  then     'Vestibular
+        sinPhDrum := -90;
+        sinPhChair := 90;
+        sinAmpChair := 10;
+        sinAmpDrum := 10;
+  endcase;
+
+
+  if testStim > 0 then
+      ToolbarPulseConfig%()
+  endif;
+
+  SetSequencerValues();
+  Return(1);
+End
