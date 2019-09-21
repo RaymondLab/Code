@@ -287,19 +287,19 @@ for count = 1:nSegs
         
         % Plot proc or raw
         if params.cleanPlot
-            plot(segTime(1:length(eyeVel_proc)), eyeVel_proc, 'k', 'LineWidth', .3); hold on
-            plot(segTime(1:length(eyeVel_proc_des)), eyeVel_proc_des, 'b', 'LineWidth', .3);
-            plot(segTime, vars*b,'r', 'LineWidth', .25);
+            plot(segTime(1:length(eyeVel_proc)), eyeVel_proc, 'k', 'LineWidth', .2); hold on
+            plot(segTime(1:length(eyeVel_proc_des)), eyeVel_proc_des, 'b', 'LineWidth', .2);
+            plot(segTime, vars*b,'r', 'LineWidth', .05);
         else
-            plot(segTime(1:length(eyeVel_raw)), eyeVel, 'k', 'LineWidth', .3); hold on
-            plot(segTime(1:length(eyeVel_raw_des)), eyeVel_raw_des, 'b', 'LineWidth', .3);
-            plot(segTime, vars*b,'r', 'LineWidth', .5);
+            plot(segTime(1:length(eyeVel_raw)), eyeVel, 'k', 'LineWidth', .2); hold on
+            plot(segTime(1:length(eyeVel_raw_des)), eyeVel_raw_des, 'b', 'LineWidth', .2);
+            plot(segTime, vars*b,'r', 'LineWidth', .3);
         end
         
         % Old de-saccade: Plot Thresh lines
         if params.newSac == 0
-            plot(segTime, fit1 + rawThres1(1), ':r', 'LineWidth', .25);
-            plot(segTime, fit1 + rawThres1(2), ':r', 'LineWidth', .25);
+            plot(segTime, fit1 + rawThres1(1), ':r', 'LineWidth', .2);
+            plot(segTime, fit1 + rawThres1(2), ':r', 'LineWidth', .2);
         end
         
         % Cosmetics
@@ -333,13 +333,13 @@ for count = 1:nSegs
         subplot(params.sp_Dim(1), params.sp_Dim(2), (9:10) + row);
         
 
-
         % plot
         plot(cycleTime, smooth(eyeVel_good_cycleMean, 50),'b'); hold on
         plot(cycleTime, smooth(eyeVel_des_cycleMean, 50), 'g');
         plot(cycleTime, eyeVel_des_cycleFit, 'r');
         plot(cycleTime, plotStim, 'k');
-        hline(0,'--k');
+        hline(0,':k');
+        %sp1.Children.Children(end).MarkerSize = 1;
         
         % Cosmetics
         box off
@@ -391,8 +391,8 @@ for count = 1:nSegs
 
             % Figure A) Plot Full-Good Cycles & Mean Trace
             subplot(params.sp_Dim(1), params.sp_Dim(2), (1:3) + row);
-            plot(cycleTime, eyeVel_des_mat(~badCycles,:)', 'b', 'LineWidth', .3); hold on;
-            plot(cycleTime, eyeVel_good_cycleMean, 'k', 'LineWidth', 2);
+            plot(cycleTime, eyeVel_des_mat(~badCycles,:)', 'b', 'LineWidth', .2); hold on;
+            plot(cycleTime, eyeVel_good_cycleMean, 'k', 'LineWidth', 1);
             hline(0, ':k')
 
             % Cosmetics
@@ -411,32 +411,32 @@ for count = 1:nSegs
             % Figure B) Error Bars + Mean Trace
             subplot(params.sp_Dim(1), params.sp_Dim(2), (4:6) + row);
             plot(cycleTime, eyeVel_good_cycleMean, 'k', 'LineWidth', 1); hold on
-            plot(cycleTime, eyeVel_good_cycleMean + eyeVel_good_cycleStd, ':k', 'LineWidth', .3);
-            plot(cycleTime, eyeVel_good_cycleMean - eyeVel_good_cycleStd, ':k', 'LineWidth', .3);
-            plot(cycleTime, eyeVel_des_cycleFit,'r', 'LineWidth', .3);
+            plot(cycleTime, eyeVel_good_cycleMean + eyeVel_good_cycleStd, ':k', 'LineWidth', .2);
+            plot(cycleTime, eyeVel_good_cycleMean - eyeVel_good_cycleStd, ':k', 'LineWidth', .2);
+            plot(cycleTime, eyeVel_des_cycleFit,'r', 'LineWidth', .2);
             hline(0, ':k')
 
             % find (+) peaks for Fit and Mean
             [maxVal, maxLoc] = max(eyeVel_des_cycleFit);
             maxLoc = maxLoc/length(eyeVel_des_cycleFit);
-            line([maxLoc maxLoc], [0 maxVal], 'color', 'r', 'LineWidth', .3);
+            line([maxLoc maxLoc], [0 maxVal], 'color', 'r', 'LineWidth', .2);
             %scatter(maxLoc, maxVal, 'r', 'filled', 'SizeData', .2)
 
             [maxVal, maxLoc] = max(eyeVel_good_cycleMean);
             maxLoc = maxLoc/length(eyeVel_good_cycleMean);
-            line([maxLoc maxLoc], [0 maxVal], 'color', 'k', 'LineWidth', .3);
+            line([maxLoc maxLoc], [0 maxVal], 'color', 'k', 'LineWidth', .2);
             %scatter(maxLoc, maxVal, 'k', 'filled', 'SizeData', .2)
 
 
             % find (-) peaks for Fit and Mean
             [minVal, minLoc] = min(eyeVel_des_cycleFit);
             minLoc = minLoc/length(eyeVel_des_cycleFit);
-            line([minLoc minLoc], [0 minVal], 'color', 'r', 'LineWidth', .3);
+            line([minLoc minLoc], [0 minVal], 'color', 'r', 'LineWidth', .2);
             %scatter(minLoc, minVal, 'r', 'filled', 'SizeData', .2)
 
             [minVal, minLoc] = min(eyeVel_good_cycleMean);
             minLoc = minLoc/length(eyeVel_good_cycleMean);
-            line([minLoc minLoc], [0 minVal], 'color', 'k', 'LineWidth', .3);
+            line([minLoc minLoc], [0 minVal], 'color', 'k', 'LineWidth', .2);
             %scatter(minLoc, minVal, 'k', 'filled', 'SizeData', .2)
 
             % Cosmetics
@@ -490,10 +490,14 @@ end
 %% === Save Figures ==================================================== %%
 sp1.PaperSize = [params.sp_Dim(2)*1.8 params.sp_Dim(1)*1.45];
 sp1.PaperPosition = [-2 -sp1.PaperSize(2)*.125 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
+sp1.Renderer = 'painters'; sp1.RendererMode = 'manual';
+
 sp2.PaperSize = [params.sp_Dim(2)*1.8 params.sp_Dim(1)*1.45];
 sp2.PaperPosition = [-2 -sp1.PaperSize(2)*.125 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
+sp2.Renderer = 'painters'; sp2.RendererMode = 'manual';
 
 fprintf('\nSaving Subplot 1...')
-tic; print(sp1, fullfile(params.folder, [params.file '_subplot.pdf']),'-dpdf', '-r250'); toc
+tic; print(sp1, fullfile(params.folder, [params.file '_subplot.pdf']),'-dpdf'); toc
 fprintf('Saving Subplot 2...')
-tic; print(sp2, fullfile(params.folder, [params.file '_subplot2.pdf']),'-dpdf', '-r250'); toc
+tic; print(sp2, fullfile(params.folder, [params.file '_subplot2.pdf']),'-dpdf'); toc
+

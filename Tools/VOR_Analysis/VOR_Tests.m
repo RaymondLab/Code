@@ -70,6 +70,7 @@ function singleAnalysis(params)
         case 'Amin_GC_Steps'
             %fprintf('Running: GC Step Summary')
             %VOR_Summary_Amin_gcStep(params)
+            VOR_Summary_Sriram_CycleDiff(params, [15, 16 17], [1, 2, 3], 'T30 - T0', 'head')
             
         case 'Sriram_OKR'
             fprintf('Running: Fit Subtraction Analysis\n')

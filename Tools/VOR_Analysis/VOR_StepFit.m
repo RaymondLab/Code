@@ -82,10 +82,10 @@ for count = 1:nSegs
     eyePos = datchandata(dataseg,'hepos');
     
     % Import TTL (stim) pulses
-    TTL3_on = datchandata(dataseg, 'TTL3+');
-    TTL3_off = datchandata(dataseg, 'TTL3-');
-    TTL4_on = datchandata(dataseg, 'TTL4+');
-    TTL4_off = datchandata(dataseg, 'TTL4-');
+    TTL3_on = [];%datchandata(dataseg, 'TTL3+');
+    TTL3_off = [];%datchandata(dataseg, 'TTL3-');
+    TTL4_on = [];%datchandata(dataseg, 'TTL4+');
+    TTL4_off = [];%datchandata(dataseg, 'TTL4-');
     
     % normalize pulse times to start of segment
     TTL3_on = TTL3_on - params.segStarts(count);
@@ -111,9 +111,7 @@ for count = 1:nSegs
     segLength = length(headVel);
     segTime = (1:segLength)/samplerate; 
     cycleLength = round(samplerate/freq);
-    if contains(R.labels{count}, 'rain')
-        cycleLength = cycleLength + 4;
-    end
+    %cycleLength = cycleLength + 4;
     cycleTime = (1:cycleLength)/samplerate;
     
     %% === Desaccade/Process =========================================== %%
@@ -298,7 +296,7 @@ for count = 1:nSegs
     %% === Subplot-1: Segment and Fit ================================== %%
     
     % Choose Stim
-    if contains(R.labels{count}, 'OKR') || contains(R.labels{count}, 'rain')
+    if contains(R.labels{count}, 'OKR') || contains(R.labels{count}, 'rain') || contains(R.labels{count}, 'x')
         plotStim = drumVel_cycleMean;
         stimType = 'Drum';
         ylimits = double([floor(min(plotStim)*1.1) ceil(max(plotStim)*1.1)]);
@@ -388,7 +386,7 @@ for count = 1:nSegs
         plot(cycleTime, eyeVel_good_cycleMean,'b'); hold on
         %plot(cycleTime, eyeVel_des_cycleMean, 'g');
         %plot(cycleTime, eyeVel_des_cycleFit, 'r');
-        plot(cycleTime, plotStim, 'k');
+        plot(cycleTime, plotStim*-1, 'k');
         hline(0,'--k');
         
         % plot stim from TTL3
