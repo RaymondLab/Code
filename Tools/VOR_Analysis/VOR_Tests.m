@@ -73,10 +73,10 @@ function singleAnalysis(params)
             
         case 'Sriram_OKR'
             fprintf('Running: Fit Subtraction Analysis\n')
-            VOR_Summary('eyeHphase', expmtExcelFile, 0); 
-            VOR_Summary_Sriram_CycleDiff(params, [59, 60, 61], 2, 'T60 - T0', 'drum')
-            VOR_Summary_Sriram_CycleDiff(params, [15, 16, 17], 2, 'T15 - T0', 'drum')
-            VOR_Summary_Sriram_CycleDiff(params, [59, 60, 61], [15, 16, 17,], 'T60 - T15', 'drum')
+            %VOR_Summary('eyeHphase', expmtExcelFile, 0); 
+            %VOR_Summary_Sriram_CycleDiff(params, [59, 60, 61], 2, 'T60 - T0', 'drum')
+            %VOR_Summary_Sriram_CycleDiff(params, [15, 16, 17], 2, 'T15 - T0', 'drum')
+            %VOR_Summary_Sriram_CycleDiff(params, [59, 60, 61], [15, 16, 17,], 'T60 - T15', 'drum')
             
         case 'Dark Rearing'
             fprintf('Running: Dark Rearing''s t30 & t0 Analysis\n')

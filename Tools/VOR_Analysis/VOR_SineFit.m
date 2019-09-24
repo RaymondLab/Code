@@ -76,7 +76,7 @@ for count = 1:nSegs
     dataseg = datseg(data, [params.segStarts(count) params.segEnds(count)]);
 
     % Import Eye, Chair, and Drum velocity
-    headVel = datchandata(dataseg,'hhvel');
+    headVel = datchandata(dataseg,'hhvel')*-1;
     drumVel = datchandata(dataseg,'htvel');
     eyeVel  = datchandata(dataseg,'hevel');
     eyePos  = datchandata(dataseg,'hepos');
