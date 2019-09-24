@@ -1,5 +1,5 @@
-function [omitH, omitCenters, eye_pos_filt, eye_vel_pfilt] = desaccadeVel_A(data, samplerate, freq, presaccade, postsaccade, thresh)
-
+function [saccadeLocs, eye_pos_filt, eye_vel_pfilt] = desaccadeVel_A(data, samplerate, freq, presaccade, postsaccade, thresh, minDataLength)
+accel = 0;
 
 % STEP 1:  LOW PASS ON POSITION
 N = 4;
@@ -31,96 +31,158 @@ eye_vel_se = (eye_vel_pfilt - fit1).^2;
 
 
 % STEP 4: Remove all points higher than thresh
-omitCenters = eye_vel_se > thresh;
+badDataLocations = eye_vel_se > thresh;
 
 
 % STEP 5: remove points around omit centers as defined by pre & post saccade time
-sacmask = ones(1,(presaccade*samplerate)+(postsaccade*samplerate));
+presaccade = round((presaccade/1000)*samplerate);
+postsaccade = round((postsaccade/1000)*samplerate);
+sacmask = ones(1,presaccade+postsaccade);
 
 % filter function replaces zeros with ones (equal to remove time) around an omit center
-rejecttemp1 = conv(double(omitCenters),sacmask);
-rejecttemp2 = rejecttemp1((presaccade*samplerate):(postsaccade*samplerate)+length(data)-1);
+rejecttemp1 = conv(double(badDataLocations),sacmask);
+rejecttemp2 = rejecttemp1(presaccade:postsaccade+length(data)-1);
 
 % eyevel with desaccade segments removed
-eyevelOut = eye_pos_filt;
-eyevelOut(logical(rejecttemp2))= NaN;
-omitH = isnan(eyevelOut);
+tempTrace = eye_pos_filt;
+tempTrace(logical(rejecttemp2))= NaN;
+saccadeLocs = isnan(tempTrace);
 
+% STEP 6: Remove any 'good data' portions that are too small
+
+goodStarts = strfind(saccadeLocs', [1 0]);
+goodEnds = strfind(saccadeLocs', [0 1]);
+
+if isempty(goodStarts)
+    % BOTH are empty 
+    if isempty(goodEnds)
+        
+    % START is empty
+    else
+        goodStarts = 1;
+    end
+else
+    % END is empty
+    if isempty(goodEnds)
+        goodEnds = length(saccadeLocs);
+        
+    % NEITHER are empty
+    else
+        if goodEnds(1) < goodStarts(1)
+            goodStarts = [1 goodStarts];
+        end
+        
+        if goodEnds(end) < goodStarts(end)
+            goodEnds = [goodEnds length(saccadeLocs)];
+        end
+    end
+end  
+
+for ii = 1:length(goodStarts)
+    if (goodEnds(ii) - goodStarts(ii)) < minDataLength
+        saccadeLocs(goodStarts(ii):goodEnds(ii)) = 1;
+        goodStarts(ii) = NaN;
+        goodEnds(ii) = NaN;
+    end
+end
     
 %% FOR TESTING, DEBUGGING, AND TWEAKING DESACCADE %%%%%%%%%%%%%%%%%%%%%%%%
-if 0
+if 1
 
     
     % find start and end times of sacs
-    sac_start = strfind(omitH', [0 1]);
-    sac_end = strfind(omitH', [1 0]);
-    if ~isempty(sac_end) || ~isempty(sac_start)
-        if sac_end(1) < sac_start(1)
-            sac_start = [1 sac_start];
-        end
+    sacStarts = strfind(saccadeLocs', [0 1]);
+    sacEnds = strfind(saccadeLocs', [1 0]);
+    
+    if isempty(sacStarts)
+        % BOTH are empty 
+        if isempty(sacEnds)
 
-        if sac_end(end) < sac_start(end)
-            sac_end = [sac_end length(omitH)];
+        % START is empty
+        else
+            sacStarts = 1;
+        end
+    else
+        % END is empty
+        if isempty(sacEnds)
+            sacEnds = length(saccadeLocs);
+
+        % NEITHER are empty
+        else
+            if sacEnds(1) < sacStarts(1)
+                sacStarts = [1 sacStarts];
+            end
+
+            if sacEnds(end) < sacStarts(end)
+                sacEnds = [sacEnds length(saccadeLocs)];
+            end
         end
     end
     
-    x = [sac_start; sac_end; sac_end; sac_start];
+    x = [sacStarts; sacEnds; sacEnds; sacStarts];
+    x = x/samplerate;
     y = [-20000;-20000;20000;20000];
     y = repmat(y,[1 size(x, 2)]);
     
     %% Plot Basic Visuals
-    figure(99);clf
+    figure();clf
     
-    ha = tight_subplot(3,1,[.01 .02],[.1 .01],[.01 .01]);
+    ha = tight_subplot(3,1,[.01 .02],[.03 .02],[.03 .01]);
 
     axes(ha(1))
-    plot(data, 'r')
+    plot(timeVec, data, 'r')
     hold on
-    plot(eye_pos_filt, 'k', 'LineWidth', 1.5)    
+    plot(timeVec, eye_pos_filt, 'k', 'LineWidth', 1.5)    
     title('Position')
     PrevYlim = ylim;
     patch(x, y, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
     ylim(PrevYlim);
-    xlim([0 length(eye_vel_pfilt)])
+    xlim([0 max(timeVec)])
     hold off
+    box off
     
     if accel
         % Plot
         axes(ha(2))
         plot(eye_acc_praw, 'r')
         hold on
-        plot(eye_acc_pfilt, 'k', 'LineWidth', 1.5)
+        plot(timeVec, eye_acc_pfilt, 'k', 'LineWidth', 1.5)
         title('Accel')
         ylim([-15000 15000])
         patch(x, y, 'k', 'FaceAlpha',.5, 'LineStyle', 'none');
-        xlim([0 length(eye_vel_pfilt)])
+        xlim([0 max(timeVec)])
         hold off
+        box off
         
         axes(ha(3))
-        plot(abs(eye_acc_pfilt), 'k', 'LineWidth', 1.5)
+        plot(timeVec, abs(eye_acc_pfilt), 'k', 'LineWidth', 1.5)
         hline(450, 'b')
         patch(x, y.*100, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
         ylim([0 2500])
-        xlim([0 length(eye_vel_pfilt)])
+        xlim([0 max(timeVec)])
+        box off
         
        
     else
         axes(ha(2))
-        plot(eye_vel_praw, 'r')
+        plot(timeVec, eye_vel_praw, 'r')
         hold on
-        plot(eye_vel_pfilt, 'k', 'LineWidth', 1.5)
+        plot(timeVec, eye_vel_pfilt, 'k', 'LineWidth', 1.5)
         title('Velocity')
         patch(x, y, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
         ylim([-200 200])
-        xlim([0 length(eye_vel_pfilt)])
+        xlim([0 max(timeVec)])
         hold off
+        box off
         
         axes(ha(3))
-        plot((eye_vel_pfilt - fit1).^2, 'k', 'LineWidth', 1.5)
-        hline(params.saccadeThresh, 'b')
+        plot(timeVec, (eye_vel_pfilt - fit1).^2, 'k', 'LineWidth', 1.5)
+        hline(thresh, 'b')
         patch(x, y.*100, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
-        ylim([0 10000])
-        xlim([0 length(eye_vel_pfilt)])
+        ylim([0 4*thresh])
+        xlim([0 max(timeVec)])
+        linkaxes(ha(:), 'x')
+        box off
     end
     
 
@@ -150,7 +212,7 @@ if 0
         plot(data)
         hold on
         eye_pos_des = data;
-        eye_pos_des(omitH) = NaN;
+        eye_pos_des(saccadeLocs) = NaN;
         plot(eye_pos_des)
         preLim = ylim;
         patch(x, y, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
@@ -162,7 +224,7 @@ if 0
         plot(eye_pos_filt);
         hold on
         eye_pos_filt_des = eye_pos_filt;
-        eye_pos_filt_des(omitH) = NaN;
+        eye_pos_filt_des(saccadeLocs) = NaN;
         plot(eye_pos_filt_des)
         preLim = ylim;
         patch(x, y, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
@@ -173,7 +235,7 @@ if 0
         axes(ha(3))
         plot(eye_vel_praw)
         hold on
-        eye_vel_praw(omitH) = NaN;
+        eye_vel_praw(saccadeLocs) = NaN;
         plot(eye_vel_praw)
         preLim = ylim;
         patch(x, y, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
@@ -185,7 +247,7 @@ if 0
         filtP_eye_vel = diff(eye_pos_filt);
         plot(filtP_eye_vel);
         hold on
-        filtP_eye_vel(omitH) = NaN;
+        filtP_eye_vel(saccadeLocs) = NaN;
         plot(filtP_eye_vel)
         preLim = ylim;
         patch(x, y, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
