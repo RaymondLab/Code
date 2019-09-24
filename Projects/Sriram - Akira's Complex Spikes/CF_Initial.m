@@ -20,23 +20,23 @@ do = 1;
 for j = 1:length(files)
 
     clc
-%     for qq = 1:30        
+%     for qq = 1:30
 %         qq
 %         RawRecording = readcxdata(fullfile(files(j).folder, files(j).name), 0, qq)
 %         clc
 %     end
 
-    
+
     RawRecording = readcxdata(fullfile(files(j).folder, files(j).name), 0, 7)
     if isempty(RawRecording.data)
         continue
     end
-    
+
     fullfile(files(j).folder, files(j).name)
     DatRecording = opensingleMAXEDIT(fullfile(files(j).folder, files(j).name), 0);
     clf(ha);
     t = linspace(DatRecording(1).tstart, DatRecording(1).tend, length(DatRecording(1).data));
-   
+
     if do
         for i = 1:(length(DatRecording))
 
@@ -62,7 +62,7 @@ for j = 1:length(files)
             if i ~= (length(DatRecording))
                 set(ha(i),'xticklabel',[])
             end
-            
+
 %             if i == 6
 %                 figure(2)
 %                 b = scatter(DatRecording(i).data, ones(length(DatRecording(i).data), 1), 'filled', 'SizeData', 10);

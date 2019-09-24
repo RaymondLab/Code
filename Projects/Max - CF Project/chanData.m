@@ -30,7 +30,7 @@ classdef chanData
             
             if strcmp(self.whoseData, 'Akira')
                 eFile = strrep(bFileName, 'unit', 'U');
-            elseif strmp(self.whoseData, 'Jennifer')
+            elseif strcmp(self.whoseData, 'Jennifer')
                 eFile = strrep(bFileName, 'da', 'du');
             else
             end
@@ -53,7 +53,7 @@ classdef chanData
             end
         end
         
-        function [self, peakFreqEstimate] = findExpmtFreq(self, datObj)
+        function [self, peakFreqEstimate] = findExpmtFreq(self, datObj, expmtRow)
             maxFreqLoc = [0,0,0,0,0; 0,0,0,0,0];
             for i = 1:8
                 
@@ -66,7 +66,7 @@ classdef chanData
                 P2 = abs(Y/L);
                 P1 = P2(1:floor(L/2+1));
                 P1(2:end-1) = 2*P1(2:end-1);
-                f = beh(i).samplerate*(0:(L/2))/L;
+                f = datObj(i).samplerate*(0:(L/2))/L;
                 
                 if sum(P1 == max(P1)) == 1
                     maxFreqLoc(1, i) = f(P1 == max(P1));
@@ -79,13 +79,18 @@ classdef chanData
                 peakFreqEstimate = round(peakFreqEstimate * 2)/2;
                 self.expmt_table.Freq_Duration(expmtRow) = peakFreqEstimate;
                 disp(['     -Freq Est: ', num2str(peakFreqEstimate)]);
+            else
+                peakFreqEstimate = NaN;
+                self.expmt_table.Freq_Duration(expmtRow) = NaN;
+                disp(['     -Freq Est: ', 'NaN']);
+                
             end
         end
         
         function plotAllChans(~, datObj)
             figure(1); clf
             ha = tight_subplot(9,1,[.03 .03],[.03 .03],[.03 .03]);
-            for i = 1:9
+            for i = 1:8
                 
                 axes(ha(i));
                 
@@ -119,8 +124,8 @@ classdef chanData
                 
         function plotPowerSpec(~, datObj)
             figure(99);clf
-            za = tight_subplot(8,1,[.03 .03],[.03 .03],[.03 .03]);
-            for i = 1:8
+            za = tight_subplot(9,1,[.03 .03],[.03 .03],[.03 .03]);
+            for i = 1:7
                 
                 L = length(datObj(i).data);
                 Y = fft(datObj(i).data);
@@ -142,8 +147,10 @@ classdef chanData
         end
         
         function self = findStimType(self, expmtRow)
-            % Sine or Step?
-            if contains(self.expmt_table.SineStep{expmtRow}, 'Not Measured')
+            %% Sine or Step?
+            
+            % Only ask if we don't know
+            if contains(self.expmt_table.SineStep{expmtRow}, 'Not Measured') || contains(self.expmt_table.SineStep{expmtRow}, 'Unknown')
                 
                 % Input for Sine/Step Information
                 answer = questdlg('Sine or Step?', ...
@@ -161,27 +168,40 @@ classdef chanData
             end
             disp(['     -', self.expmt_table.SineStep{expmtRow}]);
             
-            % What kind of Sine? 
+            %% What kind Stim?
+            
+            % Sine
             if contains(self.expmt_table.SineStep{expmtRow}, 'Sine')
-                % Input for Sine/Step Information
-                answer = questdlg('Expmt Type?', ...
-                    'Dessert Menu', ...
-                    'OKR','VORD', 'Unknown', 'Unknown');
-                if contains(answer, 'Unknown')
-                    answer = questdlg('Exmpt Type?', ...
-                        'Dessert Menu', ...
-                        'x0', 'x2', 'Unknown', 'Unknown');
-                end
                 
-                % Save StimType information
-                self.expmt_table.StimType{expmtRow} = answer;
-                disp(['     -Stim Type: ', answer]);
+                % Only ask if we don't know
+                if contains(self.expmt_table.StimType{expmtRow}, 'Unknown') || contains(self.expmt_table.StimType{expmtRow}, 'Not Measured')
+                    
+                    % Input for Sine/Step Information
+                    answer = questdlg('Expmt Type?', ...
+                        'Dessert Menu', ...
+                        'OKR','VORD', 'Unknown', 'Unknown');
+                    if contains(answer, 'Unknown')
+                        answer = questdlg('Exmpt Type?', ...
+                            'Dessert Menu', ...
+                            'x0', 'x2', 'Unknown', 'Unknown');
+                    end
+
+                    % Save StimType information
+                    self.expmt_table.StimType{expmtRow} = answer;
+                    disp(['     -Stim Type: ', answer]);
+                end
+                    
             end
             
 
         end
         
-        function self = findAmpPhase(self, datObj)
+        function self = findAmpPhase(self, datObj, peakFreqEstimate, expmtRow)
+            
+            % Make sure you have a peakFreqEstimate value
+            if isnan(peakFreqEstimate)
+                return
+            end
             
             % Generate Fit
             for i = 1:8
@@ -190,7 +210,7 @@ classdef chanData
                 end
                 
                 segLength = length(datObj(i).data);
-                segTime = (1:segLength)/samplerate;
+                segTime = (1:segLength)/datObj(i).samplerate;
                 freq = peakFreqEstimate;
                 y1 = sin(2*pi*freq*segTime(:));
                 y2 = cos(2*pi*freq*segTime(:));
@@ -242,24 +262,24 @@ classdef chanData
             pa = tight_subplot(2,1,[.03 .03],[.03 .03],[.03 .03]);
             
             axes(pa(1))
-            % Head Vel
-            samplerate = datObj(5).samplerate;
-            timeVec = 0:( 1/samplerate ):( length(datObj(5).data)-1 )/samplerate;
-            plot(timeVec, datObj(5).data, 'b'); hold on
-            
             % Target Vel
             samplerate = datObj(7).samplerate;
             timeVec = 0:( 1/samplerate ):( length(datObj(7).data)-1 )/samplerate;
-            plot(timeVec, datObj(7).data, 'r');
+            plot(timeVec, datObj(7).data, 'r'); hold on
             
+            % Head Vel
+            samplerate = datObj(5).samplerate;
+            timeVec = 0:( 1/samplerate ):( length(datObj(5).data)-1 )/samplerate;
+            plot(timeVec, datObj(5).data, 'b'); 
+            
+            legend({'Target', 'Head'})
             % Gaze Vel
-            samplerate = datObj(1).samplerate;
-            timeVec = 0:( 1/samplerate ):( length(datObj(1).data)-1 )/samplerate;
-            plot(timeVec, datObj(1).data, 'k');
-            
+            %samplerate = datObj(1).samplerate;
+            %timeVec = 0:( 1/samplerate ):( length(datObj(1).data)-1 )/samplerate;
+            %plot(timeVec, datObj(1).data, 'k');
             
             ylim([-50 50])
-            xlim([0 30])
+            xlim([0 5])
             title('Vel')
             
             axes(pa(2))
@@ -273,7 +293,7 @@ classdef chanData
             timeVec = 0:( 1/samplerate ):( length(datObj(3).data)-1 )/samplerate;
             plot(timeVec, datObj(3).data, 'k'); hold on
             ylim([-30 30])
-            xlim([0 30])
+            xlim([0 5])
             title('Pos')
             
             
@@ -281,7 +301,15 @@ classdef chanData
             
         end
         
-        
+        function plotEphys(self, datObj)
+            ephysPlot = tight_subplot(1,1,[.03 .03],[.03 .03],[.03 .03]);
+            ephysChan = datObj(contains({datObj.chanlabel}, 'Ephys'));
+            
+            samplerate = ephysChan.samplerate;
+            timeVec = 0:( 1/samplerate ):( length(ephysChan.data)-1 )/samplerate;
+            plot(timeVec, ephysChan.data);
+            
+        end
         
         
     end

@@ -14,8 +14,8 @@ var sineOn% := 0;
 '--------------------------------------------------------------------------------
 ' STEP PARAMETERS
 '--------------------------------------------------------------------------------
-var stepPeriod := 2000;
-var stepLength := 500;
+var stepPeriod := 1000;
+var stepLength := 250;
 var stepStim := 0;
 var stepAmpChair := 10;
 var stepAmpDrum := 10;
@@ -519,6 +519,11 @@ Proc WindowConfig()
   SampleTitle$(htvelCh%,"htvel");
   SampleComment$(htvelCh%, "Drum Velocity");
 
+  'Channel 15 - ALEX FANNING
+  'SampleEvent(15,4,2,1000); '- ALEX FANNING
+  'SampleTitle$(15,"TTL5"); '- ALEX FANNING
+  'SampleComment$(12, "TTL5: FP Pulse"); '- ALEX FANNING
+
   'Channel 30
   SampleTextMark(200);
 
@@ -540,7 +545,9 @@ Proc WindowConfig()
   ChanHide(-1);
 
   'Show certain channels in a particular order
-  ChanShow(1,2,3,4,5,6,7,8,9,10,11,12,13, 14,30,31);
+  ChanShow(1,2,3,4,5,6,7,8,9,10,11,12,13,14,30,31);
+  'ChanShow(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,30,31); 'Alex Fanning
+
   'ChanSelect(13,1);    'Select channel 13
   'ChanOrder(4,1,-3);   'Move selected channels
   '-----------------------------------------
@@ -564,6 +571,8 @@ Proc WindowConfig()
 
   ' Channel order
   ChanOrder(0, -1, "5, 4, 8, 13, 3, 2, 1, 12, 11, 10, 9, 30, 31");
+  'ChanOrder(0, -1, "5, 4, 8, 13, 3, 2, 1, 12, 11, 10, 9, 30, 31, 15"); 'Alex Fanning
+
   ' Background Colour'
   ViewColour(0,5);
   ' Font
@@ -622,7 +631,7 @@ Func ToolbarRunExpmt%()
   test% := 0;                  'test: 0=run testLength, 1=test testLength, 2=init&wait 20 sec, 3=init&wait 10 sec,  4=init&wait runLength
   testrep% := 0;                ' Changed from 0 to 1 5/2/14 so that VORD is only tested once at the beginning
   goalTime := MaxTime();
-
+  SampleKey("H");
   ToolbarSet(ExpmtPos, "Quit Expmt",ToolbarQuitExpmt%);
   Return(1);
 End
@@ -630,17 +639,18 @@ End
 Func ToolbarQuitExpmt%()
   runExpmt% := 0;
   ToolbarInit%();
+  SampleKey("h");
   ToolbarSet(ExpmtPos, "Run Expmt",ToolbarRunExpmt%);
   Return(1)
 End
 
 Func ToolbarInit%()
-  ToolbarLightOff%(); Yield(.01);
+  ToolbarLightOff%(); Yield();
+  ToolbarStepOff%(); Yield();
   ToolbarSineStop%(); Yield(.01);
+  ToolbarStimoff%(); Yield();
   prevTime := 0;  ' Reset prev time so sine offset code continues running in a new file
-
   SampleKey( "I" );
-
   Return( 1 );
 End
 
@@ -719,6 +729,10 @@ Func driftFix%()
       SampleKey("9");
       centerLineChair := (stepLength/1000) * stepAmpChair * X;
     endif
+    if stepAmpChair = 0 then
+      SampleKey("0");
+      centerLineChair := 0;
+    endif
 
     if stepAmpDrum > 0 then
       'SampleKey("7");
@@ -728,6 +742,10 @@ Func driftFix%()
       'SampleKey("6");
       centerLineDrum := (stepLength/1000) * stepAmpDrum * Z;
     endif
+    if stepAmpDrum = 0 then
+      centerLineDrum := 0;
+    endif
+
   case sineOn% = 1 or vidOn = 1 then
     var chairSign := 1; 'set default to 1 if phase = 0'
     var drumSign := 1;

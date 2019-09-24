@@ -3,7 +3,7 @@
 '--------------------------------------------------------------------------------
 ' SEQUENCER FILE LOCATION
 '--------------------------------------------------------------------------------
-var SequencerFile$ := "C:\\Users\\Raymond Lab\\Documents\\Code\\Experiment Protocols\\Sequencer_D019.pls";
+var SequencerFile$ := "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Sequencer_D019";
 
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS
@@ -17,11 +17,13 @@ var sinAmpDrum := 10;
 
 'Chair converstion factors
 var ChairDegreesPerSecond2Voltage := 0.009323; 'Chair velocity to voltage (Scale)  * Doubled after fixing scaling (10 V MaxVoltage) 1/10/14 HP
-var ChairDegreesPerSecondOffset := -.2;         'Chair velocity to voltage (offset)  *** Input default Chair offset here
+var ChairDegreesPerSecondOffsetDefault := -.2;         'Chair velocity to voltage (offset)  *** Input default Chair offset here
+var ChairDegreesPerSecondOffset := -.2;         'Starting value, is updated repeatedly
 
 'Drum conversion factors
 var DrumDegreesPerSecond2Voltage := 0.01;      'Drum velocity to voltage (Scale)
-var DrumDegreesPerSecondOffset := 0.1;        'Drum velocity to voltage (offset)   *** Input default Drum offset here
+var DrumDegreesPerSecondOffsetDefault := 0.1;        'Drum velocity to voltage (offset)   *** Input default Drum offset here
+var DrumDegreesPerSecondOffset := 0.1;        'Starting value, is updated repeatedly
 
 'Channel 1: Scaling to display the drum COMMAND signal
 var DrumVoltage2Velocity := 100;                'Voltage to Drum Velocity (Scale)
@@ -50,3 +52,11 @@ var DrumPosReadoutOffset := 0;                  'Drum position readout offset
 'Channel 5/6: Eye position readout
 var EyeVoltage2Position := 1;                   'Voltage to Eye Position (Scale)
 var EyeVoltage2PositionC := 0;                  'Voltage to Eye Position (offset)
+
+'Default servo direction for chair and drum -- 1 or -1'
+var ChairResetDirection := 1;
+var DrumResetDirection := 1;
+
+'Scale factor for amplitude of sine wave drift'
+var ChairDriftFactor := .06;
+var DrumDriftFactor := .085;
