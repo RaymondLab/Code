@@ -3,16 +3,16 @@
 % Adds to a results structure that already has time info
 % to do - have ROI picked automatically based on pupil radius size, and
 % move with pupil
-
-%% Parameters - try changing if needed
+function eyeAnalysis_APP(app)
+%% Parameters
 load settings
 prevsettings = 1;
 
 % Shouldn't need to change unless setup changes drastically
-edgeThresh1 = 35; % Initial gradient threshold of pupil edge detection for cam 1
-edgeThresh2 = 35; % Initial gradient threshold of pupil edge detection for cam 2
-plotall = 1;
-debugOn = 0;
+edgeThresh1 = app.edgeThreshCam1EditField.Value; 
+edgeThresh2 = app.edgeThreshCam2EditField.Value;
+plotall = app.PlotAnalysisCheckBox.Value;
+debugOn = app.debugCheckBox.Value;
 
 %% Load results time file
 cla(app.UIAxes2);
@@ -20,18 +20,16 @@ cla(app.UIAxes2_2);
 cla(app.UIAxes3);
 cla(app.UIAxes3_2);
 
-
 load(fullfile(cd,'time.mat'));
 
 n = length(results.time1);
 info1 = imfinfo('img1.tiff');
 info2 = imfinfo('img2.tiff');
 n_images = numel(info1);
+
 if n ~= n_images
     error('time stamps dont match number of images')
 end
-
-disp(repmat('.',1,sum(mod(1:n,30)==0)))
 
 pupil1 = NaN(n,5);
 pupil2 = NaN(n,5);
@@ -43,17 +41,13 @@ CR2b = NaN(n,3);
 warning off
 
 tic
-%h = waitbar(0,'0 % analyzed');
   
 %% Start looping
 for i = 1:n
 % i = i-1;
     % Make a progress bar
-    if mod(i,30) ==0
-        
-        %waitbar(i/n,h,sprintf('%.0f %% analyzed',i/n*100));
-       
-
+    if mod(i,60) ==0
+               
         % Store results
         results.pupil1 = pupil1;
         results.pupil2 = pupil2;
@@ -75,7 +69,7 @@ for i = 1:n
     img2 = imresize(img2,2);
        
     % Enhance contrast
-    if imAdjust
+    if app.ImproveImageContrastCheckBox.Value
         img1 = imadjust(img1);
         img2 = imadjust(img2);
     end
@@ -95,7 +89,7 @@ for i = 1:n
     
     try
         %% CAMERA 1
-        app.UIAxes2; cla;    
+        %app.UIAxes2; cla;    
         [pupil1(i,:), CR1a(i,:), CR1b(i,:),points1, edgeThresh1] = detectPupilCR_APP(...
             app, 1, img1,'radiiPupil',radiiPupil,'radiiCR',radiiCR1,...
             'EdgeThresh',edgeThresh1+3, 'pupilStart',pupilStart1,...
@@ -109,7 +103,7 @@ for i = 1:n
     
     try
         %% CAMERA 2
-        app.UIAxes2_2; cla
+        %app.UIAxes2_2; cla
         [pupil2(i,:), CR2a(i,:),CR2b(i,:), points2, edgeThresh2] = detectPupilCR_APP(...
             app, 0, img2,'radiiPupil',radiiPupil,'radiiCR',radiiCR2,...
             'EdgeThresh',edgeThresh2+3,'pupilStart',pupilStart2,...

@@ -215,7 +215,7 @@ if plotOn
     ylim(fig, [0, size(img,1)]);
     hold(fig, 'on');
     a = 0:.1:2*pi;
-    plot(fig, cr1(3).*cos(a) + cr1(1), cr1(3).*sin(a)+cr1(2),'b'); hold on
+    plot(fig, cr1(3).*cos(a) + cr1(1), cr1(3).*sin(a)+cr1(2),'b')
     plot(fig, cr2(3).*cos(a) + cr2(1), cr2(3).*sin(a)+cr2(2),'c')
     plot(fig, crx, cry,'+r')
     

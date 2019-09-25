@@ -1,5 +1,7 @@
 %%
-function varargout = eyecam_APP(app, vars, vid, eyetrack, nframes)
+function varargout = eyecam_APP2(app, vid, vars, eyetrack, nframes)
+
+%% Defaults for missing inputs
 if ~exist('eyetrack','var')
     eyetrack = 0;
 end
@@ -8,16 +10,19 @@ if ~exist('nframes','var')
     nframes = 180*30;
 end
 
-himg1 = [];
-himg2 = [];
-time1 = [];
-time2 = [];
-
-% Start recording!
+%%  Prep
 start(vid(1));
 start(vid(2));
+AAA = figure(3);
+fhandle = figure(1);
+i = 0;
 
-% Add a figure to begin recording
+%% Imgage Color properties
+cMap = gray(256); % Most of the image is grayscale
+cMap(1,:) = [0 0 1]; % Last row is blue.
+cMap(256,:) = [1 0 0]; % Last row is red.
+
+%% Add a figure to begin recording for EyeTrack
 if eyetrack
     screensize = get(0,'Screensize');
     [screensize(3)/2+9  49 screensize(3)/2-16 screensize(4)-132]
@@ -34,81 +39,81 @@ if eyetrack
     img1_all = uint8(zeros(size(img1,2),size(img1,1),nframes));  %D019
     img2_all = uint8(zeros(size(img1,2),size(img1,1),nframes));  %D019
 else
-    %set(gcf, 'Position', get(0,'Screensize')); % Maximize figure.
+    set(gcf, 'Position', get(0,'Screensize')); % Maximize figure.
 end
-i = 0;
+
+
+%% Plot first frame
+
+[img1, ~] = getsnapshot(vid(1));
+[img2, ~] = getsnapshot(vid(2));
+
+subplot(1,2,1)
+himg1 = imshow(img1); hold on;
+colormap(cMap);
+plot(size(img1,2)/2, size(img1,1)/2,'+r', 'MarkerSize',1000);
+
+
+subplot(1,2,2)
+himg2 = imshow(img2); hold on;
+colormap(cMap);
+plot(size(img1,2)/2, size(img1,1)/2,'+r', 'MarkerSize',1000);
+
 
 %% collect images until user closes  window
 tic
-while ~vars.videoSetupComplete
+while ishandle(fhandle)
 
+    % Quit if enough frames are captured
     if eyetrack && i>=nframes
         close(gcf)
         pause(.1)
         break
     end
 
-    trigger(vid)
     if ~exist('msgh','var') ||  ~ishandle(msgh)
         i = i + 1;
 
-        [img1, time1(i)] = getdata(vid(1),1);
-        [img2, time2(i)] = getdata(vid(2),1);
+        [img1, ~] = getsnapshot(vid(1));
+        [img2, ~] = getsnapshot(vid(2));
+
         time3(i) = toc;
 
-
-        if i==30
-            fps = 30/(time1(i) - time1(i-29))
+        if mod(i, 30) == 0
+            fps = 1/(mean(time3(end-28:end) - time3(end-29:end-1)));
+            hold on
+            AAA;
+            scatter(i, fps);
+            hold off
         end
 
     else
         img1  = getdata(vid(1),1);
         img2  = getdata(vid(2),1);
     end
-    %i
-    img1 = rot90(img1,-1); % hobin don't know why things were rotated but I left them unrotated
+    
+    % hobin don't know why things were rotated but I left them unrotated
+    % maybe unrotating them will give me an error later on
+    img1 = rot90(img1,-1); 
     img1 = rot90(img1,-1);
-    img2 = rot90(img2,-1); % maybe unrotating them will give me an error later on
+    img2 = rot90(img2,-1); 
     img2 = rot90(img2,-1);
-    if i > 0     % Store images in large 3D matrix
-        i % counter
+    
+    % Store images in large 3D matrix only when doing eyetrack
+    if eyetrack  && i > 0
+        %i % counter
         img1_all(:,:,i) = img1;
         img2_all(:,:,i) = img2;
     end
-
-    % Plot everything the first time
-    if isempty(himg1) && isempty(himg2)
-        himg1 = imshow(img1, 'Parent', app.UIAxes);
-        hold(app.UIAxes, 'on');
-
-
-        cMap = gray(256); % Most of the image is grayscale
-        cMap(1,:) = [0 0 1]; % Last row is blue.
-        cMap(256,:) = [1 0 0]; % Last row is red.
-        colormap(cMap);
-
-        hold on;
-
-        if ~exist('h','var')
-            h(1) = plot(app.UIAxes, size(img1,2)/2, size(img1,1)/2,'+r', 'MarkerSize',1000);
-        end
-
-        himg2 = imshow(img2, 'Parent', app.UIAxes_2);
-        hold(app.UIAxes_2, 'on');
-        hold on;     colormap(cMap);
-
-        if length(h)<2
-            h(2) = plot(app.UIAxes_2, size(img1,2)/2, size(img1,1)/2,'+r', 'MarkerSize',1000);
-        end
-
-        % After the first time just update
-     elseif ishandle(himg1) && ishandle(himg2)
-        set(himg1, 'CData',img1);
-        set(himg2, 'CData',img2);
-    end
+    
+    % Update Image
+    set(himg1, 'CData',img1);
+    set(himg2, 'CData',img2);
 end
 
 stop(vid);
+
+%% Define outputs
 if exist('time1','var')
     meanFrameRate = mean(1./diff(time1))
     results.time1 = time1';
