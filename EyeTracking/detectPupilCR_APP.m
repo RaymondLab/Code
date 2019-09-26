@@ -59,7 +59,7 @@
 % Copyright (c) 2005
 % All Rights Reserved.
 
-function [pupil, cr1, cr2, points, edgeThresh] = detectPupilCR_APP( app, side, img, varargin)
+function [pupil, cr1, cr2, points, edgeThresh, crx, cry, epx, epy, epx2, epy2] = detectPupilCR_APP( app, side, img, plotOn, varargin)
 
 
 %% Process imputs
@@ -86,7 +86,7 @@ radiiCR = p.Results.radiiCR;
 gridthresh = p.Results.CRthresh;
 fltr4LM_R = p.Results.CRfilter;
 
-plotOn = p.Results.PlotOn;
+%plotOn = p.Results.PlotOn;
 debugOn = p.Results.DebugOn;
 
 img = double(img);
