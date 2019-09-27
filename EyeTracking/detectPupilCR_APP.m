@@ -24,7 +24,7 @@
 %   cry - the y coordinate of circle center
 %   crr - the radius of circle
 % points        = actual points on pupil detected
-% edgeThresh    = actual edgeThresh used for pupil 
+% edgeThresh    = actual edgeThresh used for pupil
 %
 % Authors: Hannah Payne
 % Date: 2014
@@ -126,16 +126,6 @@ else
     crr(2) = NaN;
 end
 
-%% DEBUG: Plot CR circles ***
-if debugOn
-    figure; imagesc(A); axis image; colormap(gray)
-    a = 0:.001:2*pi; hold on
-    plot(crr(1).*cos(a) + crx(1), crr(1).*sin(a)+cry(1),'b')
-    plot(crr(2).*cos(a) + crx(2), crr(2).*sin(a)+cry(2),'c')
-    plot(crx, cry, 'r+')
-end
-%  END DEBUG ***%
-
 %% For time locking of video to light pulses (optional)
 % output the high y-coordinate, but the exact x of the corresponding lower cr
 if length(crx)==3
@@ -150,26 +140,22 @@ cr2 = [crx(2) cry(2) crr(2)];
 
 %% Remove corneal reflection
 if ~isempty(circen)
-            
-removeCRthresh = max(maxvals)*3/4; % Remove any bright spots
-totalMask = img>removeCRthresh;
-InoCR = img;
-
-for i = 1:length(crx) % Remove each CR
-[X, Y] = meshgrid(1:size(img,2), 1:size(img,1));
-maskCurr = ((X-crx(i)).^2 + (Y-cry(i)).^2) < crr(i).^2;
-totalMask(maskCurr) = true;
-end
-totalMaskDilate = imdilate(totalMask,strel('disk', 8)); %***10
-InoCR(totalMaskDilate) = NaN;
-
-gaussian_smooth_image = @(I, sigma) imfilter(I, fspecial('gaussian', [ceil(2.5*sigma) ceil(2.5*sigma)], sigma), 'symmetric');
-InoCR = gaussian_smooth_image(InoCR,3);
-
-%% ***   DEBUG   ***%
-if debugOn;  figure; colormap(gray);  imagesc(InoCR); end
-%*** ENG DEBUG ***%
-
+    
+    removeCRthresh = max(maxvals)*3/4; % Remove any bright spots
+    totalMask = img>removeCRthresh;
+    InoCR = img;
+    
+    for i = 1:length(crx) % Remove each CR
+        [X, Y] = meshgrid(1:size(img,2), 1:size(img,1));
+        maskCurr = ((X-crx(i)).^2 + (Y-cry(i)).^2) < crr(i).^2;
+        totalMask(maskCurr) = true;
+    end
+    totalMaskDilate = imdilate(totalMask,strel('disk', 8)); %***10
+    InoCR(totalMaskDilate) = NaN;
+    
+    gaussian_smooth_image = @(I, sigma) imfilter(I, fspecial('gaussian', [ceil(2.5*sigma) ceil(2.5*sigma)], sigma), 'symmetric');
+    InoCR = gaussian_smooth_image(InoCR,3);
+    
 else
     InoCR = img;
 end
@@ -202,7 +188,7 @@ points = [epx2(:), epy2(:)];
 %% Plotting
 if plotOn
     
-    if side 
+    if side
         % left
         fig = app.UIAxes2;
     else

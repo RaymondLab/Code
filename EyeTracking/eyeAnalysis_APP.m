@@ -11,17 +11,18 @@ load settings
 prevsettings = 1;
 
 % Shouldn't need to change unless setup changes drastically
-edgeThresh1 = app.edgeThreshCam1EditField.Value; 
+edgeThresh1 = app.edgeThreshCam1EditField.Value;
 edgeThresh2 = app.edgeThreshCam2EditField.Value;
 plotall = app.PlotAnalysisCheckBox.Value;
 debugOn = app.debugCheckBox.Value;
-
+enchanceContrast = app.ImproveImageContrastCheckBox.Value;
 
 % for plotting
 a = 0:.1:2*pi;
 the=linspace(0,2*pi,100);
 
 %% Get Images
+disp('Opening Images...')
 % tiff1
 tic
 FileTif1 = 'img1.tiff';
@@ -34,8 +35,8 @@ ImageStack1 = zeros(nImage,mImage,n_images,'uint8');
 TifLink1 = Tiff(FileTif1, 'r');
 
 for i=1:n_images
-   TifLink1.setDirectory(i);
-   ImageStack1(:,:,i)=TifLink1.read();
+    TifLink1.setDirectory(i);
+    ImageStack1(:,:,i)=TifLink1.read();
 end
 TifLink1.close();
 
@@ -44,67 +45,20 @@ FileTif_2 = 'img2.tiff';
 info2 = imfinfo(FileTif_2);
 
 ImageStack2 = zeros(nImage,mImage,n_images,'uint8');
- 
+
 TifLink_2 = Tiff(FileTif_2, 'r');
 for i = 1:n_images
-   TifLink_2.setDirectory(i);
-   ImageStack2(:,:,i) = TifLink_2.read();
+    TifLink_2.setDirectory(i);
+    ImageStack2(:,:,i) = TifLink_2.read();
 end
 TifLink_2.close();
 toc
 
-%% Pre-process Stack of images
+%% Pre-process Images
+disp('Preprocessing...')
 tic
-img1 = ImageStack1(:,:,1);
-img2 = ImageStack2(:,:,1);
-
-% Upsample image for better detection of CR
-img1 = imresize(img1,2);
-img2 = imresize(img2,2);
-
-% Enhance contrast
-if app.ImproveImageContrastCheckBox.Value
-    img1 = imadjust(img1);
-    img2 = imadjust(img2);
-end
-
-% Select ROI
-img1 = img1(pos1(2):pos1(2)+pos1(4), pos1(1):pos1(1)+pos1(3));
-img2 = img2(pos2(2):pos2(2)+pos2(4), pos2(1):pos2(1)+pos2(3));
-
-img1 = imfilter(img1, fspecial('gaussian',3,.5));
-img2 = imfilter(img2, fspecial('gaussian',3,.5));
-
-% Pre Allocate 3D Matrix using the gathered size, and store
-ImageStack1B = zeros(size(img1,1),size(img1,2),n_images,'uint8');
-ImageStack2B = zeros(size(img2,1),size(img2,2),n_images,'uint8');
-ImageStack1B(:,:,1) = img1;
-ImageStack2B(:,:,1) = img2;
-
-
-for i = 2:n_images
-    img1 = ImageStack1(:,:,i);
-    img2 = ImageStack2(:,:,i);
-    
-    % Upsample image for better detection of CR
-    img1 = imresize(img1,2);
-    img2 = imresize(img2,2);
-    
-    % Enhance contrast
-    if app.ImproveImageContrastCheckBox.Value
-        img1 = imadjust(img1);
-        img2 = imadjust(img2);
-    end
-    
-    % Select ROI
-    img1 = img1(pos1(2):pos1(2)+pos1(4), pos1(1):pos1(1)+pos1(3));
-    img2 = img2(pos2(2):pos2(2)+pos2(4), pos2(1):pos2(1)+pos2(3));
-        
-    img1 = imfilter(img1, fspecial('gaussian',3,.5));
-    img2 = imfilter(img2, fspecial('gaussian',3,.5));
-    ImageStack1B(:,:,i) = img1;
-    ImageStack2B(:,:,i) = img2;
-end
+ImageStack1B = preprocessImages(ImageStack1, n_images, pos1, enchanceContrast);
+ImageStack2B = preprocessImages(ImageStack2, n_images, pos2, enchanceContrast);
 toc
 
 %% steup Figures
@@ -113,19 +67,12 @@ cla(app.UIAxes2_2);
 cla(app.UIAxes3);
 cla(app.UIAxes3_2);
 
-%plottedImage1 = imshow(ImageStack1B(:,:,1),'Parent',app.UIAxes2);
-%plottedImage2 = imshow(ImageStack2B(:,:,1),'Parent',app.UIAxes2_2);
-
 plottedImage1 = imagesc(app.UIAxes2, ImageStack1B(:,:,1));
 plottedImage2 = imagesc(app.UIAxes2_2, ImageStack2B(:,:,1));
 
-%xlim(app.UIAxes2, [0, size(img1,1)]);
-%ylim(app.UIAxes2, [0, size(img1,2)]);
 hold(app.UIAxes2, 'on');
 colormap(app.UIAxes2, gray);
 
-%xlim(app.UIAxes2_2, [0, size(img2,1)]);
-%ylim(app.UIAxes2_2, [0, size(img2,2)]);
 hold(app.UIAxes2_2, 'on');
 colormap(app.UIAxes2_2, gray);
 
@@ -151,9 +98,9 @@ tic
 
 %% Start looping
 for i = 1:n
-
+    
     if mod(i,120) ==0
-               
+        
         % Store results
         results.pupil1 = pupil1;
         results.pupil2 = pupil2;
@@ -161,101 +108,119 @@ for i = 1:n
         results.cr2a = CR2a;
         results.cr1b = CR1b;
         results.cr2b = CR2b;
-        save('videoresults.mat','results')
-        app.UIAxes3;
         plotresults_APP(app, results)
     end
     
-	% Load images
+    % Load images
     img1 = ImageStack1B(:,:,i);
     img2 = ImageStack2B(:,:,i);
     
-    % Use the previous pupil location as a starting point
-    if i~=1
-        pupilStart1 = pupil1(i-1,:);
-        pupilStart2 = pupil2(i-1,:);
-    end  
-    
     try
+        
+        % Use the previous pupil location as a starting point
+        if i~=1
+            pupilStart1 = pupil1(i-1,:);
+            pupilStart2 = pupil2(i-1,:);
+        end
         %% CAMERA 1
-        [pupil1(i,:), CR1a(i,:), CR1b(i,:),points1, edgeThresh1, crx1, cry1, epx_1, epy_1, epx2_1, epy2_1] = detectPupilCR_APP(...
+%         [CR_Centers1, CR_radii1, ~] = imfindcircles(img1, [6 12], 'Sensitivity', .9, 'Method', 'TwoStage');
+%         
+%         % Only take first two circles
+%         CR_Centers1 = CR_Centers1(1:2, 1:2);
+%         crx1 = CR_Centers1(:,1);
+%         cry1 = CR_Centers1(:,2);
+%         
+%         % Make sure order is correct
+%         [crx1, I] = sort(crx1);
+%         cry1 = cry1(I);
+%         CR_radii1 = CR_radii1(I);
+%         
+%         % Put left CR first
+%         CR1a(i,:) = [crx1(1) cry1(1) CR_radii1(1)];
+%         CR1b(i,:) = [crx1(2) cry1(2) CR_radii1(2)];
+%         
+%         [pupil1(i,:), edgeThresh1, epx_1, epy_1, epx2_1, epy2_1] = detectPupilQuick(...
+%             img1, CR_Centers1(1:2, 1:2), crx1, cry1, CR_radii1, ...
+%             'pupilStart',pupilStart1, 'radiiPupil',radiiPupil, ...
+%             'EdgeThresh',edgeThresh1+3, 'MinFeatures',minfeatures);
+%         
+        [pupil1(i,:), CR1a(i,:),CR1b(i,:), ~, edgeThresh1, crx1, cry1, epx_1, epy_1, epx2_1, epy2_1] = detectPupilCR_APP(...
             app, 1, img1, 0, ...
-            'radiiPupil',radiiPupil,'radiiCR',radiiCR1,...
-            'EdgeThresh',edgeThresh1+3, 'pupilStart',pupilStart1,...
-            'CRthresh',CRthresh1,'CRfilter',CRfilter1,'PlotOn',plotall,...
-            'MinFeatures',minfeatures,'debugOn',debugOn);
+            'radiiPupil',radiiPupil,'radiiCR',radiiCR2,...
+            'EdgeThresh',edgeThresh2+3,'pupilStart',pupilStart2,...
+            'CRthresh',CRthresh2,'CRfilter',CRfilter2,'PlotOn',plotall,...
+            'MinFeatures', minfeatures,'debugOn',debugOn);
         
     catch msgid
         fprintf('Error in cam 1 img %i\n',i)
         msgid.message
         edgeThresh1 = 35;
     end
-
+    
     
     try
         %% CAMERA 2
-        [pupil2(i,:), CR2a(i,:),CR2b(i,:), points2, edgeThresh2, crx2, cry2, epx_2, epy_2, epx2_2, epy2_2] = detectPupilCR_APP(...
+        [pupil2(i,:), CR2a(i,:),CR2b(i,:), ~, edgeThresh2, crx2, cry2, epx_2, epy_2, epx2_2, epy2_2] = detectPupilCR_APP(...
             app, 0, img2, 0, ...
             'radiiPupil',radiiPupil,'radiiCR',radiiCR2,...
             'EdgeThresh',edgeThresh2+3,'pupilStart',pupilStart2,...
             'CRthresh',CRthresh2,'CRfilter',CRfilter2,'PlotOn',plotall,...
             'MinFeatures', minfeatures,'debugOn',debugOn);
-
+        
+        
     catch msgid
         fprintf('Error in cam 2 img %i\n',i)
         msgid.message
-        edgeThresh2 = 35;                
+        edgeThresh2 = 35;
     end
     
     %% Plotting
     set(plottedImage1,'CData',img1);
     set(plottedImage2,'CData',img2);
-
+    
     if ~exist('plotl1', 'var')
         
         %% Left Plot
         % Corneal Reflection 1
         plotl1 = plot(app.UIAxes2, CR1a(i,3).*cos(a) + CR1a(i,1), CR1a(i,3).*sin(a) + CR1a(i,2),'b');
-
+        
         % Corneal Reflection 1
         plotl2 = plot(app.UIAxes2, CR1b(i,3).*cos(a) + CR1b(i,1), CR1b(i,3).*sin(a) + CR1b(i,2),'c');
         
         plotl3 = plot(app.UIAxes2, crx1, cry1,'+r');
         
         % Center of Pupil
-        plotl4 = plot(app.UIAxes2, pupil1(i,1), pupil1(i,2),'+y','LineWidth',2, 'MarkerSize',10);
+        plotl4 = plot(app.UIAxes2, pupil1(i,1), pupil1(i,2),'+m','LineWidth',2, 'MarkerSize',10);
         
         % Pupil Elipse
         plotl5 = line(app.UIAxes2, ...
             pupil1(i,3)*cos(the)*cos(pupil1(i,5)) - sin(pupil1(i,5))*pupil1(i,4)*sin(the) + pupil1(i,1), ...
             pupil1(i,3)*cos(the)*sin(pupil1(i,5)) + cos(pupil1(i,5))*pupil1(i,4)*sin(the) + pupil1(i,2),...
-            'Color','w');
-
+            'Color','m');
+        
         plotl6 = plot(app.UIAxes2, epx_1, epy_1,'.c');
         plotl7 = plot(app.UIAxes2, epx2_1, epy2_1,'.y');
-        %plotl8 = plot(app.UIAxes2, points1(1,:), points1(1,:),'.y');
         
         %% Right Plot
         % Corneal Reflection 1
         plotr1 = plot(app.UIAxes2_2, CR2a(i,3).*cos(a) + CR2a(i,1), CR2a(i,3).*sin(a) + CR2a(i,2),'b');
-
+        
         % Corneal Reflection 1
         plotr2 = plot(app.UIAxes2_2, CR2b(i,3).*cos(a) + CR2b(i,1), CR2b(i,3).*sin(a) + CR2b(i,2),'c');
         
         plotr3 = plot(app.UIAxes2_2, crx2, cry2,'+r');
         
         % Center of Pupil
-        plotr4 = plot(app.UIAxes2_2, pupil2(i,1), pupil2(i,2),'+y','LineWidth',2, 'MarkerSize',10);
+        plotr4 = plot(app.UIAxes2_2, pupil2(i,1), pupil2(i,2),'+m','LineWidth',2, 'MarkerSize',10);
         
         % Pupil Elipse
         plotr5 = line(app.UIAxes2_2, ...
             pupil2(i,3)*cos(the)*cos(pupil2(i,5)) - sin(pupil2(i,5))*pupil2(i,4)*sin(the) + pupil2(i,1), ...
             pupil2(i,3)*cos(the)*sin(pupil2(i,5)) + cos(pupil2(i,5))*pupil2(i,4)*sin(the) + pupil2(i,2),...
-            'Color','w');
+            'Color','m');
         
         plotr6 = plot(app.UIAxes2_2, epx_2, epy_2,'.c');
         plotr7 = plot(app.UIAxes2_2, epx2_2, epy2_2,'.y');
-        %plotr8 = plot(app.UIAxes2_2, points2(1,:), points2(1,:),'.y');
     else
         %% Left Plot
         set(plotl1, 'XData', CR1a(i,3).*cos(a) + CR1a(i,1))
@@ -272,8 +237,6 @@ for i = 1:n
         set(plotl6, 'YData', epy_1)
         set(plotl7, 'XData', epx2_1)
         set(plotl7, 'YData', epy2_1)
-        %set(plotl8, 'XData', points1(1,:))
-        %set(plotl8, 'YData', points1(1,:))
         
         %% Right Plot
         set(plotr1, 'XData', CR2a(i,3).*cos(a) + CR2a(i,1))
@@ -290,13 +253,11 @@ for i = 1:n
         set(plotr6, 'YData', epy_2)
         set(plotr7, 'XData', epx2_2)
         set(plotr7, 'YData', epy2_2)
-        %set(plotr8, 'XData', points2(1,:))
-        %set(plotr8, 'YData', points2(1,:))
     end
     
     drawnow;
 end
-
+toc
 %% Store results
 results.pupil1 = pupil1;
 results.pupil2 = pupil2;
@@ -305,7 +266,7 @@ results.cr2a = CR2a;
 results.cr1b = CR1b;
 results.cr2b = CR2b;
 
-%% Plot and save 
+%% Plot and save
 figure(2);clf
 plotresults(results)
 save('videoresults.mat','results')
