@@ -59,7 +59,7 @@
 % Copyright (c) 2005
 % All Rights Reserved.
 
-function [pupil, cr1, cr2, points, edgeThresh, crx, cry, epx, epy, epx2, epy2] = detectPupilCR_APP( app, side, img, plotOn, varargin)
+function [pupil, cr1, cr2, points, edgeThresh, crx, cry, epx, epy, epx2, epy2] = detectPupilCR_APP( app, side, img, plotOn, crxPrevious, cryPrevious, varargin)
 
 
 %% Process imputs
@@ -92,7 +92,40 @@ debugOn = p.Results.DebugOn;
 img = double(img);
 
 %% Find corneal reflections
-[A, circen, crr] = CircularHough_Grd(img,radiiCR ,gridthresh,fltr4LM_R,1);
+
+% only search through portion of image, Corneal reflections shouldn't move
+try 
+    if ~isempty(crxPrevious) && ~any(isnan(crxPrevious))
+
+        TOP     = max( min(cryPrevious) - max(radiiCR)*2, 1 );
+        BOTTOM  = min( max(cryPrevious) + max(radiiCR)*2, size(img,1) );
+        LEFT    = max( min(crxPrevious) - max(radiiCR)*2, 1 );
+        RIGHT   = min( max(crxPrevious) + max(radiiCR)*2, size(img,2) );
+
+        newImg = img(TOP:BOTTOM, LEFT:RIGHT);
+        [~, circen, crr] = CircularHough_Grd(newImg,radiiCR ,gridthresh,fltr4LM_R,1);
+
+    %     figure(3); clf; hold on
+    %     image(img)
+    %     rectangle('Position', [LEFT (BOTTOM-abs(TOP-BOTTOM)) abs(RIGHT-LEFT) abs(TOP-BOTTOM)]) 
+    %     scatter(circen(:,1)+LEFT, circen(:,2)+TOP)
+    %     hold off
+    %     
+    %     figure(4); clf; hold on
+    %     image(newImg)
+    %     scatter(circen(:,1), circen(:,2))
+    %     hold off
+
+        circen(:,1) = circen(:,1)+ LEFT-1;
+        circen(:,2) = circen(:,2)+ TOP-1;
+    else
+        [A, circen, crr] = CircularHough_Grd(img,radiiCR ,gridthresh,fltr4LM_R,1);
+    end
+catch
+    [A, circen, crr] = CircularHough_Grd(img,radiiCR ,gridthresh,fltr4LM_R,1);
+    disp('ff')
+end
+
 maxvals = diag(img(round(circen(:,2)),round(circen(:,1))));
 
 %% Check for duplicates
@@ -203,15 +236,16 @@ if plotOn
     a = 0:.1:2*pi;
     plot(fig, cr1(3).*cos(a) + cr1(1), cr1(3).*sin(a)+cr1(2),'b')
     plot(fig, cr2(3).*cos(a) + cr2(1), cr2(3).*sin(a)+cr2(2),'c')
-    plot(fig, crx, cry,'+r')
+    plot(fig, crx(1), cry(1),'+b')
+    plot(fig, crx(2), cry(2),'+c')
     
     % Plot ellipse
     the=linspace(0,2*pi,100);
     line(fig, pupil(3)*cos(the)*cos(pupil(5)) - sin(pupil(5))*pupil(4)*sin(the) + pupil(1), ...
         pupil(3)*cos(the)*sin(pupil(5)) + cos(pupil(5))*pupil(4)*sin(the) + pupil(2),...
-        'Color','k');
+        'Color','m');
     
-    plot(fig, pupil(1), pupil(2),'+y','LineWidth',2, 'MarkerSize',10)
+    plot(fig, pupil(1), pupil(2),'+m','LineWidth',2, 'MarkerSize',10)
     if exist('epx','var')
         plot(fig, epx, epy,'.c')
         plot(fig, epx2, epy2,'.y')

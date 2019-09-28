@@ -92,13 +92,16 @@ CR1a = NaN(n,3);
 CR2a = NaN(n,3);
 CR1b = NaN(n,3);
 CR2b = NaN(n,3);
+crx1 = [];
+cry1 = [];
+crx2 = [];
+cry2 = [];
 
 warning off
 tic
 
 %% Start looping
 for i = 1:n
-    
     if mod(i,120) ==0
         
         % Store results
@@ -145,7 +148,7 @@ for i = 1:n
 %             'EdgeThresh',edgeThresh1+3, 'MinFeatures',minfeatures);
 %         
         [pupil1(i,:), CR1a(i,:),CR1b(i,:), ~, edgeThresh1, crx1, cry1, epx_1, epy_1, epx2_1, epy2_1] = detectPupilCR_APP(...
-            app, 1, img1, 0, ...
+            app, 1, img1, 0, crx1, cry1,...
             'radiiPupil',radiiPupil,'radiiCR',radiiCR2,...
             'EdgeThresh',edgeThresh2+3,'pupilStart',pupilStart2,...
             'CRthresh',CRthresh2,'CRfilter',CRfilter2,'PlotOn',plotall,...
@@ -161,7 +164,7 @@ for i = 1:n
     try
         %% CAMERA 2
         [pupil2(i,:), CR2a(i,:),CR2b(i,:), ~, edgeThresh2, crx2, cry2, epx_2, epy_2, epx2_2, epy2_2] = detectPupilCR_APP(...
-            app, 0, img2, 0, ...
+            app, 0, img2, 0, crx2, cry2,...
             'radiiPupil',radiiPupil,'radiiCR',radiiCR2,...
             'EdgeThresh',edgeThresh2+3,'pupilStart',pupilStart2,...
             'CRthresh',CRthresh2,'CRfilter',CRfilter2,'PlotOn',plotall,...
@@ -183,20 +186,18 @@ for i = 1:n
         %% Left Plot
         % Corneal Reflection 1
         plotl1 = plot(app.UIAxes2, CR1a(i,3).*cos(a) + CR1a(i,1), CR1a(i,3).*sin(a) + CR1a(i,2),'b');
+        plotl3 = plot(app.UIAxes2, crx1(1), cry1(1),'+b', 'LineWidth', 2, 'MarkerSize',10);
         
-        % Corneal Reflection 1
+        % Corneal Reflection 2
         plotl2 = plot(app.UIAxes2, CR1b(i,3).*cos(a) + CR1b(i,1), CR1b(i,3).*sin(a) + CR1b(i,2),'c');
+        plotl3a = plot(app.UIAxes2, crx1(2), cry1(2),'+c', 'LineWidth', 2, 'MarkerSize',10);
         
-        plotl3 = plot(app.UIAxes2, crx1, cry1,'+r');
-        
-        % Center of Pupil
-        plotl4 = plot(app.UIAxes2, pupil1(i,1), pupil1(i,2),'+m','LineWidth',2, 'MarkerSize',10);
-        
-        % Pupil Elipse
+        % Pupil 
         plotl5 = line(app.UIAxes2, ...
             pupil1(i,3)*cos(the)*cos(pupil1(i,5)) - sin(pupil1(i,5))*pupil1(i,4)*sin(the) + pupil1(i,1), ...
             pupil1(i,3)*cos(the)*sin(pupil1(i,5)) + cos(pupil1(i,5))*pupil1(i,4)*sin(the) + pupil1(i,2),...
             'Color','m');
+        plotl4 = plot(app.UIAxes2, pupil1(i,1), pupil1(i,2),'+m','LineWidth', 2, 'MarkerSize',10);
         
         plotl6 = plot(app.UIAxes2, epx_1, epy_1,'.c');
         plotl7 = plot(app.UIAxes2, epx2_1, epy2_1,'.y');
@@ -204,20 +205,18 @@ for i = 1:n
         %% Right Plot
         % Corneal Reflection 1
         plotr1 = plot(app.UIAxes2_2, CR2a(i,3).*cos(a) + CR2a(i,1), CR2a(i,3).*sin(a) + CR2a(i,2),'b');
+        plotr3 = plot(app.UIAxes2_2, crx2(1), cry2(1),'+b', 'LineWidth',2, 'MarkerSize',10);
         
-        % Corneal Reflection 1
+        % Corneal Reflection 2
         plotr2 = plot(app.UIAxes2_2, CR2b(i,3).*cos(a) + CR2b(i,1), CR2b(i,3).*sin(a) + CR2b(i,2),'c');
+        plotr3a = plot(app.UIAxes2_2, crx2(2), cry2(2),'+c', 'LineWidth',2, 'MarkerSize',10);
         
-        plotr3 = plot(app.UIAxes2_2, crx2, cry2,'+r');
-        
-        % Center of Pupil
-        plotr4 = plot(app.UIAxes2_2, pupil2(i,1), pupil2(i,2),'+m','LineWidth',2, 'MarkerSize',10);
-        
-        % Pupil Elipse
+        % Pupil 
         plotr5 = line(app.UIAxes2_2, ...
             pupil2(i,3)*cos(the)*cos(pupil2(i,5)) - sin(pupil2(i,5))*pupil2(i,4)*sin(the) + pupil2(i,1), ...
             pupil2(i,3)*cos(the)*sin(pupil2(i,5)) + cos(pupil2(i,5))*pupil2(i,4)*sin(the) + pupil2(i,2),...
             'Color','m');
+        plotr4 = plot(app.UIAxes2_2, pupil2(i,1), pupil2(i,2),'+m','LineWidth',2, 'MarkerSize',10);
         
         plotr6 = plot(app.UIAxes2_2, epx_2, epy_2,'.c');
         plotr7 = plot(app.UIAxes2_2, epx2_2, epy2_2,'.y');
@@ -227,8 +226,10 @@ for i = 1:n
         set(plotl1, 'YData', CR1a(i,3).*sin(a) + CR1a(i,2))
         set(plotl2, 'XData', CR1b(i,3).*cos(a) + CR1b(i,1))
         set(plotl2, 'YData', CR1b(i,3).*sin(a) + CR1b(i,2))
-        set(plotl3, 'XData', crx1)
-        set(plotl3, 'YData', cry1)
+        set(plotl3, 'XData', crx1(1))
+        set(plotl3, 'YData', cry1(1))
+        set(plotl3a, 'XData', crx1(2))
+        set(plotl3a, 'YData', cry1(2))
         set(plotl4, 'XData', pupil1(i,1))
         set(plotl4, 'YData', pupil1(i,2))
         set(plotl5, 'XData', pupil1(i,3)*cos(the)*cos(pupil1(i,5)) - sin(pupil1(i,5))*pupil1(i,4)*sin(the) + pupil1(i,1))
@@ -243,8 +244,10 @@ for i = 1:n
         set(plotr1, 'YData', CR2a(i,3).*sin(a) + CR2a(i,2))
         set(plotr2, 'XData', CR2b(i,3).*cos(a) + CR2b(i,1))
         set(plotr2, 'YData', CR2b(i,3).*sin(a) + CR2b(i,2))
-        set(plotr3, 'XData', crx2)
-        set(plotr3, 'YData', cry2)
+        set(plotr3, 'XData', crx2(1))
+        set(plotr3, 'YData', cry2(1))
+        set(plotr3a, 'XData', crx2(2))
+        set(plotr3a, 'YData', cry2(2))
         set(plotr4, 'XData', pupil2(i,1))
         set(plotr4, 'YData', pupil2(i,2))
         set(plotr5, 'XData', pupil2(i,3)*cos(the)*cos(pupil2(i,5)) - sin(pupil2(i,5))*pupil2(i,4)*sin(the) + pupil2(i,1))
@@ -255,7 +258,7 @@ for i = 1:n
         set(plotr7, 'YData', epy2_2)
     end
     
-    drawnow;
+    pause(0.001)
 end
 toc
 %% Store results
@@ -271,7 +274,6 @@ figure(2);clf
 plotresults(results)
 save('videoresults.mat','results')
 fprintf('\nResults saved\n')
-t=toc
 fprintf('Processing time %f per 100 images\n',t/n *100)
 warning on
 

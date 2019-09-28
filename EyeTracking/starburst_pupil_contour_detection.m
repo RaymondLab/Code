@@ -101,45 +101,47 @@ end
 
 function [epx, epy, dir] = locate_edge_points(I, cx, cy, dis, angle_step, angle_normal, angle_spread, edge_thresh)
     
-[height width] = size(I);
+[height, width] = size(I);
 epx = [];
 epy = [];
 dir = [];
 ep_num = 0;  % ep stands for edge point
 step = 3; %***2
+distances = dis:step:(dis+step*80);
+distanceAmt = length(distances);
 
 for angle=(angle_normal-angle_spread/2+0.0001):angle_step:(angle_normal+angle_spread/2)
-    cosangle = cos(angle);
-    sinangle = sin(angle);
-    dist1 = dis;
-    p1 = [round(cx+dist1*cosangle) round(cy+dist1*sinangle)];
-    p2 = [round(cx+(step+dist1)*cosangle) round(cy+(step+dist1)*sinangle)];
-
-    if p1(2) > height || p1(2) < 1 || p1(1) > width || p1(1) < 1
+    
+    SBVector = [round(cx + distances * cos(angle)); round( cy + distances * sin(angle))]'; 
+    
+    if SBVector(1,2) > height || SBVector(1,2) < 1 || SBVector(1,1) > width || SBVector(1,1) < 1
         continue;
     end
-    while 1
-        %         p2 = [round(cx+step*dis*cos(angle)) round(cy+step*dis*sin(angle))];
-        p1 = p2;%[round(cx+dist1*cosangle) round(cy+dist1*sinangle)];        
-        p2 = [round(cx+(step+dist1)*cosangle) round(cy+(step+dist1)*sinangle)];
-        if p2(2) > height || p2(2) < 1 || p2(1) > width || p2(1) < 1
+    %% New Version
+    for k = 2:distanceAmt
+        
+        if SBVector(k,2) > height || SBVector(k,2) < 1 || SBVector(k,1) > width || SBVector(k,1) < 1
             break;
         end
         
-        d = I(p2(2),p2(1)) - I(p1(2),p1(1));
-        if (d >= edge_thresh),
+        d = I(SBVector(k,2),SBVector(k,1)) - I(SBVector(k-1,2),SBVector(k-1,1));
+        
+        if (d >= edge_thresh)
             ep_num = ep_num+1;
-            epx(ep_num) = p1(1)+step/2;    % edge point x coordinate
-            epy(ep_num) = p1(2)+step/2;    % edge point y coordinate
+            epx(ep_num) = SBVector(k-1,1)+step/2;    % edge point x coordinate
+            epy(ep_num) = SBVector(k-1,2)+step/2;    % edge point y coordinate
             dir(ep_num) = d;
-            
             break;
         end
+        if k > 80
+            k
+            disp('over 80')
+            k
+        end
         
-        dist1 = dist1 + step;
     end
 end
-
+%length(epx)
 %% DEBUGGING/VISUALIZATION %%%
 %     figure(3);
 %     imagesc(I);colormap(gray)
