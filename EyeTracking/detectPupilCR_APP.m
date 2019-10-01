@@ -205,7 +205,6 @@ end
 [epx, epy, edgeThresh] = starburst_pupil_contour_detection(InoCR, pupilStart(1),...
     pupilStart(2), edgeThresh,round(radiiPupil),minfeatures);
 [~, inliers] = fit_ellipse_ransac(epx(:), epy(:), radiiPupil + [-15 15]);
-
 epx2 = epx(inliers);
 epy2 = epy(inliers);
 

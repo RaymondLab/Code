@@ -23,42 +23,16 @@ the=linspace(0,2*pi,100);
 
 %% Get Images
 disp('Opening Images...')
-% tiff1
 tic
-FileTif1 = 'img1.tiff';
-info1 = imfinfo(FileTif1);
-
-nImage = info1(1).Height;
-mImage = info1(1).Width;
-n_images = length(info1);
-ImageStack1 = zeros(nImage,mImage,n_images,'uint8');
-TifLink1 = Tiff(FileTif1, 'r');
-
-for i=1:n_images
-    TifLink1.setDirectory(i);
-    ImageStack1(:,:,i)=TifLink1.read();
-end
-TifLink1.close();
-
-% tiff2
-FileTif_2 = 'img2.tiff';
-info2 = imfinfo(FileTif_2);
-
-ImageStack2 = zeros(nImage,mImage,n_images,'uint8');
-
-TifLink_2 = Tiff(FileTif_2, 'r');
-for i = 1:n_images
-    TifLink_2.setDirectory(i);
-    ImageStack2(:,:,i) = TifLink_2.read();
-end
-TifLink_2.close();
+[ImageStack1, n_images] = getImageStack('img1.tiff');
+[ImageStack2, ~] = getImageStack('img2.tiff');
 toc
 
 %% Pre-process Images
 disp('Preprocessing...')
 tic
-ImageStack1B = preprocessImages(ImageStack1, n_images, pos1, enchanceContrast);
-ImageStack2B = preprocessImages(ImageStack2, n_images, pos2, enchanceContrast);
+ImageStack1B = preprocessImages(ImageStack1, pos1, enchanceContrast);
+ImageStack2B = preprocessImages(ImageStack2, pos2, enchanceContrast);
 toc
 
 %% steup Figures
@@ -96,6 +70,7 @@ crx1 = [];
 cry1 = [];
 crx2 = [];
 cry2 = [];
+hp = gobjects(6,1);
 
 warning off
 tic
@@ -111,7 +86,7 @@ for i = 1:n
         results.cr2a = CR2a;
         results.cr1b = CR1b;
         results.cr2b = CR2b;
-        plotresults_APP(app, results)
+        hp = plotresults_APP(app, results, hp, i);
     end
     
     % Load images
@@ -126,27 +101,6 @@ for i = 1:n
             pupilStart2 = pupil2(i-1,:);
         end
         %% CAMERA 1
-%         [CR_Centers1, CR_radii1, ~] = imfindcircles(img1, [6 12], 'Sensitivity', .9, 'Method', 'TwoStage');
-%         
-%         % Only take first two circles
-%         CR_Centers1 = CR_Centers1(1:2, 1:2);
-%         crx1 = CR_Centers1(:,1);
-%         cry1 = CR_Centers1(:,2);
-%         
-%         % Make sure order is correct
-%         [crx1, I] = sort(crx1);
-%         cry1 = cry1(I);
-%         CR_radii1 = CR_radii1(I);
-%         
-%         % Put left CR first
-%         CR1a(i,:) = [crx1(1) cry1(1) CR_radii1(1)];
-%         CR1b(i,:) = [crx1(2) cry1(2) CR_radii1(2)];
-%         
-%         [pupil1(i,:), edgeThresh1, epx_1, epy_1, epx2_1, epy2_1] = detectPupilQuick(...
-%             img1, CR_Centers1(1:2, 1:2), crx1, cry1, CR_radii1, ...
-%             'pupilStart',pupilStart1, 'radiiPupil',radiiPupil, ...
-%             'EdgeThresh',edgeThresh1+3, 'MinFeatures',minfeatures);
-%         
         [pupil1(i,:), CR1a(i,:),CR1b(i,:), ~, edgeThresh1, crx1, cry1, epx_1, epy_1, epx2_1, epy2_1] = detectPupilCR_APP(...
             app, 1, img1, 0, crx1, cry1,...
             'radiiPupil',radiiPupil,'radiiCR',radiiCR2,...
@@ -274,6 +228,6 @@ figure(2);clf
 plotresults(results)
 save('videoresults.mat','results')
 fprintf('\nResults saved\n')
-fprintf('Processing time %f per 100 images\n',t/n *100)
+%fprintf('Processing time %f per 100 images\n',t/n *100)
 warning on
 
