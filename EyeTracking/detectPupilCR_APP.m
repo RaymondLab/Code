@@ -223,9 +223,11 @@ if plotOn
     if side
         % left
         fig = app.UIAxes2;
+        color = 'r';
     else
         % right
         fig = app.UIAxes2_2;
+        color = 'm';
     end
     
     imagesc(fig, img);  colormap(fig, gray);%  axis off; axis image
@@ -242,9 +244,9 @@ if plotOn
     the=linspace(0,2*pi,100);
     line(fig, pupil(3)*cos(the)*cos(pupil(5)) - sin(pupil(5))*pupil(4)*sin(the) + pupil(1), ...
         pupil(3)*cos(the)*sin(pupil(5)) + cos(pupil(5))*pupil(4)*sin(the) + pupil(2),...
-        'Color','m');
+        'Color',color);
     
-    plot(fig, pupil(1), pupil(2),'+m','LineWidth',2, 'MarkerSize',10)
+    plot(fig, pupil(1), pupil(2),['+', color],'LineWidth',2, 'MarkerSize',10)
     if exist('epx','var')
         plot(fig, epx, epy,'.c')
         plot(fig, epx2, epy2,'.y')

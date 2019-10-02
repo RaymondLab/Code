@@ -89,7 +89,7 @@ end
 
 %% Warning messages
 if loop_count > 10 %***
-    fprintf('Warning! edge points did not converge in %d iterations.\n',loop_count);
+    fprintf('Warning! edge points did not converge in %d iterations.',loop_count);
     return;
 end;
 
@@ -100,48 +100,88 @@ end
 
 
 function [epx, epy, dir] = locate_edge_points(I, cx, cy, dis, angle_step, angle_normal, angle_spread, edge_thresh)
-
+    
 [height, width] = size(I);
-
 epx = [];
 epy = [];
 dir = [];
-
+epx1 = [];
+epy1 = [];
+dir1 = [];
+ep_num = 0;  % ep stands for edge point
+ep_num1 = 0;
 step = 3; %***2
-
-% Create Vecors of distances & Angles
+halfStep = step/2;
 distances = dis:step:(dis+step*80);
 angles = (angle_normal-angle_spread/2+0.0001):angle_step:(angle_normal+angle_spread/2);
 
-distAngleMat_x = distances' * cos(angles) + cx;
-distAngleMat_y = distances' * sin(angles) + cy;
+distanceAmt = length(distances);
+angleAmt = length(angles);
 
-% Round (used for indexing)
-distAngleMat_x = round(distAngleMat_x);
-distAngleMat_y = round(distAngleMat_y);
 
-% Remove negative values, and values that are too tall/wide
-distAngleMat_x(distAngleMat_y > height) = nan;
-distAngleMat_x(distAngleMat_y < 1) = nan;
-distAngleMat_x(distAngleMat_x > width) = nan;
-distAngleMat_x(distAngleMat_x < 1) = nan;
-distAngleMat_y(isnan(distAngleMat_x)) = nan;
+d_a_mat_x = round( cx + distances' * cos(angles) );
+d_a_mat_y = round( cy + distances' * sin(angles) );
 
-% Convert [x, y] pairs to linear indices (this is faster than matlab func
-img_indx_mat = distAngleMat_y + (distAngleMat_x-1) * size(I,1);
 
-% Replace matrix values with correspponding values from image
-notNanLocs = ~isnan(img_indx_mat);
-img_indx_vec = img_indx_mat(notNanLocs);
-img_vals = I(img_indx_vec);
-img_indx_mat(notNanLocs) = img_vals;
+for a = 1:angleAmt
+    
+    if d_a_mat_y(1, a) > height || d_a_mat_y(1, a) < 1 || d_a_mat_x(1, a) > width || d_a_mat_x(1, a) < 1
+        continue;
+    end
+    
+    for d = 2:distanceAmt
+        
+        if d_a_mat_y(d,a) > height || d_a_mat_y(d,a) < 1 || d_a_mat_x(d,a) > width || d_a_mat_x(d,a) < 1
+            break;
+        end
+        
+        dw = I(d_a_mat_y(d,a),d_a_mat_x(d,a)) - I(d_a_mat_y(d-1,a),d_a_mat_x(d-1,a));
+        
+        if (dw >= edge_thresh)
+            ep_num = ep_num+1;
+            epx(ep_num) = d_a_mat_x(d-1,a)+halfStep;    % edge point x coordinate
+            epy(ep_num) = d_a_mat_y(d-1,a)+halfStep;    % edge point y coordinate
+            dir(ep_num) = dw;
+            %break;
+        end 
+    end
+end
 
-% find places where contrast is large
-img_vals_delta = img_indx_mat(2:end,:) - img_indx_mat(1:end-1,:);
-[rows, cols, ~] = find(img_vals_delta > edge_thresh);
 
-edgeInds = rows + (cols-1) * size(distAngleMat_x,1);
-epx = [distAngleMat_x(edgeInds) + step/2]';
-epy = [distAngleMat_y(edgeInds) + step/2]';
-dir = img_vals_delta(img_vals_delta > edge_thresh)';
 
+% for angle=(angle_normal-angle_spread/2+0.0001):angle_step:(angle_normal+angle_spread/2)
+%     
+%     SBVector = [round(cx + distances * cos(angle)); round( cy + distances * sin(angle))]'; 
+%     
+%     if SBVector(1,2) > height || SBVector(1,2) < 1 || SBVector(1,1) > width || SBVector(1,1) < 1
+%         continue;
+%     end
+%     %% New Version
+%     for k = 2:distanceAmt
+%         
+%         if SBVector(k,2) > height || SBVector(k,2) < 1 || SBVector(k,1) > width || SBVector(k,1) < 1
+%             break;
+%         end
+%         
+%         d = I(SBVector(k,2),SBVector(k,1)) - I(SBVector(k-1,2),SBVector(k-1,1));
+%         
+%         if (d >= edge_thresh)
+%             ep_num = ep_num+1;
+%             epx(ep_num) = SBVector(k-1,1)+step/2;    % edge point x coordinate
+%             epy(ep_num) = SBVector(k-1,2)+step/2;    % edge point y coordinate
+%             dir(ep_num) = d;
+%             break;
+%         end        
+%     end
+% end
+%length(epx)
+%% DEBUGGING/VISUALIZATION %%%
+%     figure(3);
+%     imagesc(I);colormap(gray)
+%     hold on; plot(epx, epy,'.y');
+%     if angle_spread  <6;  c = 'c'; else  c = 'm'; end
+%     
+%     plot([cx*ones(1,length(epx)); epx], [cy*ones(1,length(epy));epy],c)
+%     
+%     hold on; plot(cx,cy,'om')
+%     pause(.001)        
