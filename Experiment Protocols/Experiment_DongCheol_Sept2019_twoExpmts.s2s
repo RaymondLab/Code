@@ -11,7 +11,7 @@
 ' Universal Parameters File Location
 '--------------------------------------------------------------------------------
 #include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal.s2s"
-var ExpPart := 1;
+
 
 '--------------------------------------------------------------------------------
 ' MAIN PROGRAM
@@ -19,6 +19,11 @@ var ExpPart := 1;
 ToolbarConfig();
 nBlocks% := 3;
 runLength := 600;
+var ExpPart := 1;
+var nBlocks2% := nBlocks%;
+var nTestrep2% := nTestrep%;
+var runLength2 := runLength;
+var testLength2 := testLength;
 '--------------------------------------------------------------------------------
 ' Toolbar Callbacks
 '--------------------------------------------------------------------------------
@@ -63,6 +68,12 @@ Func ToolbarIdle%()
 
             prePostNum := 1;
             ExpPart := ExpPart + 1;
+            if ExpPart = 2 then
+              nBlocks% := nBlocks2%;
+              nTestrep% := nTestrep2%;
+              runLength := runLength2;
+              'testLength := testLength2;
+            endif
             if ExpPart = 3 then
               prePostNum := 0;
             endif
@@ -160,15 +171,21 @@ End
 '--------------------------------------------------------------------------------
 Func ToolbarConfigExpmt%()
   DlgCreate("Experiment settings");  'Start new dialog
-  DlgInteger(1,"Number of run-test blocks",0,100,0,0,1);
-  DlgInteger(2,"Number of tests per block",1,100,0,0,1);    'set to 0 if not using Chair
-  DlgReal(3,"Run length (s)",0,5000);
-  DlgReal(4,"Test length (s)",0,5000);
-  DlgList(5,"Expmt mode", "Dark Resting|Vestibular");
-  DlgInteger(6,"Light flash on?)",0,1,0,0,"0|1");
-  DlgReal(7,"Test stim and bilat (0 or 1)",0,1);
+  DlgInteger(1,"Number of run-test blocks (Part A)",0,100,0,0,1);
+  DlgInteger(2,"Number of tests per block (Part A)",1,100,0,0,1);    'set to 0 if not using Chair
+  DlgReal(3,"Run length (s) (Part A)",0,5000);
+  DlgReal(4,"Test length (s) (Part A)",0,5000);
 
-  DlgShow(nBlocks%, nTestreps%, runLength, testLength, expmtMode, flashon%,testStim);
+  DlgInteger(5,"Number of run-test blocks (Part B)",0,100,0,0,1);
+  DlgInteger(6,"Number of tests per block (Part B)",1,100,0,0,1);    'set to 0 if not using Chair
+  DlgReal(7,"Run length (s) (Part B)",0,5000);
+  DlgReal(8,"Test length (s) (Part B)",0,5000);
+
+  DlgList(9,"Expmt mode", "Dark Resting|Vestibular");
+  DlgInteger(10,"Light flash on?)",0,1,0,0,"0|1");
+  DlgReal(11,"Test stim and bilat (0 or 1)",0,1);
+
+  DlgShow(nBlocks%, nTestreps%, runLength, testLength, nBlocks2%, nTestrep2%, runLengt2, testLengt2, expmtMode, flashon%,testStim);
 
   docase
     case expmtMode = 0 then      'Dark Resting
