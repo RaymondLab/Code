@@ -124,10 +124,15 @@ if 1
     y = [-20000;-20000;20000;20000];
     y = repmat(y,[1 size(x, 2)]);
     
+    if isempty(x)
+        x = [];
+        y = [];
+    end
+    
     %% Plot Basic Visuals
     figure();clf
     
-    ha = tight_subplot(3,1,[.01 .02],[.03 .02],[.03 .01]);
+    ha = tight_subplot(3,1,[.02 .02],[.03 .02],[.03 .01]);
 
     axes(ha(1))
     plot(timeVec, data, 'r')
@@ -138,6 +143,7 @@ if 1
     patch(x, y, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
     ylim(PrevYlim);
     xlim([0 max(timeVec)])
+    xticks([])
     hold off
     box off
     
@@ -151,6 +157,7 @@ if 1
         ylim([-15000 15000])
         patch(x, y, 'k', 'FaceAlpha',.5, 'LineStyle', 'none');
         xlim([0 max(timeVec)])
+        xticks([])
         hold off
         box off
         
@@ -170,8 +177,13 @@ if 1
         plot(timeVec, eye_vel_pfilt, 'k', 'LineWidth', 1.5)
         title('Velocity')
         patch(x, y, 'k', 'FaceAlpha',.1, 'LineStyle', 'none');
-        ylim([-200 200])
+        try
+            ylim([median(eye_vel_praw)*-800 median(eye_vel_praw)*800]);
+        catch 
+            ylim([median(eye_vel_praw)*800 median(eye_vel_praw)*-800]);
+        end
         xlim([0 max(timeVec)])
+        xticks([])
         hold off
         box off
         

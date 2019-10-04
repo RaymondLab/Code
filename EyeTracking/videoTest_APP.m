@@ -1,5 +1,5 @@
 function videoTest_APP(app, radiiPupil, varargin)
-clc
+
 manual = 1;
 p = inputParser;
 addOptional(p,'RadiiCR1',[10 16])

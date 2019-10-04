@@ -102,7 +102,8 @@ for i = 1:n
         pupilStart2 = pupil2(i-1,:);
         
         maxRadii = max([pupil1(i-1,3:4) pupil2(i-1,3:4)]);
-        radiiPupil(2) = round(maxRadii*1.5);
+        radiiPupil(2) = round(maxRadii*1.25);
+        %radiiPupil = [round(maxRadii*.8) round(maxRadii*1.2)];
     end
     
     try
@@ -231,26 +232,37 @@ results.cr1b = CR1b;
 results.cr2b = CR2b;
 
 %% Plot Summary
-figure()
+A = figure('units','normalized','outerposition',[0 0 1 1]); clf
 
-subplot(2,1,1)
-hp(1) = plot( results.time1, results.pupil1(:,1),'r-');hold on
-hp(2) = plot( results.time2, results.pupil2(:,1),'m-');
-hp(3) = plot( results.time1, results.cr1a(:,1),'b-');
-hp(4) = plot( results.time2, results.cr2b(:,1),'c-');
+TrackSumFig = tight_subplot(2,1,[.01 .025],[.025 .025],[.03 .01]);
+axes(TrackSumFig(1));
 
+plot( results.time1, results.pupil1(:,1),'r-');hold on
+plot( results.time2, results.pupil2(:,1),'m-');
+plot( results.time1, results.cr1a(:,1),'b-');
+plot( results.time2, results.cr2b(:,1),'c-');
+xticks([])
+box off
 xlim( [results.time2(1+1) results.time2(end-1)]);
+
 ylabel( 'Horiz Pos (pix)')
 
-subplot(2,1,2)
-hp(5) = plot( results.time1,max(results.pupil1(:,3:4),[],2),'r-'); hold on
-hp(6) = plot( results.time2,max(results.pupil2(:,3:4),[],2),'m-');  
-hp(7) = plot( results.time1,results.cr1a(:,3),'b-');
-hp(8) = plot( results.time2,results.cr2b(:,3),'c-');  
-
+axes(TrackSumFig(2));
+plot( results.time1,max(results.pupil1(:,3:4),[],2),'r-'); hold on
+plot( results.time2,max(results.pupil2(:,3:4),[],2),'m-');  
+plot( results.time1,results.cr1a(:,3),'b-');
+plot( results.time2,results.cr2b(:,3),'c-');  
+box off
+legend({'Cam1 - Pupil' 'Cam2 - Pupil', 'Cam1 - Left CR', 'Cam2 - Right CR'})
 xlim( [results.time2(1) results.time2(end)]);
 ylabel( 'radii (pix)' )
 xlabel( 'Time (s)')
+
+set(A,'Units','Inches');
+pos = get(A,'Position');
+set(A,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+print(A, fullfile(cd, 'Summary_EyeTracking.pdf'),'-dpdf');
+savefig('Summary_EyeTracking.fig')
 
 
 %% Save Data
