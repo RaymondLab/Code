@@ -7,7 +7,7 @@ A.excelFile = 'C:\Users\Public\RaymondLabCode\Projects\Max - CF Project\Monkey M
 %A.excelFile = 'C:\Users\Public\RaymondLabCode\Projects\Max - CF Project\Monkey Metadata by Max (Akira).xlsx';
 A.expmt_table = readtable(A.excelFile);
 
-A.expmtDataFolder = 'D:\My Drive\Expmt Data\2019_05 - Max Climbing Fiber\Initial Data for testing';
+A.expmtDataFolder = 'D:\My Drive\Expmt Data\Max\Climbing Fiber Project\Initial Data for testing';
 %A.expmtDataFolder = 'G:\My Drive\Expmt Data\2019_05 - Akira and Sriram Complex Spikes';
 
 %bFiles = dir([ExpmtDataFolder '\**\*.0*']);
