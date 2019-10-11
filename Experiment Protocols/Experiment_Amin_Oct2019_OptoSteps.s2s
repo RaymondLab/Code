@@ -171,8 +171,8 @@ Func ToolbarIdle%()
               sAmpDrumN := 0-sAmpDrum;                      ' Amp drum (opposite direction)
 
               ' YES LIGHT
-              stepLight := 0; ' BUT NOT STEP LIGHT
-              toolbarLightOn%();
+              stepLight := 1; ' BUT NOT STEP LIGHT
+              'toolbarLightOn%();
 
               ToolbarStepConfig%(); Yield();
               SetSequencerValues(); Yield();
@@ -185,30 +185,14 @@ Func ToolbarIdle%()
         case test% = 2 then
           docase
 
-          ' STIM only
+          ' Training
           case trainLoc% = 1 then
             SampleKey("X");
-            goalTime := MaxTime() + testLength;
-            trainLoc% := trainLoc% + 1;
-
-            ' Only STIM
-            ' No head, no chair, no light, only STIM
-            pNumber := pNumberOriginal;
-            pulseDuration := pulseDurationOriginal;
-            SetPulseSettings%(); Yield();
-            ToolbarStimOn%();
-
-          ' Training
-          case trainLoc% = 2 then
-            SampleKey("x");
-            SampleKey("X");
             goalTime := MaxTime() + runLength;
-            trainLoc% := trainLoc% - 1;
-            test% := 0;
+            trainLoc% := trainLoc% + 1;
             trainAmount := trainAmount + 1;
             ToolbarInit%();
 
-            'Yield(.1);
             ' STEP LIGHT ON
             stepLight := 1;
             stepStim := 1;
@@ -226,6 +210,23 @@ Func ToolbarIdle%()
             ToolbarStepConfig%(); Yield();
             SetSequencerValues(); Yield();
             ToolbarStepOn%();
+
+          ' STIM only
+          case trainLoc% = 2 then
+            SampleKey("x");
+            SampleKey("X");
+            test% := 0;
+            goalTime := MaxTime() + testLength;
+            trainLoc% := trainLoc% - 1;
+            'sToolbarInit%();
+
+            ' Only STIM
+            ' No head, no chair, no light, only STIM
+            toolbarLightOff%();
+            pNumber := pNumberOriginal;
+            pulseDuration := pulseDurationOriginal;
+            SetPulseSettings%(); Yield();
+            ToolbarStimOn%();
 
 
             if trainAmount = nBlocks% then
