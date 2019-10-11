@@ -2,10 +2,10 @@
 ' Rig-Specific parameters file Location
 '--------------------------------------------------------------------------------
 'D019
-#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D019.s2s"
+''#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D019.s2s"
 
 'D253
-'#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D253.s2s"
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D253.s2s"
 
 '--------------------------------------------------------------------------------
 ' Universal Parameters File Location
@@ -110,7 +110,7 @@ Func ToolbarIdle%()
             docase
 
             ' STIM only
-            case prePostNum = 1 or prePostNum = 4 or prePostNum = 5 then
+            case prePostNum = 1 or prePostNum = 6 or prePostNum = 7 then
               SampleKey("X");
               goalTime := MaxTime() + testLength;
               prePostNum := prePostNum + 1;
@@ -122,7 +122,7 @@ Func ToolbarIdle%()
               SetPulseSettings%(); Yield();
               ToolbarStimOn%();
               test% := 0;
-              if prePostNum = 6 then
+              if prePostNum = 8 then
                 prePostNum := 1;
                 expmtLoc% := 2;
                 test% := 0;
@@ -154,7 +154,7 @@ Func ToolbarIdle%()
               test% := 0;
 
             ' OKR
-            case prePostNum = 3 then
+          case prePostNum = 3 or prePostNum = 4 or prePostNum = 5 then
               SampleKey("X");
               goalTime := MaxTime() + testLength;
               prePostNum := prePostNum + 1;
