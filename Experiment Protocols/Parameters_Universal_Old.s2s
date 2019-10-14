@@ -60,10 +60,10 @@ var everyNCycles := 1;
 '--------------------------------------------------------------------------------
 ' EXPERIMENT PARAMETERS
 '--------------------------------------------------------------------------------
-var nBlocks% := 2;                 'Number of run-test blocks in exmpt
-var nTestreps% := 2;               'Number of times to repeat 40 sec test
-var runLength := 900;             'Seconds to run protocol in each block(300 for 5 min)
-var testLength := 300;             'Seconds to test
+var nBlocks% := 6;                 'Number of run-test blocks in exmpt
+var nTestreps% := 1;               'Number of times to repeat 40 sec test
+var runLength := 300;             'Seconds to run protocol in each block(300 for 5 min)
+var testLength := 45;             'Seconds to test
 var expmtLoc% := 1;
 var prePostNum := 1;
 var trainLoc% := 1;
@@ -78,23 +78,8 @@ var goalTime := 1000000000;    'maximum time the motor is allowed to run for
 var flashon% := 1;
 var waitLength := 300;
 var prevTime := 0;
-var startTracking% := 0;
 
-'--------------------------------------------------------------------------------
-' TRACKING PARAMETERS
-'--------------------------------------------------------------------------------
-var delta := .001; 'TEMPORARY VALUE'
-var saccadeThreshold := 1; 'TEMPORARY VALUE'
-var gain := .005;  'TEMPORARY VALUE'
-var gainCeiling := .0075; 'TEMPORARY VALUE'
-var nullEyePos := 0;
-var eyePos := 0;
-var preTest% := 1; 'variable to check if test was run for first time to take baseline eye position'
-var LeakInstabilityScale := -1; '-1 for leak, 1 for instability'
-var leakOrInstability;
-var incrementSize := .0025;
-var bestChannel := 0;
-var eyeScaleFactor := 1;
+
 
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS
@@ -105,7 +90,7 @@ var vidOn := 0;
 var stepOn% := 0;
 var fullPulse := 0;
 'Voltage Range: check in Edit -> Edit Parameters
-var MaxVoltage := 5;
+var MaxVoltage := 10;
 var driftFix := 1;
 var centerLineChair := 0;
 var centerLineDrum := 0;
@@ -130,10 +115,7 @@ const PulseConfigPos    := PulsePos+1;
 const VidPos            := PulseConfigPos+1;
 const StepPos           := VidPos+1;
 const StepConfigPos     := StepPos+1;
-const TrackPos          := StepConfigPos+1;
-const TrackConfigPos    := TrackPos+1;
-const FindNullEyePos    := TrackConfigPos+1;
-const ExpmtPos          := FindNullEyePos+1;
+const ExpmtPos          := StepConfigPos+1;
 const ExpmtConfigPos    := ExpmtPos+1;
 
 const HTVELChCom% := 1;
@@ -179,6 +161,7 @@ Func ToolbarSineConfig%()
   SetPulseSettings%();
 
   SetSequencerValues();
+
   Return(1);
 End
 
@@ -416,103 +399,6 @@ Func ToolbarStimOff%()
 End
 
 '--------------------------------------------------------------------------------
-' TRACKING FUNCTIONS
-'--------------------------------------------------------------------------------
-'Constantly updates to track the eye movements of the mouse and adjust the drum to the same position'
-'We don't want to move the chair at all, just the drum'
-'Try to figure out how to change gain'
-Func trackEye%()
-  prevTime := MaxTime();
-  var currEyePos := ChanValue(heposCh1%, prevTime); 'CHANGE THIS FOR DEV'
-  if bestChannel = 2 then
-    currEyePos := ChanValue(heposCh2%, prevTime);
-  endif;
-  var currEyePosScaled := currEyePos;
-
-  var degreeDiffScaled := (currEyePos - nullEyePos) * gain; 'MAKE SURE THIS IS HOW WE GET THAT DEGREE VALUE'
-  DrumDegreesPerSecondOffset := (degreeDiffScaled) * DrumResetDirection * LeakInstabilityScale * eyeScaleFactor;
-  'make sure that the drum is going the right way'
-  SetSequencerValues();
-  Return(1);
-End
-
-Func ToolbarTrackConfig%() 'All of the values in here are guesses - may have to change how they're input, etc.
-  'also need to figure out units for everything'
-  DlgCreate("Eye Tracking settings");  'Start new dialog
-  DlgReal(1,"Delta (s)",.000001,10);
-  DlgReal(2,"Gain start value",.0001, 10);
-  DlgReal(3,"Size of increments",.001, 1);
-  DlgList(4, "Train for leak or instability", "Leak|Instability");
-  DlgReal(5, "Null eye pos (for development)",-50,50);
-  DlgReal(6, "Which eye channel?", 0, 2); 'if 0, average channels
-  DlgReal(7, "What is the calibration scale factor?", -100, 100);
-  DlgShow(delta, gain, incrementSize, leakOrInstability, nullEyePos, bestChannel, eyeScaleFactor);
-
-  SetTrackingSettings%();
-  SetSequencerValues();
-
-  Return(1);
-End
-
-'this will only need to be used if i can't just directly set everything from here/if calculations will need to be done
-Func SetTrackingSettings%()
-  'allows leak or instability to be chosen in menu, and scales velocities accordingly'
-  docase
-  case leakOrInstability = 0 then 'leaky'
-    LeakInstabilityScale := -1;
-  case leakOrInstability = 1 then 'unstable'
-    LeakInstabilityScale := 1;
-  endcase
-
-  SetSequencerValues();
-  Return(1);
-End
-
-Func findNullEye()
-  prevTime := MaxTime();
-  'update for median instead of mean'
-  var chanMean := ChanMeasure(heposCh1%, 2, prevTime-290, prevTime);
-  if bestChannel = 2 then
-    chanMean := ChanMeasure(heposCh2%, 2, prevTime-290, prevTime);
-  endif;
-  nullEyePos := chanMean;
-  SetSequencerValues();
-End
-
-'finds the null eye position based on data from pre-training -- currently just averages means of both channels'
-'possible improvement: find which one has less noise, use that channel to find null position'
-Func ToolbarFindNullEye%()
-  Toolbarset(FindNullEyePos,"Reset", ToolbarNullEyeReset%);
-  prevTime := MaxTime();
-  var chan1Mean := ChanMeasure(heposCh1%, 2, prevTime-testLength, prevTime);
-  var chan2Mean := ChanMeasure(heposCh2%, 2, prevTime-testLength, prevTime);
-  nullEyePos := (chan1Mean + chan2Mean) / 2;
-  SetSequencerValues();
-End
-
-Func ToolbarNullEyeReset%()
-  Toolbarset(FindNullEyePos,"Find Null Pos", ToolbarFindNullEye%);
-  nullEyePos := 0;
-  SetSequencerValues();
-End
-
-Func ToolbarTrackEyeOn%()
-  SampleKey( "R" );
-  Toolbarset(TrackPos,"Track Off", ToolbarTrackEyeOff%);
-  startTracking% := 1;
-  Return( 1 );
-End
-
-Func ToolbarTrackEyeOff%()
-  SampleKey( "r" );
-  Toolbarset(TrackPos,"Track On", ToolbarTrackEyeOn%);
-  startTracking% := 0;
-  DrumDegreesPerSecondOffset := 0;
-  SetSequencerValues();
-  Return( 1 );
-End
-
-'--------------------------------------------------------------------------------
 ' OTHER FUNCTIONS
 '--------------------------------------------------------------------------------
 Proc ToolbarConfig()
@@ -534,9 +420,6 @@ Proc ToolbarConfig()
   ToolbarSet(ExpmtConfigPos, "Expmt Config", ToolbarConfigExpmt%);
   ToolbarSet(CommentPos, "Comment", ToolbarComment%);
   ToolbarSet(NewFilePos, "New File", ToolbarNew%);
-  ToolbarSet(TrackPos, "Track On", ToolbarTrackEyeOn%);
-  ToolbarSet(TrackConfigPos, "Track Config", ToolbarTrackConfig%);
-  ToolbarSet(FindNullEyePos, "Find Null Pos", ToolbarFindNullEye%);
   Toolbar("", 231);
 End
 
@@ -588,9 +471,10 @@ Proc WindowConfig()
   SampleComment$(heposCh2%, "Eye Position 2");
 
   'Channel 7 UCOMMENT THIS FOR EPHYS
-  SampleTalker(7,"LS7366", 0);
-  'SampleCalibrate(7, "deg", 1111.11, 0);
-  SampleTitle$(7,"DrumPos");
+  'SampleWaveform(7,6,1000);
+  'SampleCalibrate(7,"V",1,0);
+  'SampleTitle$(7,"phys");
+  'SampleComment$(7, "phys");
 
   'Channel 8
   SampleWaveform(hhvelCh%,7,1000);
@@ -668,7 +552,7 @@ Proc WindowConfig()
   XRange( 0, 20);      ' Set the default X axis time range
 
   ' Channel order
-  ChanOrder(0, -1, "5, 4, 8, 13, 3, 2, 1, ,7, 12, 11, 10, 9, 30, 31");
+  ChanOrder(0, -1, "5, 4, 8, 13, 3, 2, 1, 12, 11, 10, 9, 30, 31");
   ' Background Colour'
   ViewColour(0,5);
   ' Font
@@ -704,14 +588,6 @@ Proc WindowConfig()
 
   HCursorNew(6);
   HCursor(6, 0, 12);
-
-  ' ellas Virtual Channel
-  var ch1% := VirtualChan(0, ""); 'Create new virtual channel
-  ChanShow(ch1%); 'Make it visible
-  VirtualChan(ch1%, "rm(7)", 0, 0.002, 0);  'Edit virtual channel
-  ChanProcessAdd(ch1%, 1); 'Add Smooth to channel 4001
-  ChanProcessAdd(ch1%, 3); 'Add Slope to channel 4001
-  ChanProcessArg(ch1%, 2, 1, 0.002); 'Set Slope Time constant (s)
 End
 
 Func ToolbarNew%()
@@ -804,14 +680,8 @@ Proc SetSequencerValues()
   SampleSeqVar( 51, pulseWaitV);
   SampleSeqVar( 52, pulsePeriod);
   SampleSeqVar( 54, everyNCycles);
-
   'Rotation Parameters
   SampleSeqVar( 66, rotationVelocity); 'This is a relative value
-
-  'Tracking parameters
-  SampleSeqVar( 67, nullEyePos);
-  SampleSeqVar( 68, gain);
-  SampleSeqVar( 69, LeakInstabilityScale);
 End
 
 Func driftFix%()
@@ -863,8 +733,8 @@ Func driftFix%()
   var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime);
 
   ' Scales *1 for D253, *-1 for D019
-  ChairDegreesPerSecondOffset :=  (ChairDegreesPerSecondOffsetDefault - hhposSlope/4 - hhposPos/4 - centerLineChair/4) * ChairResetDirection;
-  DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - htposSlope/4 - htposPos/4 - centerLineDrum/4) * DrumResetDirection;
+  ChairDegreesPerSecondOffset :=  (ChairDegreesPerSecondOffsetDefault - (hhposSlope + hhposPos + centerLineChair)/4) * ChairResetDirection;
+  DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - (htposSlope + htposPos + centerLineDrum)/4) * DrumResetDirection;
 
   SetSequencerValues();
 End

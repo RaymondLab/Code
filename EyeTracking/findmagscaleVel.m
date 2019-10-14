@@ -6,7 +6,7 @@ function  findmagscaleVel
 close all;
 magthresh = 5; % 15
 vidthresh = 100; % 100
-freq = 1;
+freq = .5;
 
 %% Load magnet
 pathname = cd;
@@ -87,11 +87,11 @@ vid_saccademask = ~isnan(desaccade(vidVel,samplerateM,vidthresh,0));
 % y2 = cos(2*pi*freq*tmag(:));
 % const = ones(size(y1));
 % vars = [y1 y2 const];
-% 
+%
 % keep = abs(magnetSeg(2).data) < 5*std(abs(magnetSeg(2).data)) + mean(abs(magnetSeg(2).data));
 % b = regress(eyeVel(keep), vars(keep,:));
 % fit1 = vars *b;
-% 
+%
 % params.NoiseAnalysis = 0;
 % params.saccadeThresh = 1000;
 % [omitH, omitCenters, pos_filt, vel_pfilt] = desaccadeVel3(magnetSeg(2).data, samplerateM, .05, .05, freq, params, fit1);
@@ -109,19 +109,19 @@ ha = tight_subplot(3,1,[.025 .025],[.025 .025],[.015 .01]);
 axes(ha(1))
 title('Magnet 1 Desaccading, Unscaled'); hold on;
 plot(tmag, mag1Velplot,'k'); mag1Velplot(~mag1_saccademask) = NaN;
-plot(tmag, mag1Velplot,'b', 'LineWidth', .5); 
+plot(tmag, mag1Velplot,'b', 'LineWidth', .5);
 ylim([-2 2]);
 
 axes(ha(2))
 title('Magnet 2 Desaccading, Unscaled'); hold on;
 plot(tmag, mag2Velplot,'k');  mag2Velplot(~mag2_saccademask) = NaN;
-plot(tmag, mag2Velplot,'b', 'LineWidth', .5);  
+plot(tmag, mag2Velplot,'b', 'LineWidth', .5);
 ylim([-2 2]);
 
-axes(ha(3)) 
+axes(ha(3))
 title('Video Desaccading'); hold on;
 plot(tmag, vidVelplot,'k');  vidVelplot(~vid_saccademask) = NaN;
-plot(tmag, vidVelplot,'b', 'LineWidth', .5);  
+plot(tmag, vidVelplot,'b', 'LineWidth', .5);
 ylim([-25 25]);
 
 %% Do sine fit on magnet and video sine waves
@@ -155,13 +155,13 @@ r2vid = stat(1);
 
 %% save scale factor
 % Add term for 180 deg phase - negate?
-if r2mag1>r2mag2
-    scaleCh1 = vidAmp/mag1Amp * (2*(abs(mag1Phase)<90)-1); % Change sign if needed
-    scaleCh2 = 0;
-else
-    scaleCh1 = 0;
-    scaleCh2 = vidAmp/mag2Amp * (2*(abs(mag2Phase)<90)-1); % Change sign if needed
-end
+%if r2mag1>r2mag2
+scaleCh1 = vidAmp/mag1Amp * (2*(abs(mag1Phase)<90)-1); % Change sign if needed
+%scaleCh2 = 0;
+%else
+%scaleCh1 = 0;
+scaleCh2 = vidAmp/mag2Amp * (2*(abs(mag2Phase)<90)-1); % Change sign if needed
+%end
 fprintf('scaleCh1 = %.2f, scaleCh2 = %.2f\n',scaleCh1, scaleCh2)
 fprintf('r2   Ch1 = %.4f, r2   Ch2 = %.4f\n',r2mag1, r2mag2)
 save(fullfile(cd, [filenameroot '.mat']),'scaleCh1', 'scaleCh2',...
@@ -169,7 +169,7 @@ save(fullfile(cd, [filenameroot '.mat']),'scaleCh1', 'scaleCh2',...
     'r2mag1','r2mag2','r2vid','vidthresh','magthresh','freq');
 
 %% Plot fits
-axes(ha(1)); hold on; 
+axes(ha(1)); hold on;
 plot(tmag,vars*bMag1,'r-', 'LineWidth', 1);
 text(1, 1.6, sprintf('Amp = %.3f\nr^2 = %.3f\nScale Factor = %.3f',mag1Amp, r2mag1, scaleCh1),'BackgroundColor','w')
 yticklabels(yticks)
@@ -179,7 +179,7 @@ plot(tmag,vars*bMag2,'r-', 'LineWidth', 1);
 text(1, 1.6, sprintf('Amp = %.3f\nr^2 = %.3f\nScale Factor = %.3f',mag2Amp, r2mag2, scaleCh2),'BackgroundColor','w')
 yticklabels(yticks)
 
-axes(ha(3)); hold on; 
+axes(ha(3)); hold on;
 plot(tmag, vars*bVid,'r-', 'LineWidth', 1);
 text(1, 20, sprintf('Amp = %.3f\nr^2 = %.3f',vidAmp, r2vid),'BackgroundColor','w')
 yticklabels(yticks)
