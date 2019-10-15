@@ -720,17 +720,17 @@ Func driftFix%()
   'drift back to 0 if sine wave isn't running
   docase
   case stepOn% = 1 then
-    SampleKey("7");
+    'SampleKey("7");
     if stepAmpChair > 0 then
-      SampleKey("8");
+      'SampleKey("8");
       centerLineChair := (stepLength/1000) * stepAmpChair * W;
     endif
     if stepAmpChair < 0 then
-      SampleKey("9");
+      'SampleKey("9");
       centerLineChair := (stepLength/1000) * stepAmpChair * X;
     endif
     if stepAmpChair = 0 then
-      SampleKey("0");
+      'SampleKey("0");
       centerLineChair := 0;
     endif
 

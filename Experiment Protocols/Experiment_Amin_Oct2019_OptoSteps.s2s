@@ -2,10 +2,10 @@
 ' Rig-Specific parameters file Location
 '--------------------------------------------------------------------------------
 'D019
-#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D019.s2s"
+''#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D019.s2s"
 
 'D253
-'#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D253.s2s"
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D253.s2s"
 
 '--------------------------------------------------------------------------------
 ' Universal Parameters File Location
@@ -110,7 +110,7 @@ Func ToolbarIdle%()
             docase
 
             ' STIM only
-            case prePostNum = 1 or prePostNum = 4 or prePostNum = 5 then
+            case prePostNum = 1 or prePostNum = 6 or prePostNum = 7 then
               SampleKey("X");
               goalTime := MaxTime() + testLength;
               prePostNum := prePostNum + 1;
@@ -122,7 +122,7 @@ Func ToolbarIdle%()
               SetPulseSettings%(); Yield();
               ToolbarStimOn%();
               test% := 0;
-              if prePostNum = 6 then
+              if prePostNum = 8 then
                 prePostNum := 1;
                 expmtLoc% := 2;
                 test% := 0;
@@ -154,7 +154,7 @@ Func ToolbarIdle%()
               test% := 0;
 
             ' OKR
-            case prePostNum = 3 then
+          case prePostNum = 3 or prePostNum = 4 or prePostNum = 5 then
               SampleKey("X");
               goalTime := MaxTime() + testLength;
               prePostNum := prePostNum + 1;
@@ -171,8 +171,8 @@ Func ToolbarIdle%()
               sAmpDrumN := 0-sAmpDrum;                      ' Amp drum (opposite direction)
 
               ' YES LIGHT
-              stepLight := 0; ' BUT NOT STEP LIGHT
-              toolbarLightOn%();
+              stepLight := 1; ' BUT NOT STEP LIGHT
+              'toolbarLightOn%();
 
               ToolbarStepConfig%(); Yield();
               SetSequencerValues(); Yield();
@@ -185,30 +185,14 @@ Func ToolbarIdle%()
         case test% = 2 then
           docase
 
-          ' STIM only
+          ' Training
           case trainLoc% = 1 then
             SampleKey("X");
-            goalTime := MaxTime() + testLength;
-            trainLoc% := trainLoc% + 1;
-
-            ' Only STIM
-            ' No head, no chair, no light, only STIM
-            pNumber := pNumberOriginal;
-            pulseDuration := pulseDurationOriginal;
-            SetPulseSettings%(); Yield();
-            ToolbarStimOn%();
-
-          ' Training
-          case trainLoc% = 2 then
-            SampleKey("x");
-            SampleKey("X");
             goalTime := MaxTime() + runLength;
-            trainLoc% := trainLoc% - 1;
-            test% := 0;
+            trainLoc% := trainLoc% + 1;
             trainAmount := trainAmount + 1;
             ToolbarInit%();
 
-            'Yield(.1);
             ' STEP LIGHT ON
             stepLight := 1;
             stepStim := 1;
@@ -226,6 +210,23 @@ Func ToolbarIdle%()
             ToolbarStepConfig%(); Yield();
             SetSequencerValues(); Yield();
             ToolbarStepOn%();
+
+          ' STIM only
+          case trainLoc% = 2 then
+            SampleKey("x");
+            SampleKey("X");
+            test% := 0;
+            goalTime := MaxTime() + testLength;
+            trainLoc% := trainLoc% - 1;
+            'sToolbarInit%();
+
+            ' Only STIM
+            ' No head, no chair, no light, only STIM
+            toolbarLightOff%();
+            pNumber := pNumberOriginal;
+            pulseDuration := pulseDurationOriginal;
+            SetPulseSettings%(); Yield();
+            ToolbarStimOn%();
 
 
             if trainAmount = nBlocks% then
