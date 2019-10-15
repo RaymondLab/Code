@@ -1,4 +1,4 @@
-function [behaviorDat, shiftAmt, shiftConfidence] = alignCXandMaestro(behaviorDat, ephysDat, plotOn)
+function [behaviorDat, shiftAmt, shiftConfidence] = alignCXandMaestro(behaviorDat, ephysData, plotOn)
 
     % Don't plot by default
     if ~exist('plotOn','var')
@@ -6,12 +6,12 @@ function [behaviorDat, shiftAmt, shiftConfidence] = alignCXandMaestro(behaviorDa
     end
     
     
-    eSamplerate = ephysDat.samplerate;
-    ephysData = datchandata(ephysDat,'Ephys');
+    eSamplerate = 50000;%ephysDat.samplerate;
+    %ephysData = datchandata(ephysDat,'Ephys');
     timeEphys = 0:1/eSamplerate:(length(ephysData)-1)/eSamplerate;
     
     %% Allign Ephys Data
-    spikesForAlignment = 100:150;
+    spikesForAlignment = 100:120;
     
     timeofsimplespikes = datchandata(behaviorDat,'ss');    
     eventsSampleTime = timeofsimplespikes * eSamplerate;
@@ -19,18 +19,20 @@ function [behaviorDat, shiftAmt, shiftConfidence] = alignCXandMaestro(behaviorDa
     eventsSampleTime = round(eventsSampleTime);
     eventsSampleTime = eventsSampleTime - eventsSampleTime(1);
     
-    sumofthings = nan(length(ephysData),1);
+    sumofthingsInitial = nan(length(ephysData),length(eventsSampleTime));
     
     for x = 1:length(ephysData)
-        if max(eventsSampleTime + x) > length(ephysData)
+        if max(eventsSampleTime + x) > min([150000, length(ephysData)])
             break
         end
-        sumofthings(x) = sum(ephysData(eventsSampleTime + x));
+        sumofthingsInitial(x,:) = sum(ephysData(eventsSampleTime + x));
     end
     
+    sumofthings = sum(sumofthingsInitial,2);
     %% Modify ephys
     maxMatchValue = max(abs(sumofthings));
     maxSumLoc = timeEphys(find(abs(sumofthings) == maxMatchValue));
+    maxSumLoc = maxSumLoc(1);
     
     if maxMatchValue > 30
         shiftAmt = -(maxSumLoc - timeofsimplespikes(100));
@@ -40,15 +42,15 @@ function [behaviorDat, shiftAmt, shiftConfidence] = alignCXandMaestro(behaviorDa
         if plotOn
             figure(9);clf
             plot(timeEphys, abs(sumofthings))
-            ylim([0 100])
+            %ylim([0 100])
             if ~isempty(maxSumLoc)
-                vline(maxSumLoc + shiftAmt)
+                vline(maxSumLoc + shiftAmt, ':r')
                 xlim([maxSumLoc-1 maxSumLoc+1])
             end
 
             figure(10); clf
             plot(timeEphys, ephysData);
-            vline(timeofsimplespikes(1:100))
+            vline(timeofsimplespikes(1:100), '--r')
             xlim([.5 1])
         end
         
