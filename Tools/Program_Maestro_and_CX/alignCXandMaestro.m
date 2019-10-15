@@ -5,6 +5,8 @@ function [behaviorDat, shiftAmt, shiftConfidence] = alignCXandMaestro(behaviorDa
         plotOn = 0;
     end
     
+    shiftConfidence = 0;
+    shiftAmt = 0;
     
     eSamplerate = 50000;%ephysDat.samplerate;
     %ephysData = datchandata(ephysDat,'Ephys');
@@ -20,15 +22,19 @@ function [behaviorDat, shiftAmt, shiftConfidence] = alignCXandMaestro(behaviorDa
     eventsSampleTime = eventsSampleTime - eventsSampleTime(1);
     
     sumofthingsInitial = nan(length(ephysData),length(eventsSampleTime));
-    
+    ephysData = ephysData - mean(ephysData);
     for x = 1:length(ephysData)
-        if max(eventsSampleTime + x) > min([150000, length(ephysData)])
+        if max(eventsSampleTime + x) > length(ephysData)/2%min([150000, length(ephysData)])
             break
         end
         sumofthingsInitial(x,:) = sum(ephysData(eventsSampleTime + x));
     end
     
     sumofthings = sum(sumofthingsInitial,2);
+    if ~sum(~isnan(sumofthings))
+        return
+    end
+    
     %% Modify ephys
     maxMatchValue = max(abs(sumofthings));
     maxSumLoc = timeEphys(find(abs(sumofthings) == maxMatchValue));
@@ -40,18 +46,18 @@ function [behaviorDat, shiftAmt, shiftConfidence] = alignCXandMaestro(behaviorDa
         shiftConfidence = maxMatchValue;
         
         if plotOn
-            figure(9);clf
+            figure(9); clf
             plot(timeEphys, abs(sumofthings))
             %ylim([0 100])
             if ~isempty(maxSumLoc)
                 vline(maxSumLoc + shiftAmt, ':r')
-                xlim([maxSumLoc-1 maxSumLoc+1])
+                %xlim([timeEphys(1) timeEphys(1)+1])
             end
 
             figure(10); clf
             plot(timeEphys, ephysData);
             vline(timeofsimplespikes(1:100), '--r')
-            xlim([.5 1])
+            xlim([timeEphys(1) timeEphys(1)+1])
         end
         
 
