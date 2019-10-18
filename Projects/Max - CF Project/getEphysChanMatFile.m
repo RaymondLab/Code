@@ -10,16 +10,27 @@ recording file counterparts.
 %% Set up
 clear;clc;
 
-expmtDataFolder = 'D:\My Drive\Expmt Data\2019_05 - Max Climbing Fiber\Initial Data for testing';
+expmtDataFolder = 'G:\My Drive\Expmt Data\Max\Climbing Fiber Project\Jennifer Data\jennifer_arch\Jennifer_Arch';
 Files = dir([expmtDataFolder '\**\*']);
 
 %% Filters
 % Remove directories
 Files([Files.isdir]) = [];
+Files(contains({Files.folder}, {'backup'})) = [];
+
+%Files(strlength(Files.name) ~= 10) = [];
+tic
+for j = length(Files):-1:1
+    if strlength(Files(j).name) ~= 10
+        Files(j) = [];
+    end
+end
+toc
+
 % Remove zip files
-Files(contains({Files.name}, {'.zip'})) = [];
+%Files(contains({Files.name}, {'.zip'})) = [];
 % Remove non-ephys files - only works for Jenifer's data
-Files(~contains({Files.name}, {'du'})) = [];
+%Files(~contains({Files.name}, {'du'})) = [];
 
 %% Find, open, rename, and save ephys files
 for i = 1:length(Files)
@@ -30,14 +41,19 @@ for i = 1:length(Files)
         ephysData = openmaestro(fullfile(Files(i).folder, Files(i).name));
         
         % Plot
-        %    figure(1);clf
-        %    plot(ephysData)
-        %    title(Files(i).name)
-        %    xlim([0 50000])
+%            figure(1);clf
+%            plot(ephysData)
+%            title(Files(i).name)
+           %xlim([0 50000])
         
         % Rename
         newName = [strrep(Files(i).name, '.', '_0') 'ephys.mat'];
-        newName = strrep(newName, 'du', 'da');
+        if contains(newName, 'du')
+            newName = strrep(newName, 'du', 'da');
+        elseif contains(newName, 'eu')
+            newName = strrep(newName, 'eu', 'el');
+        end
+        
         
         % Save as a .mat with a single varibale inside of it
         disp(fullfile(Files(i).folder, newName))

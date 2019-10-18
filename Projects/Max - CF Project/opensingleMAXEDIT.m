@@ -127,14 +127,15 @@ function [beh, shiftAmt, shiftConfidence] = opensingleMAXEDIT(filename, ephys_ex
     beh(end+1) = dat(htpos,'Horz Target Pos',4,bSamplerate,tstart, tend,'deg');
     beh(end+1) = dat(hhvel,'Horz Head Vel',  5,bSamplerate,tstart, tend,'deg/s');
     beh(end+1) = dat(hdvel,'Horz d Vel (eye2)',     6,bSamplerate,tstart, tend,'deg/s');
-    beh(end+1) = dat(htvel,'Horz Target Vel',7,bSamplerate,tstart, tend,'deg/s');
+    %beh(end+1) = dat(htvel,'Horz Target Vel',7,bSamplerate,tstart, tend,'deg/s');
+    if chanAmt == 7
+        beh(end+1) = dat(unknown, 'Unknown',7,bSamplerate, tstart, tend,'?');
+    end
     if ephys_exists
         beh(end+1) = dat(ephys, 'Ephys',8,50000,timeEphys(1),timeEphys(end),'mV?');
     else
         beh(end+1) = dat([], 'Ephys',8,50000,tstart,tend,'mV?');
     end
-    if chanAmt == 7
-        beh(end+1) = dat(unknown, 'Unknown',9,bSamplerate, tstart, tend,'?');
-    end
-    beh(end+1) = dat(timeofsimplespikes,'ss', 10,'event',tstart, tend,'s');
-    beh(end+1) = dat(timeofcomplexspikes,'cs',11,'event',tstart, tend,'s');
+
+    beh(end+1) = dat(timeofsimplespikes,'ss', 9,'event',tstart, tend,'s');
+    beh(end+1) = dat(timeofcomplexspikes,'cs',10,'event',tstart, tend,'s');

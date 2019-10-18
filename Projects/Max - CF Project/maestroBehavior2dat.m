@@ -8,7 +8,7 @@ them as a .mat file.
 %% Set up
 clear;clc; close all; fclose('all');
 
-expmtDataFolder = 'D:\My Drive\Expmt Data\Max\Climbing Fiber Project\Initial Data for testing';
+expmtDataFolder = 'G:\My Drive\Expmt Data\Max\Climbing Fiber Project\Jennifer Data\jennifer_arch\Jennifer_Arch';
 Files = dir([expmtDataFolder '\**\*']);
 
 samplerate = 500;
@@ -22,17 +22,27 @@ Files(contains({Files.name}, {'.zip'})) = [];
 % Remove mat files
 Files(contains({Files.name}, {'.mat'})) = [];
 % Remove non-behavior files - only works for Jenifer's data
-Files(~contains({Files.name}, {'da'})) = [];
+Files(~contains({Files.name}, {'el'})) = [];
 % Remove files that typically don't work
 %Files(~contains({Files.name}, {'.0'})) = [];
 Files(contains({Files.name}, {'VORC'})) = [];
 Files(contains({Files.name}, {'sines'})) = [];
+Files(contains({Files.folder}, {'backup'})) = [];
 
+%% name length check
+tic
+for j = length(Files):-1:1
+    if strlength(Files(j).name) ~= 11
+        Files(j) = [];
+    end
+end
+toc
 
 %% Find, open, rename, and save behavior files
 for i = 1:length(Files)
     
     disp(['(', num2str(i), '/', num2str(length(Files)), ')'])
+    disp(['     ', Files(i).name]);
     try
         % Open the BEHAVIOR Maestro file (the ephys file)
         filename = fullfile(Files(i).folder, Files(i).name);
@@ -42,11 +52,14 @@ for i = 1:length(Files)
             continue
         end
         
+        if ~isempty(behaviorData(1,9).data)
+            disp('Contains Sorted CS')
+        end
         % Rename
         newName = [strrep(Files(i).name, '.', '_') 'behavior.mat'];
 
         % Save as a .mat with a single varibale inside of it
-        disp(fullfile(Files(i).folder, newName))
+        disp(['     ', fullfile(Files(i).folder, newName)])
         save(fullfile(Files(i).folder, newName), 'behaviorData')
     catch
         disp(filename)
