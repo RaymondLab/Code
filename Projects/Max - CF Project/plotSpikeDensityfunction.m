@@ -20,14 +20,14 @@ kernel = normpdf(edges, 0, kernel_sd);
 sdf = conv(binned, kernel);
 %center = ceil(length(edges)/2);
 
-figure(1);clf
+figure();clf
 plot(sdf);
-vline(0:100000:4000000, ':r')
+%vline(timeVec,0:100000:4000000, ':r')
 %ylim([-.2 .2])
 
-figure(2);clf
-[mat, mean] = VOR_breakTrace(100000, 1, sdf);
-plot(timeVec(1:length(mean)), mat, 'b'); hold on
-plot(timeVec(1:length(mean)), mean, 'k', 'LineWidth', 10)
+% figure();clf
+% [mat, mean] = VOR_breakTrace(100000, 1, sdf);
+% plot(timeVec(1:length(mean)), mat, 'b'); hold on
+% plot(timeVec(1:length(mean)), mean, 'k', 'LineWidth', 10)
 
 
