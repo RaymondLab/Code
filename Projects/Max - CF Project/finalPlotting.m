@@ -10,6 +10,27 @@ dataTable(~contains(dataTable.alignedMat, {'aligned'}),:) = [];
 
 %% Choose Parameters and filter 
 
+tempTable = dataTable;
+alldiffs = [];
+allgoodcsLocs = [];
+allcs = [];
+
+
+stimType        = 'sine'; % sine, step
+tempTable(~contains(tempTable.sineStep, {stimType}),:) = [];
+
+expmtFreq       = .5;
+tempTable(~(tempTable.freq == expmtFreq),:) = [];
+
+learningType    = 'x2'; % VOR, OKR, x0, x2 
+tempTable(~contains(tempTable.learningType, {learningType}),:) = [];
+
+tempTable(~(tempTable.sortedCS == 1),:) = [];
+
+
+disp(['Files Found: ', num2str(height(tempTable))]);
+plotAllChans = 1;
+allFiles(~contains({allFiles.name}, {'aligned'})) = [];
 
 
 
@@ -31,6 +52,8 @@ for i = 1:height(tempTable)
     
     %% MAKE cs matrix
     csLocs = zeros(length(behaviorEphysAligned(10).data),1);
+    behaviorEphysAligned(9).data(behaviorEphysAligned(9).data < 0) = [];
+
     for k = 1:length(behaviorEphysAligned(9).data)
         csLocs(round(behaviorEphysAligned(9).data(k)*behaviorEphysAligned(10).samplerate)) = 1;
     end
@@ -147,7 +170,7 @@ for i = 1:height(tempTable)
     % 300ms window
     ssWindow = .3 * 50000; 
 
-    for k = 1:size(cycleMat_ss, 1)-1
+    for k = 1:min(size(cycleMat_cs, 1), size(cycleMat_ss, 1))-1
         
         % If your cycle contains 1 CS and in the proper location
         if sum(cycleMat_cs(k,csWindowN1)) == 1 && sum(cycleMat_cs(k,csWindow_no)) == 0
