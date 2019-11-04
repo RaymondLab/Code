@@ -1,7 +1,7 @@
 %% Setup
 clear;clc;close all
-[dataTable] = readtable('G:\My Drive\Expmt Data\Max\Climbing Fiber Project\ExperimentMetadata_B.xlsx');
-expmtDataFolder = 'G:\My Drive\Expmt Data\Max\Climbing Fiber Project\Jennifer Data\jennifer_arch';
+[dataTable] = readtable('D:\My Drive\Expmt Data\Max\Climbing Fiber Project\ExperimentMetadata_B.xlsx');
+expmtDataFolder = 'D:\My Drive\Expmt Data\Max\Climbing Fiber Project\Jennifer Data\jennifer_arch';
 
 % Only keep 'Aligned Files'
 allFiles = dir([expmtDataFolder, '\**\*']);
@@ -29,10 +29,11 @@ tempTable(~(tempTable.sortedCS == 1),:) = [];
 
 
 disp(['Files Found: ', num2str(height(tempTable))]);
-plotAllChans = 1;
+PLOT_Summary1 = 1;
+PLOT_Summary2 = 0;
+PLOT_Summary3 = 0;
+individualPlot = 0;
 allFiles(~contains({allFiles.name}, {'aligned'})) = [];
-
-
 
 
 %% 
@@ -43,11 +44,6 @@ for i = 1:height(tempTable)
     expmtRow = allFiles( contains({allFiles.name}, renamedFile ));
     fullFileName = fullfile(expmtRow.folder, expmtRow.name);
     load(fullFileName)
-    
-    
-    %% Start figure
-    figure()
-    overviewPlot = tight_subplot(2,3,[.05 .01],[.03 .03],[.01 .01]);
     
     
     %% MAKE cs matrix
@@ -78,38 +74,61 @@ for i = 1:height(tempTable)
     cycleTimeVec = 0:1/50000:(cycleLen-1)/50000;
     
     
-    %% PLOT ss continuous firing rate
-    timeVec = [0:1/50000:(length(sdf)-1)/50000]';
-    timeVec = round(timeVec*100000)/100000;
-    
-    axes(overviewPlot(1));
-    plot(timeVec, sdf);
-    xlim([0 10]);
-    yticks([]);
-    title('Cont. Firing Rate: Segment')
-    
-    axes(overviewPlot(4));
-    plot(cycleTimeVec, cycleMat_ss'); hold on
-    plot(cycleTimeVec, cycleMean_ss, 'k', 'LineWidth', 5);
-    title('Cont. Firing Rate: Cycles');
-    yticks([]);
+    %% PLOT Summary 1: Sanity Check
+    if PLOT_Summary1
+        figure('Position', [2 557 958 439])
+        overviewPlot = tight_subplot(2,3,[.05 .01],[.03 .03],[.01 .01]);
+        
+        timeVec = [0:1/50000:(length(sdf)-1)/50000]';
+        timeVec = round(timeVec*100000)/100000;
 
+        axes(overviewPlot(1));
+        plot(timeVec, sdf);
+        xlim([0 10]);
+        yticks([]);
+        title('Cont. Firing Rate: Segment')
+
+        axes(overviewPlot(4));
+        plot(cycleTimeVec, cycleMat_ss'); hold on
+        plot(cycleTimeVec, cycleMean_ss, 'k', 'LineWidth', 5);
+        title('Cont. Firing Rate: Cycles');
+        yticks([]);
+
+        axes(overviewPlot(3));
+        timeVec = dattime(behaviorEphysAligned(1,7));
+        plot(timeVec, behaviorEphysAligned(1,7).data, 'r'); hold on
+        plot(timeVec, behaviorEphysAligned(1,5).data, 'b');
+        xlim([0 8])
+        ylim([-80 80])
+        yticks([]);
+        title('Stim')
+        legend('T Vel', 'H Vel')
+
+        axes(overviewPlot(2));
+        plot(dattime(behaviorEphysAligned(10)), behaviorEphysAligned(10).data)
+        vline(behaviorEphysAligned(8).data(50:53))
+        xlim([behaviorEphysAligned(8).data(50) behaviorEphysAligned(8).data(53)])
+        yticks([]);
+        title('Simple Spikes')
+
+        axes(overviewPlot(5));
+        plot(dattime(behaviorEphysAligned(10)), behaviorEphysAligned(1,10).data)
+        vline(behaviorEphysAligned(1,9).data(1:4))
+        xlim([behaviorEphysAligned(1,9).data(1) behaviorEphysAligned(1,9).data(4)])
+        yticks([]);
+        title('Complex Spikes')
+        
+        axes(overviewPlot(6));
+        title(tempTable.name(i))
+        text(1,9, ['Align Val: ', num2str(tempTable.alignVal(i))] )
+        xlim([0 10])
+        ylim([0 10])
+    end
     
-    %% PLOT Stim
-    axes(overviewPlot(3));
-    timeVec = dattime(behaviorEphysAligned(1,7));
-    plot(timeVec, behaviorEphysAligned(1,7).data, 'r'); hold on
-    plot(timeVec, behaviorEphysAligned(1,5).data, 'b');
-    xlim([0 8])
-    ylim([-80 80])
-    yticks([]);
-    title('Stim')
-    legend('T Vel', 'H Vel')
     
-    
-    %% PLOT each channel
-    if plotAllChans
-        figure()
+    %% PLOT Summary 2: All Channels
+    if PLOT_Summary2
+        figure('Position', [962 32 958 964])
         ephysPlot = tight_subplot(length(behaviorEphysAligned),1,[.03 .03],[.03 .03],[.03 .03]);
         for j = 1:length(behaviorEphysAligned)
             
@@ -132,36 +151,12 @@ for i = 1:height(tempTable)
             if j == 1
                 title([tempTable.name(i) behaviorEphysAligned(j).chanlabel])
             end
-            
-            if j == 10
-                axes(overviewPlot(2));
-                plot(timeVec, behaviorEphysAligned(1,10).data)
-                vline(behaviorEphysAligned(1,8).data(50:100))
-                xlim([behaviorEphysAligned(1,8).data(50) behaviorEphysAligned(1,8).data(100)])
-                yticks([]);
-                title('Simple Spikes')
-            end
-            
-            if j == 10
-                axes(overviewPlot(5));
-                plot(timeVec, behaviorEphysAligned(1,10).data)
-                vline(behaviorEphysAligned(1,9).data)
-                yticks([]);
-                xlim([0 20])
-                title('Complex Spikes')
-            end
         end
     end
     
     
-    %% Finish adding things to overviewPlot
-    axes(overviewPlot(6));
-    title(tempTable.name(i))
-
-    
     %% PLOT 120ms difference
     
-
     % First x% of cycle
     csWindow_no = 1:(50000 * .201);
     csWindowN1 = (50000 * .201):(cycleLength/2);
@@ -195,62 +190,69 @@ for i = 1:height(tempTable)
                     ssChunkB = cycleMat_ss(k+1,csLoc-(ssWindow):csLoc+(ssWindow));
                 end
                 
-                figure()
-                cycleExample = tight_subplot(4,1,[.04 .03],[.03 .03],[.01 .01]);
-                
-                
-                axes(cycleExample(1));
-                plot(cycleTimeVecB, nanmean(cycleMat_tVel), 'r', 'LineWidth', 2); hold on
-                plot(cycleTimeVecB, nanmean(cycleMat_hVel), 'b', 'LineWidth', 2);
-                vline(csLoc/50000, '-k')
-                vline((csLoc/50000)-ssWindow/50000, '--k')
-                vline((csLoc/50000)+ssWindow/50000, '--k')
-                xticks([])
-                yticks([])
-                hline(0, ':k')
-                title(tempTable.name(i))
-                legend({'Target Vel', 'Head Vel'})
-                
-                % Whole cycle sub-figure
-                axes(cycleExample(2));
-                plot(cycleTimeVec, cycleMat_ss(k  ,:), 'Color', [0.9100    0.4100    0.1700], 'LineWidth', 2); hold on
-                plot(cycleTimeVec, cycleMat_ss(k+1,:), 'Color', [0, 0.5, 0], 'LineWidth', 2);
-                vline(csLoc/50000, '-k')
-                vline((csLoc/50000)-ssWindow/50000, '--k')
-                vline((csLoc/50000)+ssWindow/50000, '--k')
-                yticks([])
-                hline(0, ':k')
-                legend({'Cycle N', 'Cycle N+1'})
-                title('CS -> !CS Cycles')
-                text(mean(xlim),max(ylim)*.95, ['Cycle ', num2str(k)])
-                
-                % 601ms window sub-figure
-                axes(cycleExample(3));
-                plot( (1:((ssWindow*2)+1))/50000, ssChunkA, 'Color', [0.9100    0.4100    0.1700], 'LineWidth', 2); hold on
-                plot( (1:((ssWindow*2)+1))/50000, ssChunkB, 'Color', [0, 0.5, 0], 'LineWidth', 2);
-                
-                title('600ms window around CS')
-                xlim([0 length(ssChunkA)/50000])
-                ylim([-40 40]);
-                yticks([])
-                xticks([])
-                hline(0, ':k')
-                vline(mean(xlim), 'k')
-                
-                % Difference sub-figure
-                axes(cycleExample(4));
                 ssChunkDiff = ssChunkB - ssChunkA;
-                plot( (1:((ssWindow*2)+1))/50000, ssChunkDiff, 'Color', [0.9100    0.4100    0.1700], 'LineWidth', 3); hold on
-                plot( (1:((ssWindow*2)+1))/50000, ssChunkDiff, 'Color', [0, 0.5, 0], 'LineWidth', 3, 'LineStyle', '--');
 
+                %% PLOT individual examples
+                if individualPlot
+                    figure()
+                    cycleExample = tight_subplot(4,1,[.04 .03],[.03 .03],[.01 .01]);
+
+
+                    axes(cycleExample(1));
+                    plot(cycleTimeVecB, nanmean(cycleMat_tVel), 'r', 'LineWidth', 2); hold on
+                    plot(cycleTimeVecB, nanmean(cycleMat_hVel), 'b', 'LineWidth', 2);
+                    vline(csLoc/50000, '-k')
+                    vline((csLoc/50000)-ssWindow/50000, '--k')
+                    vline((csLoc/50000)+ssWindow/50000, '--k')
+                    xticks([])
+                    yticks([])
+                    hline(0, ':k')
+                    title(tempTable.name(i))
+                    legend({'Target Vel', 'Head Vel'})
+
+                    % Whole cycle sub-figure
+                    axes(cycleExample(2));
+                    plot(cycleTimeVec, cycleMat_ss(k  ,:), 'Color', [0.9100    0.4100    0.1700], 'LineWidth', 2); hold on
+                    plot(cycleTimeVec, cycleMat_ss(k+1,:), 'Color', [0, 0.5, 0], 'LineWidth', 2);
+                    vline(csLoc/50000, '-k')
+                    vline((csLoc/50000)-ssWindow/50000, '--k')
+                    vline((csLoc/50000)+ssWindow/50000, '--k')
+                    yticks([])
+                    hline(0, ':k')
+                    legend({'Cycle N', 'Cycle N+1'})
+                    title('CS -> !CS Cycles')
+                    text(mean(xlim),max(ylim)*.95, ['Cycle ', num2str(k)])
+
+                    % 601ms window sub-figure
+                    axes(cycleExample(3));
+                    plot( (1:((ssWindow*2)+1))/50000, ssChunkA, 'Color', [0.9100    0.4100    0.1700], 'LineWidth', 2); hold on
+                    plot( (1:((ssWindow*2)+1))/50000, ssChunkB, 'Color', [0, 0.5, 0], 'LineWidth', 2);
+
+                    title('600ms window around CS')
+                    xlim([0 length(ssChunkA)/50000])
+                    ylim([-60 60]);
+                    yticks([])
+                    xticks([])
+                    hline(0, ':k')
+                    vline(mean(xlim), 'k')
+
+                    % Difference sub-figure
+                    axes(cycleExample(4));
+                    ssChunkDiff = ssChunkB - ssChunkA;
+                    plot( (1:((ssWindow*2)+1))/50000, ssChunkDiff, 'Color', [0.9100    0.4100    0.1700], 'LineWidth', 3); hold on
+                    plot( (1:((ssWindow*2)+1))/50000, ssChunkDiff, 'Color', [0, 0.5, 0], 'LineWidth', 3, 'LineStyle', '--');
+
+
+                    title('Cycle N+1 - Cycle N')
+                    xlim([0 length(ssChunkA)/50000])
+                    ylim([-60 60]);
+                    yticks([])
+                    hline(0, ':k')
+                    vline(mean(xlim), 'k')
+                end
                 
-                title('Cycle N+1 - Cycle N')
-                xlim([0 length(ssChunkA)/50000])
-                ylim([-40 40]);
-                yticks([])
-                hline(0, ':k')
-                vline(mean(xlim), 'k')
                 
+                %% Retain important values
                 alldiffs(end+1,:) = ssChunkDiff;
                 allgoodcsLocs(end+1) = csLoc;
                 
@@ -259,52 +261,53 @@ for i = 1:height(tempTable)
         end
         
     end
-    allcs = [allcs, find(sum(cycleMat_cs))];
+    allcs = [allcs, find(nansum(cycleMat_cs))];
 
+    
 end
 
-%% Summary Figures
+%% PLOT Summary 3: Across Trial Averages
+if PLOT_Summary3
+    % PLOT Average Differences
+    figure()
+    plot((1:((ssWindow*2)+1))/50000, alldiffs'); hold on
+    plot((1:((ssWindow*2)+1))/50000, nanmean(alldiffs), 'k', 'LineWidth', 3)
+    hline(0, '--k')
+    ylim([-40 40])
+    xlim([0 length(ssChunkA)/50000])
+    title('CS+!CS ss Firing Rate Differences')
+    vline(mean(xlim), '--k')
 
-% PLOT Average Differences
-figure()
-plot((1:((ssWindow*2)+1))/50000, alldiffs'); hold on
-plot((1:((ssWindow*2)+1))/50000, nanmean(alldiffs), 'k', 'LineWidth', 3)
-hline(0, '--k')
-ylim([-40 40])
-xlim([0 length(ssChunkA)/50000])
-title('CS+!CS ss Firing Rate Differences')
-vline(mean(xlim), '--k')
+    % PLOT Good CS Locations
+    figure()
+    csSummary = tight_subplot(2,1,[.01 .01],[.03 .03],[.01 .01]);
+    axes(csSummary(1));
+    plot(cycleTimeVecB, nanmean(cycleMat_tVel), 'r', 'LineWidth', 2); hold on
+    plot(cycleTimeVecB, nanmean(cycleMat_hVel), 'b', 'LineWidth', 2);
+    legend('T Vel', 'H Vel')
+    ylim([-20 20])
+    yticks([])
+    xticks([])
+    vline(allgoodcsLocs/50000, 'k')
+    hline(0, ':k')
+    title('good cs locations relative to cycle')
+    axes(csSummary(2));
+    hist(allgoodcsLocs/50000, 20)
+    yticks([])
+    xlim([0 max(cycleTimeVecB)])
 
-% PLOT Good CS Locations
-figure()
-csSummary = tight_subplot(2,1,[.01 .01],[.03 .03],[.01 .01]);
-axes(csSummary(1));
-plot(cycleTimeVecB, nanmean(cycleMat_tVel), 'r', 'LineWidth', 2); hold on
-plot(cycleTimeVecB, nanmean(cycleMat_hVel), 'b', 'LineWidth', 2);
-legend('T Vel', 'H Vel')
-ylim([-20 20])
-yticks([])
-xticks([])
-vline(allgoodcsLocs/50000, 'k')
-hline(0, ':k')
-title('good cs locations relative to cycle')
-axes(csSummary(2));
-hist(allgoodcsLocs/50000, 50)
-yticks([])
-xlim([0 max(cycleTimeVecB)])
-
-% PLOT all cs
-figure()
-csSummary = tight_subplot(2,1,[.01 .01],[.03 .03],[.01 .01]);
-axes(csSummary(1));
-plot(cycleTimeVecB, nanmean(cycleMat_tVel), 'r', 'LineWidth', 2); hold on
-plot(cycleTimeVecB, nanmean(cycleMat_hVel), 'b', 'LineWidth', 2);
-legend('T Vel', 'H Vel')
-vline(allcs/50000, 'k');
-yticks([])
-xticks([])
-title(tempTable.name(i))
-axes(csSummary(2));
-hist(allcs/50000, 75)
-yticks([])
-
+    % PLOT all cs
+    figure()
+    csSummary = tight_subplot(2,1,[.01 .01],[.03 .03],[.01 .01]);
+    axes(csSummary(1));
+    plot(cycleTimeVecB, nanmean(cycleMat_tVel), 'r', 'LineWidth', 2); hold on
+    plot(cycleTimeVecB, nanmean(cycleMat_hVel), 'b', 'LineWidth', 2);
+    legend('T Vel', 'H Vel')
+    %vline(allcs/50000, 'k');
+    yticks([])
+    xticks([])
+    title(tempTable.name(i))
+    axes(csSummary(2));
+    hist(allcs/50000, 20)
+    yticks([])
+end
