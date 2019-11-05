@@ -1,10 +1,10 @@
 %% Open Excel File
 clear;clc;close all
 
-[dataTable] = readtable('D:\My Drive\Expmt Data\Max\Climbing Fiber Project\ExperimentMetadata_B.xlsx');
+[dataTable] = readtable('G:\My Drive\Expmt Data\Max\Climbing Fiber Project\ExperimentMetadata_B.xlsx');
 %dataTable.learningType = cell(height(dataTable),1);
 
-expmtDataFolder = 'D:\My Drive\Expmt Data\Max\Climbing Fiber Project\Jennifer Data\jennifer_arch';
+expmtDataFolder = 'G:\My Drive\Expmt Data\Max\Climbing Fiber Project\Jennifer Data\jennifer_arch';
 
 allFiles = dir([expmtDataFolder, '\**\*']);
 
@@ -13,22 +13,25 @@ csFiles(~contains({csFiles.name}, {'sortedCS'})) = [];
 allFiles(~contains({allFiles.name}, {'aligned'})) = [];
 
 %% loop through each one
-for j = 2700:height(dataTable)
+for j = 1:height(dataTable)
     disp(j)
-        
+    
     %% Skip non-related recordings
-    if dataTable.UnableToAlign(j)
+    if isnan(dataTable.maxSortedCS(j))
         continue
     end
-    if ~contains(dataTable.ephysMat(j), 'ephys') 
+    if ~dataTable.maxSortedCS(j)
         continue
     end
+%     if ~contains(dataTable.ephysMat(j), 'ephys') 
+%         continue
+%     end
 %     if dataTable.alignVal(j) > 0 %&& dataTable.alignVal(j) > .004.
 %         continue
 %     end
-    if ~contains(dataTable.sineStep(j), 'sine')
-        continue
-    end
+%     if ~contains(dataTable.sineStep(j), 'sine')
+%         continue
+%     end
 %     if dataTable.freq(j) ~= .5
 %         continue
 %     end

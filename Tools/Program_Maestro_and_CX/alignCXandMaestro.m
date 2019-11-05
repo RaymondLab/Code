@@ -58,6 +58,19 @@ function [behaviorDat, shiftAmt, shiftConfidence] = alignCXandMaestro(behaviorDa
             plot(timeEphys, ephysData);
             vline(timeofsimplespikes(1:100), '--r')
             xlim([timeEphys(1) timeEphys(1)+1])
+            
+            figure(11); clf
+            csLocs = zeros(length(ephysData),1);
+            behaviorDat(9).data(behaviorDat(9).data < 0) = [];
+            
+            for k = 1:length(behaviorDat(9).data)
+                csLocs(round(behaviorDat(9).data(k)*eSamplerate)) = 1;
+            end
+            [c,lags] = xcorr(ephysData,csLocs);
+            plot(lags/50000, c);
+            xCorrShiftVal = lags(find(c == max(c)))/eSamplerate;
+            disp(xCorrShiftVal)
+            disp(shiftAmt)
         end
         
 
