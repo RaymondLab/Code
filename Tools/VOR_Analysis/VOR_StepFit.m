@@ -111,9 +111,9 @@ for count = 1:nSegs
     segLength = length(headVel);
     segTime = (1:segLength)/samplerate; 
     cycleLength = round(samplerate/freq);
-%     if contains(R.labels(count), 'x2')
-%         cycleLength = cycleLength + 4;
-%     end
+    if contains(R.labels(count), 'x2')
+        cycleLength = cycleLength + 4;
+    end
     cycleTime = (1:cycleLength)/samplerate;
     
     %% === Desaccade/Process =========================================== %%

@@ -11,7 +11,7 @@ for i = 1:length(spikeTimes)
 end
 
 %% Kernel
-edges = -3 * kernel_sd : 1/ephysSampleRate : 3 * kernel_sd;
+edges = -5 * kernel_sd : 1/ephysSampleRate : 5 * kernel_sd;
 kernel = normpdf(edges, 0, kernel_sd);
 sdf = conv(binned, kernel);
 
