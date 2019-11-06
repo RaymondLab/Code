@@ -25,13 +25,20 @@ tempTable(~(tempTable.freq == expmtFreq),:) = [];
 learningType    = 'x2'; % VOR, OKR, x0, x2 
 tempTable(~contains(tempTable.learningType, {learningType}),:) = [];
 
-tempTable(~(tempTable.sortedCS == 1),:) = [];
+tempTable(~(tempTable.maxSortedCS == 1 | tempTable.jenrSortedCS),:) = [];
+%tempTable(~(tempTable.maxSortedCS == 1),:) = [];
+%tempTable(~(tempTable.jenrSortedCS),:) = [];
+
+
+tempTable(~isnan(tempTable.maxRemoved),:) = [];
+tempTable(contains(tempTable.name, {'el1219.0016'}),:) = [];
+
 
 
 disp(['Files Found: ', num2str(height(tempTable))]);
-PLOT_Summary1 = 1;
+PLOT_Summary1 = 0;
 PLOT_Summary2 = 0;
-PLOT_Summary3 = 0;
+PLOT_Summary3 = 1;
 individualPlot = 0;
 allFiles(~contains({allFiles.name}, {'aligned'})) = [];
 
@@ -42,7 +49,7 @@ for i = 1:height(tempTable)
     %% Open the File
     renamedFile = strrep(tempTable.name{i}, '.', '_');
     expmtRow = allFiles( contains({allFiles.name}, renamedFile ));
-    fullFileName = fullfile(expmtRow.folder, expmtRow.name);
+    fullFileName = fullfile(expmtRow(1).folder, expmtRow(1).name);
     load(fullFileName)
     
     
@@ -120,7 +127,7 @@ for i = 1:height(tempTable)
         
         axes(overviewPlot(6));
         title(tempTable.name(i))
-        text(1,9, ['Align Val: ', num2str(tempTable.alignVal(i))] )
+        text(1,9, ['Align Val: ', num2str(tempTable.maxAlignVal(i))] )
         xlim([0 10])
         ylim([0 10])
     end
@@ -277,6 +284,8 @@ if PLOT_Summary3
     xlim([0 length(ssChunkA)/50000])
     title('CS+!CS ss Firing Rate Differences')
     vline(mean(xlim), '--k')
+    vline(mean(xlim)-.120, '--k')
+
 
     % PLOT Good CS Locations
     figure()
