@@ -4,8 +4,6 @@ clear;clc;close all
 [dataTable] = readtable('G:\My Drive\Expmt Data\Max\Climbing Fiber Project\ExperimentMetadata_B.xlsx');
 writetable(dataTable, 'G:\My Drive\Expmt Data\Max\Climbing Fiber Project\ExperimentMetadata_Backup.xlsx')
 
-%dataTable.learningType = cell(height(dataTable),1);
-
 expmtDataFolder = 'G:\My Drive\Expmt Data\Max\Climbing Fiber Project\Jennifer Data\jennifer_arch';
 
 allFiles = dir([expmtDataFolder, '\**\*']);
