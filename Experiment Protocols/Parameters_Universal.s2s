@@ -331,15 +331,50 @@ Func ToolbarStepConfig%()
 
 
   ' Convert to exact numbers, accounting for software delays
+  'Max 11-2019: If you input a 1000ms stepPeriod it will not end up being 1000ms. idk why, sorry. Spike2 issue
+
   sRest1 := (stepPeriod  - stepLength - stepLength)/2 - 3;
+  if sRest1 < 0 then
+    sRest1 := 0;
+  endif
+
   sLength := stepLength - 3;
+  if sLength < 0 then
+    sLength := 0;
+  endif
+
   sRest2 := sRest1 - 1;
+  if sRest2 < 0 then
+    sRest2 := 0;
+  endif
 
   ' Chair and drum velocity
   sAmpChair := ChairVel2Int32%( stepAmpChair );   ' Amp chair
   sAmpChairN := 0-sAmpChair;                      ' Amp chair (opposite direction)
   sAmpDrum := DrumVel2Int32%( stepAmpDrum );      ' Amp drum
   sAmpDrumN := 0-sAmpDrum;                        ' Amp drum (opposite direction)
+''  if chairDegreesPerSecondOffset > 0 then
+''    'SampleKey("1");
+''    sAmpChair := ChairVel2Int32%( stepAmpChair + chairDegreesPerSecondOffset/50);   ' Amp chair
+''    sAmpChairN := 0-ChairVel2Int32%( stepAmpChair - chairDegreesPerSecondOffset);
+''  else
+''    'SampleKey("2");
+''    var chairDegreesPerSecondOffsetNEG := chairDegreesPerSecondOffset * -1;
+''    sAmpChair := ChairVel2Int32%( stepAmpChair + chairDegreesPerSecondOffsetNEG);   ' Amp chair
+''    sAmpChairN := 0-ChairVel2Int32%( stepAmpChair + chairDegreesPerSecondOffsetNEG + chairDegreesPerSecondOffsetNEG/50);
+''  endif
+
+
+''  if DrumDegreesPerSecondOffset > 0 then
+''    SampleKey("1");
+''    sAmpDrum := DrumVel2Int32%( stepAmpDrum + DrumDegreesPerSecondOffset);   ' Amp chair
+''    sAmpDrumN := 0-DrumVel2Int32%( stepAmpDrum - DrumDegreesPerSecondOffset*1.02);
+''  else
+''    SampleKey("2");
+''    var DrumDegreesPerSecondOffsetNEG := DrumDegreesPerSecondOffset * -1;
+''    sAmpDrum := DrumVel2Int32%( stepAmpDrum + DrumDegreesPerSecondOffsetNEG*.02);   ' Amp chair
+''    sAmpDrumN := 0-DrumVel2Int32%( stepAmpDrum + DrumDegreesPerSecondOffsetNEG);
+''  endif
 
   ' Light pulse
   if stepLight = 1 then
@@ -806,6 +841,8 @@ Func driftFix%()
   ' Scales *1 for D253, *-1 for D019
   ChairDegreesPerSecondOffset :=  (ChairDegreesPerSecondOffsetDefault - hhposSlope/4 - hhposPos/4) * ChairResetDirection;
   DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - htposSlope/4 - htposPos/4) * DrumResetDirection;
+
+  'ToolbarStepConfig%();
 
   SetSequencerValues();
 End
