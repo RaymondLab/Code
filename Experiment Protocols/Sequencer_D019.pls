@@ -48,6 +48,9 @@
             VAR    V52,PulsePer=1000 ; pulse period duration
             VAR    V53,PulseHPe=500  ; Half Period duration
 
+                VAR    V55,QueTime=250
+                VAR    V56,DOffOrig=vdac16(0)
+                VAR    V57,COffOrig=vdac16(0)
 ;-----------------------------------------------------------------------------
 ; LOOP: our idle loop.
 ;-----------------------------------------------------------------------------
@@ -307,6 +310,21 @@ STEPZ:  'u  DAC    0,SAmpD              ;Turn on drum
 ;            DAC    1,Chairoff
 ;            DELAY  StepRes1
 ;            JUMP   STEPS
+
+;Set step command to move chair and drum with Light Queue. For Experiment for Alex F. -- Maxwell 11/19
+;-----------------------------------------------------------------------------
+STEPK:  'K  DAC    0,SAmpD
+            DAC    1,Chairoff
+            DELAY  StepLeng
+            DIGOUT [.......0]
+            DAC    0,SAmpDn
+            DAC    1,Chairoff
+            DELAY  StepLeng
+            DAC    0,DOffOrig
+            DAC    1,Chairoff
+            DIGOUT [.......1]
+            DELAY  QueTime
+            JUMP   STEPK
 
 ;-----------------------------------------------------------------------------
 ;SINEON: Set sine command to DRUM Velocity DAC0 & to CHAIR Velocity DAC1

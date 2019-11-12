@@ -37,6 +37,8 @@ var pulseDurationV := 33;
 var pulseWaitV := 1000 - pulseDurationV - 5;
 var pulsePeriod := 1000;
 var checkConfig := 1;
+var QueTime := 0;
+
 
 
 '--------------------------------------------------------------------------------
@@ -276,8 +278,13 @@ End
 Func ToolbarStepOn%()
   stepOn% := 1;
   if (stepStim = 0) and (stepLight = 0) then
+    if (stepPeriod - (2*stepLength)) > 0 then
   	SampleKey ( "T" );
   	ToolbarSet(StepPos, "Step Stop", ToolbarStepOff%);
+    else
+      SampleKey("K");
+      ToolbarSet(stepPos, "Step Stop", ToolbarStepOff%);
+    endif
   else
       if stepLight = 1 and stepStim = 0 then
         stepOn% := 1; Yield();
@@ -366,7 +373,7 @@ End
 
 Func StepConfigWindow%()
   DlgCreate("Step settings"); 'Start new dialog for entering step commands
-  DlgReal(1,"Total Period (ms)", 0, 15000);
+  DlgReal(1,"Total Period (ms)", 0, 21000);
   DlgReal(2,"Step length (ms)", 0, 15000);
   DlgReal(3,"Chair Velocity (deg/sec)", -100, 100);
   DlgReal(4,"Drum Velocity (deg/sec)", -100, 100);
@@ -712,6 +719,11 @@ Proc SetSequencerValues()
   SampleSeqVar( 51, pulseWaitV);
   SampleSeqVar( 52, pulsePeriod);
   SampleSeqVar( 54, everyNCycles);
+  SampleSeqVar( 55, QueTime );
+  SampleSeqVar( 56, DrumAmp2Int32%( DrumDegreesPerSecondOffsetDefault ) );
+  SampleSeqVar( 57, ChairAmp2Int32%( ChairDegreesPerSecondOffsetDefault ) );
+
+
   'Rotation Parameters
   SampleSeqVar( 66, rotationVelocity); 'This is a relative value
 End
