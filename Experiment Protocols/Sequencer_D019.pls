@@ -311,6 +311,20 @@ STEPZ:  'u  DAC    0,SAmpD              ;Turn on drum
 ;            DELAY  StepRes1
 ;            JUMP   STEPS
 
+
+
+;Set step command to move chair and drum with NO light cue. For Experiment for Alex F. -- Maxwell 11/19
+;-----------------------------------------------------------------------------
+STEPK2: 'k  DAC    0,SAmpD
+            DAC    1,Chairoff
+            DELAY  StepLeng
+            DAC    0,SAmpDn
+            DAC    1,Chairoff
+            DELAY  StepLeng
+            DAC    0,DOffOrig
+            DAC    1,Chairoff
+            JUMP   STEPK2
+
 ;Set step command to move chair and drum with Light Queue. For Experiment for Alex F. -- Maxwell 11/19
 ;-----------------------------------------------------------------------------
 STEPK:  'K  DAC    0,SAmpD

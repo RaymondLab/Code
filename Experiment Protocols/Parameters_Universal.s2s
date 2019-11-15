@@ -80,10 +80,10 @@ var goalTime := 1000000000;    'maximum time the motor is allowed to run for
 var flashon% := 1;
 var waitLength := 300;
 var prevTime := 0;
-var W := -.25;
-var X := -.75;
-var Y := -.6;
-var Z := -.45;
+var W := 1;
+var X := 1.02;
+var Y := .9;
+var Z := 1;
 
 
 
@@ -282,8 +282,13 @@ Func ToolbarStepOn%()
   	SampleKey ( "T" );
   	ToolbarSet(StepPos, "Step Stop", ToolbarStepOff%);
     else
+      if QueTime > 0 then
       SampleKey("K");
       ToolbarSet(stepPos, "Step Stop", ToolbarStepOff%);
+      else
+        SampleKey("k");
+        ToolbarSet(stepPos, "Step Stop", ToolbarStepOff%);
+      endif
     endif
   else
       if stepLight = 1 and stepStim = 0 then

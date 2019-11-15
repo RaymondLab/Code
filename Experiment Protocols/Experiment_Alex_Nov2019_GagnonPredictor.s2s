@@ -36,12 +36,6 @@ const Order%[] := {0, 1, 2,
 var expmtIndx := 0;
 runLength := 3600; '1 Hour (60 minutes x 60 seconds)
 testLength := 45;
-QueTime := 0;
-
-stepPeriod := 10000;
-stepLength := 5000;
-stepAmpChair := 0;
-stepAmpDrum := -5;
 
 ToolbarConfig();
 
