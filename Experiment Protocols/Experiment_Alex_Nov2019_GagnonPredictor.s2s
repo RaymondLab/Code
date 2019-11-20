@@ -18,8 +18,6 @@
 '--------------------------------------------------------------------------------
 ' MAIN PROGRAM
 '--------------------------------------------------------------------------------
-ToolbarConfig();
-
 ' 0 = GAP A
 ' 1 = Gap B
 ' 2 = test
@@ -36,11 +34,10 @@ const Order%[] := {0, 1, 2,
                    9};
 
 var expmtIndx := 0;
+runLength := 3600; '1 Hour (60 minutes x 60 seconds)
+testLength := 45;
 
-stepPeriod := 10000;
-stepLength := 5000;
-
-var preStepGap := 250: 'ms
+ToolbarConfig();
 
 '--------------------------------------------------------------------------------
 ' Toolbar Callbacks
@@ -58,7 +55,7 @@ Func ToolbarIdle%()
   endif;
 
   ' Keep sine wave from drifting
-  if MaxTime() > (prevTime + 1/sinHzChair) then
+  if MaxTime() > (prevTime + 1/((stepPeriod+245)/1000)) then
     if driftFix = 1 then
       driftFix%();
     endif;
@@ -90,9 +87,12 @@ Func ToolbarIdle%()
           case Order%[expmtIndx] = 2 then
             SampleKey("X");
             goalTime := MaxTime() + testLength;
-            stepAmpChair := 2;
+            stepPeriod := 1000;
+            stepLength := 250;
+            stepAmpChair := 15;
             stepAmpDrum := 0;
-            SetSequencerValues(); Yield();
+            ToolbarStepConfig%();
+
             toolbarStepOn%();
 
 
@@ -100,9 +100,12 @@ Func ToolbarIdle%()
           case Order%[expmtIndx] = 3 then
             SampleKey("X");
             goalTime := MaxTime() + runLength;
+            stepPeriod := 10000;
+            stepLength := 5000;
             stepAmpChair := 0;
-            stepAmpDrum := 2;
-            SetSequencerValues(); Yield();
+            stepAmpDrum := -15;
+            QueTime := 245;
+            ToolbarStepConfig%();
             toolbarStepOn%();
 
           ' QUIT EXPMT
@@ -122,46 +125,11 @@ End
 '--------------------------------------------------------------------------------
 Func ToolbarConfigExpmt%()
   DlgCreate("Experiment settings");  'Start new dialog
-  DlgInteger(1,"Number of run-test blocks",0,100,0,0,1);
-  DlgInteger(2,"Number of tests per block",1,100,0,0,1);    'set to 0 if not using Chair
-  DlgReal(3,"Run length (s)",0,5000);
-  DlgReal(4,"Test length (s)",0,5000);
-  DlgList(5,"Expmt mode", "habit|x0|x2|ipsi|contra|steps");
-  DlgInteger(6,"Light flash on?)",0,1,0,0,"0|1");
-  DlgReal(7,"Test stim and bilat (0 or 1)",0,1);
+  DlgReal(1,"Run length (s)",0,5000);
+  DlgReal(2,"Test length (s)",0,5000);
+  DlgInteger(3,"Light flash on?)",0,1,0,0,"0|1");
 
-  DlgShow(nBlocks%, nTestreps%, runLength, testLength, expmtMode, flashon%,testStim);
-
-  docase
-  case expmtMode = 0 then     'habit
-      sinPhDrum := 90;
-      sinPhChair := 90;
-      sinAmpChair := 10;
-      sinAmpDrum := 0;
-  case expmtMode = 1 then     'x0
-      sinPhDrum := 90;
-      sinPhChair := 90;
-      sinAmpChair := 10;
-      sinAmpDrum := 10;
-  case expmtMode = 2 then     'x2
-      sinPhDrum := -90;
-      sinPhChair := 90;
-      sinAmpChair := 10;
-      sinAmpDrum := 10;
-  case expmtMode = 3  then     'ipsi
-      sinPhChair := 90;
-      sinAmpDrum := 0;
-  case expmtMode = 4 then      'contra
-      sinPhChair := -90;
-      sinAmpDrum := 0;
-  case expmtMode = 5 then      'steps
-      StepConfigWindow%();
-  endcase;
-
-
-  if testStim > 0 then
-      ToolbarPulseConfig%()
-  endif;
+  DlgShow(runLength, testLength, flashon%,testStim);
 
   SetSequencerValues();
   Return(1);
