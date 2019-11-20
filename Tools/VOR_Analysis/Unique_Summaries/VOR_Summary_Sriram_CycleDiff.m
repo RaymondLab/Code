@@ -131,6 +131,14 @@ else
 end
 [~, eyevelH_rel_phase_diff, eyevelH_amp_diff, eyeHgain_diff]    = VOR_SineFit_Single(freq, samplerate, DiffOfMeans, headVel_preMean, drumVel_preMean);
 
+Pree = table( eyeVel_des_preWeightedMean);
+posst= table( eyeVel_des_postWeightedMean);
+
+writetable(Pree, [params.file, ' ', Etitle, 'mousePRE', '.xlsx']);
+writetable(posst, [params.file, ' ', Etitle, 'mousePOST', '.xlsx']);
+
+
+
 % Plot
 axes(ha(3))
 plot(ttCycle, DiffOfMeans, 'Color', [0 .5 0]); hold on
