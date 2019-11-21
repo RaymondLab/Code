@@ -71,6 +71,7 @@ function [behaviorDat, shiftAmt, shiftConfidence] = alignCXandMaestro(behaviorDa
             xCorrShiftVal = lags(find(c == max(c)))/eSamplerate;
             disp(xCorrShiftVal)
             disp(shiftAmt)
+            shiftAmt = xCorrShiftVal;
         end
         
 
