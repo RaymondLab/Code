@@ -1,7 +1,12 @@
 %% Setup
 clear;clc;%close all
-[dataTable] = readtable('D:\My Drive\Expmt Data\Max\Climbing Fiber Project\ExperimentMetadata_B.xlsx');
-expmtDataFolder = 'D:\My Drive\Expmt Data\Max\Climbing Fiber Project\Jennifer Data\jennifer_arch';
+try
+[dataTable] = readtable('G:\My Drive\Expmt Data\Max\Climbing Fiber Project\ExperimentMetadata_B.xlsx');
+expmtDataFolder = 'G:\My Drive\Expmt Data\Max\Climbing Fiber Project\Jennifer Data\jennifer_arch';
+catch
+    [dataTable] = readtable('D:\My Drive\Expmt Data\Max\Climbing Fiber Project\ExperimentMetadata_B.xlsx');
+    expmtDataFolder = 'D:\My Drive\Expmt Data\Max\Climbing Fiber Project\Jennifer Data\jennifer_arch';
+end
 
 % Only keep 'Aligned Files'
 allFiles = dir([expmtDataFolder, '\**\*']);
@@ -16,8 +21,8 @@ kernel_sd = .01; % Seconds
 bin_ifr = .05; % Seconds
 
 % Pattern to look for
-csNOcs = 1;
-NOcsNOcs = 0;
+csNOcs = 0;
+NOcsNOcs = 1;
 
 PLOT_1 = 1; % Sanity Check Plot
 PLOT_2 = 0; % All Channels Plot
@@ -74,7 +79,6 @@ for i = 1:height(tempTable)
     [cycleMat_cs, cycleMean_cs] = VOR_breakTrace(cycleLen_e, startpt_e, csLocs);
     cycleTime_e = 0:1/sr_e:(cycleLen_e-1)/sr_e;
 
-    
     
     %% Make head and target matrix
     cycleLen_b = sr_b * (1/expmtFreq);
@@ -200,226 +204,117 @@ for i = 1:height(tempTable)
     end
     
     
-    %% PLOT difference CS -> !CS
+    %% FIND appropriate Cycles
+
+    % First x% of cycle
+    csWindow_no = 1:(sr_e * .201);
+    csWindowN1 = (sr_e * .201):(cycleLen_e/2);
+    csWindowN2 = 1:(cycleLen_e/2);
+
+    % 300ms window
+    ssWindow = .3 * sr_e; 
+    ssWindow = round(ssWindow/bin_size);
+    conds = [];
     if csNOcs
-        % First x% of cycle
-        csWindow_no = 1:(sr_e * .201);
-        csWindowN1 = (sr_e * .201):(cycleLen_e/2);
-        csWindowN2 = 1:(cycleLen_e/2);
+        % Condition 1: 1 cs in 200-1000ms
+        conds(:,1) = sum(cycleMat_cs(:,csWindowN1),2);
+        conds(:,1) = conds(:,1) == 1;
+        % Condition 2: NO cs in 0-200ms
+        conds(:,2)  = ~any(cycleMat_cs(:,csWindow_no),2);
+        % Condition 3: NO cs in 0-1000ms of next cycle
+        conds(:,3)  = ~any(cycleMat_cs(:,csWindowN2),2);
+        conds(:,3)  = [conds(2:end,3); 0];
 
-        % 300ms window
-        ssWindow = .3 * sr_e; 
-        ssWindow = round(ssWindow/bin_size);
-        conds = [];
-        if csNOcs
-            % Condition 1: 1 cs in 200-1000ms window
-            conds(:,1) = sum(cycleMat_cs(:,csWindowN1),2);
-            conds(:,1) = conds(:,1) == 1;
-            % Condition 2: NO cs in 0-200ms window
-            conds(:,2)  = ~any(cycleMat_cs(:,csWindow_no),2);
-            % Condition 3: NO cs in 0-1000ms of next cycle
-            conds(:,3)  = ~any(cycleMat_cs(:,csWindowN2),2);
-            conds(:,3)  = [conds(2:end,3); 0];
-            goodCycles = ~any(~conds,2);
-            disp(find(~any(~conds,2)))
-        end
-        
-        for k = 1:min(size(cycleMat_cs, 1), size(cycleMat_ss, 1))-1
-            if goodCycles(k)
-                
-                csLoc_cycle = find(cycleMat_cs(k,:), 1);
-                csLoc_cycle = round(csLoc_cycle/bin_size);
-                
-                csLoc_seg = (k-1)*cycleLen_e+csLoc_cycle+startpt_e-1;
-                ssChunkA  = segment_ss((csLoc_seg-ssWindow):(csLoc_seg+ssWindow));
-                ssChunkB  = segment_ss((csLoc_seg+cycleLen_e-ssWindow):(csLoc_seg+cycleLen_e+ssWindow));
+    elseif NOcsNOcs
+        % Condition 1: NO cs in 0-1000ms 
+        conds(:,1) = ~any(cycleMat_cs(:,csWindowN2),2);
+        % Condition 2: NO cs in 0-1000ms of next cycle
+        conds(:,2) = [conds(2:end,1); 0];
+
+    end
+    disp(find(~any(~conds,2)))
+    goodCycles = ~any(~conds,2);
+
+
+    for k = 1:min(size(cycleMat_cs, 1), size(cycleMat_ss, 1))-1
+        if goodCycles(k)
+
+            csLoc_cycle = find(cycleMat_cs(k,:), 1);
+            csLoc_cycle = round(csLoc_cycle/bin_size);
+
+            csLoc_seg = (k-1)*cycleLen_e+csLoc_cycle+startpt_e-1;
+            ssChunkA  = segment_ss((csLoc_seg-ssWindow):(csLoc_seg+ssWindow));
+            ssChunkB  = segment_ss((csLoc_seg+cycleLen_e-ssWindow):(csLoc_seg+cycleLen_e+ssWindow));
+            ssChunkDiff = ssChunkB - ssChunkA;
+
+            %% PLOT individual examples
+            if PLOT_4
+                figure()
+                cycleExample = tight_subplot(4,1,[.04 .03],[.03 .03],[.01 .01]);
+
+
+                axes(cycleExample(1));
+                plot(cycleTimeVec_b, nanmean(cycleMat_tVel), 'r', 'LineWidth', 2); hold on
+                plot(cycleTimeVec_b, nanmean(cycleMat_hVel), 'b', 'LineWidth', 2);
+                vline(csLoc_cycle/sr_e, '-k')
+                vline((csLoc_cycle/sr_e)-ssWindow/sr_e, '--k')
+                vline((csLoc_cycle/sr_e)+ssWindow/sr_e, '--k')
+                xticks([])
+                yticks([])
+                hline(0, ':k')
+                title(tempTable.name(i))
+                legend({'Target Vel', 'Head Vel'})
+
+                % Whole cycle sub-figure
+                axes(cycleExample(2));
+                plot(cycleTime_e, cycleMat_ss(k  ,:), 'Color', [0.9100    0.4100    0.1700], 'LineWidth', 2); hold on
+                plot(cycleTime_e, cycleMat_ss(k+1,:), 'Color', [0, 0.5, 0], 'LineWidth', 2);
+                vline(csLoc_cycle/sr_e, '-k')
+                vline((csLoc_cycle/sr_e)-ssWindow/sr_e, '--k')
+                vline((csLoc_cycle/sr_e)+ssWindow/sr_e, '--k')
+                yticks([])
+                hline(0, ':k')
+                legend({'Cycle N', 'Cycle N+1'})
+                title('CS -> !CS Cycles')
+                text(mean(xlim),max(ylim)*.95, ['Cycle ', num2str(k)])
+
+                % 601ms window sub-figure
+                axes(cycleExample(3));
+                plot( (1:((ssWindow*2)+1))/sr_e, ssChunkA, 'Color', [0.9100    0.4100    0.1700], 'LineWidth', 2); hold on
+                plot( (1:((ssWindow*2)+1))/sr_e, ssChunkB, 'Color', [0, 0.5, 0], 'LineWidth', 2);
+
+                title('600ms window around CS')
+                xlim([0 length(ssChunkA)/sr_e])
+                ylim([-6 6]);
+                yticks([])
+                xticks([])
+                hline(0, ':k')
+                vline(mean(xlim), 'k')
+
+                % Difference sub-figure
+                axes(cycleExample(4));
                 ssChunkDiff = ssChunkB - ssChunkA;
-                                
-                %% PLOT individual examples
-                if PLOT_4
-                    figure()
-                    cycleExample = tight_subplot(4,1,[.04 .03],[.03 .03],[.01 .01]);
-                    
-                    
-                    axes(cycleExample(1));
-                    plot(cycleTimeVec_b, nanmean(cycleMat_tVel), 'r', 'LineWidth', 2); hold on
-                    plot(cycleTimeVec_b, nanmean(cycleMat_hVel), 'b', 'LineWidth', 2);
-                    vline(csLoc_cycle/sr_e, '-k')
-                    vline((csLoc_cycle/sr_e)-ssWindow/sr_e, '--k')
-                    vline((csLoc_cycle/sr_e)+ssWindow/sr_e, '--k')
-                    xticks([])
-                    yticks([])
-                    hline(0, ':k')
-                    title(tempTable.name(i))
-                    legend({'Target Vel', 'Head Vel'})
-                    
-                    % Whole cycle sub-figure
-                    axes(cycleExample(2));
-                    plot(cycleTime_e, cycleMat_ss(k  ,:), 'Color', [0.9100    0.4100    0.1700], 'LineWidth', 2); hold on
-                    plot(cycleTime_e, cycleMat_ss(k+1,:), 'Color', [0, 0.5, 0], 'LineWidth', 2);
-                    vline(csLoc_cycle/sr_e, '-k')
-                    vline((csLoc_cycle/sr_e)-ssWindow/sr_e, '--k')
-                    vline((csLoc_cycle/sr_e)+ssWindow/sr_e, '--k')
-                    yticks([])
-                    hline(0, ':k')
-                    legend({'Cycle N', 'Cycle N+1'})
-                    title('CS -> !CS Cycles')
-                    text(mean(xlim),max(ylim)*.95, ['Cycle ', num2str(k)])
-                    
-                    % 601ms window sub-figure
-                    axes(cycleExample(3));
-                    plot( (1:((ssWindow*2)+1))/sr_e, ssChunkA, 'Color', [0.9100    0.4100    0.1700], 'LineWidth', 2); hold on
-                    plot( (1:((ssWindow*2)+1))/sr_e, ssChunkB, 'Color', [0, 0.5, 0], 'LineWidth', 2);
-                    
-                    title('600ms window around CS')
-                    xlim([0 length(ssChunkA)/sr_e])
-                    ylim([-6 6]);
-                    yticks([])
-                    xticks([])
-                    hline(0, ':k')
-                    vline(mean(xlim), 'k')
-                    
-                    % Difference sub-figure
-                    axes(cycleExample(4));
-                    ssChunkDiff = ssChunkB - ssChunkA;
-                    plot( (1:((ssWindow*2)+1))/sr_e, ssChunkDiff, 'Color', [0.9100    0.4100    0.1700], 'LineWidth', 3); hold on
-                    plot( (1:((ssWindow*2)+1))/sr_e, ssChunkDiff, 'Color', [0, 0.5, 0], 'LineWidth', 3, 'LineStyle', '--');
-                    
-                    
-                    title('Cycle N+1 - Cycle N')
-                    xlim([0 length(ssChunkA)/sr_e])
-                    ylim([-6 6]);
-                    yticks([])
-                    hline(0, ':k')
-                    vline(mean(xlim), 'k')
-                end
-                
-                
-                %% Retain important values
-                alldiffs(end+1,:) = ssChunkDiff;
-                allgoodcsLocs(end+1) = csLoc_cycle;
-                
-            end
-            
-        end
-        allcs = [allcs, find(nansum(cycleMat_cs))];
-    end
-    
-    
-    %% PLOT difference !CS -> !CS
-    if NOcsNOcs
-        % First x% of cycle
-        csWindow_no = 1:(sr_e * .201); % first 200ms of cycle
-        csWindowN1 = (sr_e * .201):(cycleLen_e/2); % 200 - half cycle length
-        csWindowN2 = 1:(cycleLen_e/2); % First half of cycle
+                plot( (1:((ssWindow*2)+1))/sr_e, ssChunkDiff, 'Color', [0.9100    0.4100    0.1700], 'LineWidth', 3); hold on
+                plot( (1:((ssWindow*2)+1))/sr_e, ssChunkDiff, 'Color', [0, 0.5, 0], 'LineWidth', 3, 'LineStyle', '--');
 
-        % 300ms window
-        ssWindow = .3 * sr_e;
-        
-        % Load CS->!CS times
-        load('G:\My Drive\Expmt Data\Max\Climbing Fiber Project\Jennifer Data\Figures\csLocs11_06_19')
-        
-        for k = 1:min(size(cycleMat_cs, 1), size(cycleMat_ss, 1))-1
-            
-            % If cycle k contains no CS and in proper location
-            if ~any(cycleMat_cs(k,csWindowN2))
-                
-                % If cycle k+1 contain no CS in proper location
-                if ~any(cycleMat_cs(k+1,csWindowN2))
-                    % Choose a random location from CS->!CS locations
-                    
-                    csLoc_cycle = randperm(length(allgoodcsLocs));
-                    csLoc_cycle = allgoodcsLocs(csLoc_cycle(1));
-                    disp(k)
-                    
-                    if csLoc_cycle < max(ssWindow)
-                        vecSecondHalf = cycleMat_ss(k,1:(csLoc_cycle+ssWindow));
-                        prevCycleChunkLength = ((ssWindow*2 + 1) - length(vecSecondHalf))-1;
-                        vecFirstHalf = cycleMat_ss(k-1, end-prevCycleChunkLength:end);
-                        ssChunkA = [vecFirstHalf vecSecondHalf];
-                        
-                        vecSecondHalf = cycleMat_ss(k+1,1:(csLoc_cycle+ssWindow));
-                        prevCycleChunkLength = ((ssWindow*2 + 1) - length(vecSecondHalf))-1;
-                        vecFirstHalf = cycleMat_ss(k, end-prevCycleChunkLength:end);
-                        ssChunkB = [vecFirstHalf vecSecondHalf];
-                    else
-                        ssChunkA = cycleMat_ss(k,csLoc_cycle-(ssWindow):csLoc_cycle+(ssWindow));
-                        ssChunkB = cycleMat_ss(k+1,csLoc_cycle-(ssWindow):csLoc_cycle+(ssWindow));
-                    end
-                    
-                    ssChunkDiff = ssChunkB - ssChunkA;
-                    
-                    %% PLOT individual examples
-                    if PLOT_4
-                        figure()
-                        cycleExample = tight_subplot(4,1,[.04 .03],[.03 .03],[.01 .01]);
-                        
-                        
-                        axes(cycleExample(1));
-                        plot(cycleTimeVec_b, nanmean(cycleMat_tVel), 'r', 'LineWidth', 2); hold on
-                        plot(cycleTimeVec_b, nanmean(cycleMat_hVel), 'b', 'LineWidth', 2);
-                        vline(csLoc_cycle/sr_e, '-k')
-                        vline((csLoc_cycle/sr_e)-ssWindow/sr_e, '--k')
-                        vline((csLoc_cycle/sr_e)+ssWindow/sr_e, '--k')
-                        xticks([])
-                        yticks([])
-                        hline(0, ':k')
-                        title(tempTable.name(i))
-                        legend({'Target Vel', 'Head Vel'})
-                        
-                        % Whole cycle sub-figure
-                        axes(cycleExample(2));
-                        plot(cycleTime_e, cycleMat_ss(k  ,:), 'Color', [0.9100    0.4100    0.1700], 'LineWidth', 2); hold on
-                        plot(cycleTime_e, cycleMat_ss(k+1,:), 'Color', [0, 0.5, 0], 'LineWidth', 2);
-                        vline(csLoc_cycle/sr_e, '-k')
-                        vline((csLoc_cycle/sr_e)-ssWindow/sr_e, '--k')
-                        vline((csLoc_cycle/sr_e)+ssWindow/sr_e, '--k')
-                        yticks([])
-                        hline(0, ':k')
-                        legend({'Cycle N', 'Cycle N+1'})
-                        title('CS -> !CS Cycles')
-                        text(mean(xlim),max(ylim)*.95, ['Cycle ', num2str(k)])
-                        
-                        % 601ms window sub-figure
-                        axes(cycleExample(3));
-                        plot( (1:((ssWindow*2)+1))/sr_e, ssChunkA, 'Color', [0.9100    0.4100    0.1700], 'LineWidth', 2); hold on
-                        plot( (1:((ssWindow*2)+1))/sr_e, ssChunkB, 'Color', [0, 0.5, 0], 'LineWidth', 2);
-                        
-                        title('600ms window around CS')
-                        xlim([0 length(ssChunkA)/sr_e])
-                        ylim([-60 60]);
-                        yticks([])
-                        xticks([])
-                        hline(0, ':k')
-                        vline(mean(xlim), 'k')
-                        
-                        % Difference sub-figure
-                        axes(cycleExample(4));
-                        ssChunkDiff = ssChunkB - ssChunkA;
-                        plot( (1:((ssWindow*2)+1))/sr_e, ssChunkDiff, 'Color', [0.9100    0.4100    0.1700], 'LineWidth', 3); hold on
-                        plot( (1:((ssWindow*2)+1))/sr_e, ssChunkDiff, 'Color', [0, 0.5, 0], 'LineWidth', 3, 'LineStyle', '--');
-                        
-                        
-                        title('Cycle N+1 - Cycle N')
-                        xlim([0 length(ssChunkA)/sr_e])
-                        ylim([-60 60]);
-                        yticks([])
-                        hline(0, ':k')
-                        vline(mean(xlim), 'k')
-                    end
-                    
-                    
-                    %% Retain important values
-                    alldiffs(end+1,:) = ssChunkDiff;
-                    allgoodcsLocs(end+1) = csLoc_cycle;
-                    
-                    
-                end
-                
+
+                title('Cycle N+1 - Cycle N')
+                xlim([0 length(ssChunkA)/sr_e])
+                ylim([-6 6]);
+                yticks([])
+                hline(0, ':k')
+                vline(mean(xlim), 'k')
             end
-            
+
+
+            %% Retain important values
+            alldiffs(end+1,:) = ssChunkDiff;
+            allgoodcsLocs(end+1) = csLoc_cycle;
+
         end
+
     end
+    allcs = [allcs, find(nansum(cycleMat_cs))]; 
     
     
 end
