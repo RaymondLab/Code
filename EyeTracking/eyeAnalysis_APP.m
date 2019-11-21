@@ -11,8 +11,7 @@ load settings
 prevsettings = 1;
 
 % Shouldn't need to change unless setup changes drastically
-edgeThresh1 = app.edgeThreshCam1EditField.Value;
-edgeThresh2 = app.edgeThreshCam2EditField.Value;
+edgeThresh = app.edgeThreshCam1EditField.Value;
 plotall = app.PlotAnalysisCheckBox.Value;
 debugOn = app.debugCheckBox.Value;
 enchanceContrast = app.ImproveImageContrastCheckBox.Value;
@@ -24,28 +23,21 @@ the=linspace(0,2*pi,100);
 %% Get Images
 disp('Opening Images...')
 tic
-[ImageStack1, n_images] = getImageStack('img1.tiff');
-[ImageStack2, ~] = getImageStack('img2.tiff');
+[ImageStack, n_images] = getImageStack('img1.tiff');
 toc
 
 %% Pre-process Images
 disp('Preprocessing...')
 tic
-ImageStack1B = preprocessImages(ImageStack1, pos1, enchanceContrast);
-ImageStack2B = preprocessImages(ImageStack2, pos2, enchanceContrast);
+ImageStackB = preprocessImages(ImageStack, pos, enchanceContrast);
 toc
 
 %% steup Figures
-cla(app.UIAxes2);
 cla(app.UIAxes2_2);
 cla(app.UIAxes3);
 cla(app.UIAxes3_2);
 
-plottedImage1 = imagesc(app.UIAxes2, ImageStack1B(:,:,1));
-plottedImage2 = imagesc(app.UIAxes2_2, ImageStack2B(:,:,1));
-
-hold(app.UIAxes2, 'on');
-colormap(app.UIAxes2, gray);
+plottedImage = imagesc(app.UIAxes2_2, ImageStackB(:,:,1));
 
 hold(app.UIAxes2_2, 'on');
 colormap(app.UIAxes2_2, gray);
@@ -60,16 +52,11 @@ if n ~= n_images
     error('time stamps dont match number of images')
 end
 
-pupil1 = NaN(n,5);
-pupil2 = NaN(n,5);
-CR1a = NaN(n,3);
-CR2a = NaN(n,3);
-CR1b = NaN(n,3);
-CR2b = NaN(n,3);
-crx1 = [];
-cry1 = [];
-crx2 = [];
-cry2 = [];
+pupil = NaN(n,5);
+CRa = NaN(n,3);
+CRb = NaN(n,3);
+crx = [];
+cry = [];
 hp = gobjects(6,1);
 
 warning off
@@ -83,152 +70,93 @@ for i = 1:n
     if mod(i,120) ==0
         
         % Store results
-        results.pupil1 = pupil1;
-        results.pupil2 = pupil2;
-        results.cr1a = CR1a;
-        results.cr2a = CR2a;
-        results.cr1b = CR1b;
-        results.cr2b = CR2b;
+        results.pupil = pupil;
+        results.cra = CRa;
+        results.crb = CRb;
         hp = plotresults_APP(app, results, hp, i);
     end
     
     % Load images
-    img1 = ImageStack1B(:,:,i);
-    img2 = ImageStack2B(:,:,i);
+    img = ImageStackB(:,:,i);
     
     % Use previous frame's pupil as a starting point & radii estimate
     if i~=1
-        pupilStart1 = pupil1(i-1,:);
-        pupilStart2 = pupil2(i-1,:);
+        pupilStart = pupil(i-1,:);
         
-        maxRadii = max([pupil1(i-1,3:4) pupil2(i-1,3:4)]);
+        maxRadii = max([pupil(i-1,3:4)]);
         radiiPupil(2) = round(maxRadii*1.25);
         %radiiPupil = [round(maxRadii*.8) round(maxRadii*1.2)];
     end
     
     try
         % CAMERA 1
-        [pupil1(i,:), CR1a(i,:),CR1b(i,:), ~, edgeThresh1, crx1, cry1, epx_1, epy_1, epx2_1, epy2_1] = detectPupilCR_APP(...
-            app, 1, img1, 0, crx1, cry1,...
-            'radiiPupil',radiiPupil,'radiiCR',radiiCR1,...
-            'EdgeThresh',edgeThresh1+3,'pupilStart',pupilStart1,...
-            'CRthresh',CRthresh1,'CRfilter',CRfilter1,'PlotOn',plotall,...
+        [pupil(i,:), CRa(i,:),CRb(i,:), ~, edgeThresh, crx, cry, epx_1, epy_1, epx2_1, epy2_1] = detectPupilCR_APP(...
+            app, 1, img, 0, crx, cry,...
+            'radiiPupil',radiiPupil,'radiiCR',radiiCR,...
+            'EdgeThresh',edgeThresh+3,'pupilStart',pupilStart,...
+            'CRthresh',CRthresh,'CRfilter',CRfilter,'PlotOn',plotall,...
             'MinFeatures', minfeatures,'debugOn',debugOn);
         
     catch msgid
         fprintf('Error in cam 1 img %i\n',i)
         msgid.message
-        edgeThresh1 = 35;
-    end
-    
-    
-    try
-        % CAMERA 2
-        [pupil2(i,:), CR2a(i,:),CR2b(i,:), ~, edgeThresh2, crx2, cry2, epx_2, epy_2, epx2_2, epy2_2] = detectPupilCR_APP(...
-            app, 0, img2, 0, crx2, cry2,...
-            'radiiPupil',radiiPupil,'radiiCR',radiiCR2,...
-            'EdgeThresh',edgeThresh2+3,'pupilStart',pupilStart2,...
-            'CRthresh',CRthresh2,'CRfilter',CRfilter2,'PlotOn',plotall,...
-            'MinFeatures', minfeatures,'debugOn',debugOn);
-        
-        
-    catch msgid
-        fprintf('Error in cam 2 img %i\n',i)
-        msgid.message
-        edgeThresh2 = 35;
+        edgeThresh = 35;
     end
     
     %% Plotting
-    set(plottedImage1,'CData',img1);
-    set(plottedImage2,'CData',img2);
+    set(plottedImage,'CData',img);
     
-    if ~exist('plotl1', 'var')
+    if ~exist('plot1', 'var')
         
-        %% Left Plot
         % Corneal Reflection 1
-        plotl1 = line(app.UIAxes2, CR1a(i,3).*cos(a) + CR1a(i,1), CR1a(i,3).*sin(a) + CR1a(i,2),'Color', 'b');
-        plotl3 = plot(app.UIAxes2, crx1(1), cry1(1),'+b', 'LineWidth', 2, 'MarkerSize',10);
+        plot1 = line(app.UIAxes2_2, CRa(i,3).*cos(a) + CRa(i,1), CRa(i,3).*sin(a) + CRa(i,2),'Color', 'b');
+        plot3 = plot(app.UIAxes2_2, crx(1), cry(1),'+b', 'LineWidth',2, 'MarkerSize',10);
         
         % Corneal Reflection 2
-        plotl2 = line(app.UIAxes2, CR1b(i,3).*cos(a) + CR1b(i,1), CR1b(i,3).*sin(a) + CR1b(i,2),'Color', 'c');
-        plotl3a = plot(app.UIAxes2, crx1(2), cry1(2),'+c', 'LineWidth', 2, 'MarkerSize',10);
+        plot2 = line(app.UIAxes2_2, CRb(i,3).*cos(a) + CRb(i,1), CRb(i,3).*sin(a) + CRb(i,2),'Color', 'c');
+        plotra = plot(app.UIAxes2_2, crx(2), cry(2),'+c', 'LineWidth',2, 'MarkerSize',10);
         
         % Pupil 
-        plotl5 = line(app.UIAxes2, ...
-            pupil1(i,3)*cos(the)*cos(pupil1(i,5)) - sin(pupil1(i,5))*pupil1(i,4)*sin(the) + pupil1(i,1), ...
-            pupil1(i,3)*cos(the)*sin(pupil1(i,5)) + cos(pupil1(i,5))*pupil1(i,4)*sin(the) + pupil1(i,2),...
-            'Color','r');
-        plotl4 = plot(app.UIAxes2, pupil1(i,1), pupil1(i,2),'+r','LineWidth', 2, 'MarkerSize',10);
-        
-        plotl6 = plot(app.UIAxes2, epx_1, epy_1,'.c');
-        plotl7 = plot(app.UIAxes2, epx2_1, epy2_1,'.y');
-        
-        %% Right Plot
-        % Corneal Reflection 1
-        plotr1 = line(app.UIAxes2_2, CR2a(i,3).*cos(a) + CR2a(i,1), CR2a(i,3).*sin(a) + CR2a(i,2),'Color', 'b');
-        plotr3 = plot(app.UIAxes2_2, crx2(1), cry2(1),'+b', 'LineWidth',2, 'MarkerSize',10);
-        
-        % Corneal Reflection 2
-        plotr2 = line(app.UIAxes2_2, CR2b(i,3).*cos(a) + CR2b(i,1), CR2b(i,3).*sin(a) + CR2b(i,2),'Color', 'c');
-        plotr3a = plot(app.UIAxes2_2, crx2(2), cry2(2),'+c', 'LineWidth',2, 'MarkerSize',10);
-        
-        % Pupil 
-        plotr5 = line(app.UIAxes2_2, ...
-            pupil2(i,3)*cos(the)*cos(pupil2(i,5)) - sin(pupil2(i,5))*pupil2(i,4)*sin(the) + pupil2(i,1), ...
-            pupil2(i,3)*cos(the)*sin(pupil2(i,5)) + cos(pupil2(i,5))*pupil2(i,4)*sin(the) + pupil2(i,2),...
+        plot5 = line(app.UIAxes2_2, ...
+            pupil(i,3)*cos(the)*cos(pupil(i,5)) - sin(pupil(i,5))*pupil(i,4)*sin(the) + pupil(i,1), ...
+            pupil(i,3)*cos(the)*sin(pupil(i,5)) + cos(pupil(i,5))*pupil(i,4)*sin(the) + pupil(i,2),...
             'Color','m');
-        plotr4 = plot(app.UIAxes2_2, pupil2(i,1), pupil2(i,2),'+m','LineWidth',2, 'MarkerSize',10);
+        plot4 = plot(app.UIAxes2_2, pupil(i,1), pupil(i,2),'+m','LineWidth',2, 'MarkerSize',10);
         
-        plotr6 = plot(app.UIAxes2_2, epx_2, epy_2,'.c');
-        plotr7 = plot(app.UIAxes2_2, epx2_2, epy2_2,'.y');
+        plot6 = plot(app.UIAxes2_2, epx_1, epy_1,'.c');
+        plot7 = plot(app.UIAxes2_2, epx2_1, epy2_1,'.y');
     else
-        %% Left Plot
-        set(plotl1, 'XData', CR1a(i,3).*cos(a) + CR1a(i,1))
-        set(plotl1, 'YData', CR1a(i,3).*sin(a) + CR1a(i,2))
-        set(plotl2, 'XData', CR1b(i,3).*cos(a) + CR1b(i,1))
-        set(plotl2, 'YData', CR1b(i,3).*sin(a) + CR1b(i,2))
-        set(plotl3, 'XData', crx1(1))
-        set(plotl3, 'YData', cry1(1))
-        set(plotl3a, 'XData', crx1(2))
-        set(plotl3a, 'YData', cry1(2))
-        set(plotl4, 'XData', pupil1(i,1))
-        set(plotl4, 'YData', pupil1(i,2))
-        set(plotl5, 'XData', pupil1(i,3)*cos(the)*cos(pupil1(i,5)) - sin(pupil1(i,5))*pupil1(i,4)*sin(the) + pupil1(i,1))
-        set(plotl5, 'YData', pupil1(i,3)*cos(the)*sin(pupil1(i,5)) + cos(pupil1(i,5))*pupil1(i,4)*sin(the) + pupil1(i,2))
-        set(plotl6, 'XData', epx_1)
-        set(plotl6, 'YData', epy_1)
-        set(plotl7, 'XData', epx2_1)
-        set(plotl7, 'YData', epy2_1)
         
         %% Right Plot
-        set(plotr1, 'XData', CR2a(i,3).*cos(a) + CR2a(i,1))
-        set(plotr1, 'YData', CR2a(i,3).*sin(a) + CR2a(i,2))
-        set(plotr2, 'XData', CR2b(i,3).*cos(a) + CR2b(i,1))
-        set(plotr2, 'YData', CR2b(i,3).*sin(a) + CR2b(i,2))
-        set(plotr3, 'XData', crx2(1))
-        set(plotr3, 'YData', cry2(1))
-        set(plotr3a, 'XData', crx2(2))
-        set(plotr3a, 'YData', cry2(2))
-        set(plotr4, 'XData', pupil2(i,1))
-        set(plotr4, 'YData', pupil2(i,2))
-        set(plotr5, 'XData', pupil2(i,3)*cos(the)*cos(pupil2(i,5)) - sin(pupil2(i,5))*pupil2(i,4)*sin(the) + pupil2(i,1))
-        set(plotr5, 'YData', pupil2(i,3)*cos(the)*sin(pupil2(i,5)) + cos(pupil2(i,5))*pupil2(i,4)*sin(the) + pupil2(i,2))
-        set(plotr6, 'XData', epx_2)
-        set(plotr6, 'YData', epy_2)
-        set(plotr7, 'XData', epx2_2)
-        set(plotr7, 'YData', epy2_2)
+        set(plot1, 'XData', CRa(i,3).*cos(a) + CRa(i,1))
+        set(plot1, 'YData', CRa(i,3).*sin(a) + CRa(i,2))
+        set(plot2, 'XData', CRb(i,3).*cos(a) + CRb(i,1))
+        set(plot2, 'YData', CRb(i,3).*sin(a) + CRb(i,2))
+        set(plot3, 'XData', crx(1))
+        set(plot3, 'YData', cry(1))
+        set(plotra, 'XData', crx(2))
+        set(plotra, 'YData', cry(2))
+        set(plot4, 'XData', pupil(i,1))
+        set(plot4, 'YData', pupil(i,2))
+        set(plot5, 'XData', pupil(i,3)*cos(the)*cos(pupil(i,5)) - sin(pupil(i,5))*pupil(i,4)*sin(the) + pupil(i,1))
+        set(plot5, 'YData', pupil(i,3)*cos(the)*sin(pupil(i,5)) + cos(pupil(i,5))*pupil(i,4)*sin(the) + pupil(i,2))
+        set(plot6, 'XData', epx_1)
+        set(plot6, 'YData', epy_1)
+        set(plot7, 'XData', epx2_1)
+        set(plot7, 'YData', epy2_1)
     end
     
+    drawnow
     pause(0.001) % needed for things actually plot.
 end
 
 toc
 %% Store results
-results.pupil1 = pupil1;
+results.pupil1 = pupil;
 results.pupil2 = pupil2;
-results.cr1a = CR1a;
+results.cr1a = CRa;
 results.cr2a = CR2a;
-results.cr1b = CR1b;
+results.cr1b = CRb;
 results.cr2b = CR2b;
 
 %% Plot Summary
