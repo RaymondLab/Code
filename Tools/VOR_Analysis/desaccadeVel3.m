@@ -70,7 +70,14 @@ if params.NoiseAnalysis
     % find start and end times of sacs
     sac_start = strfind(omitH', [0 1]);
     sac_end = strfind(omitH', [1 0]);
-    if ~isempty(sac_end) || ~isempty(sac_start)
+    
+    if ~isempty(sac_end) && isempty(sac_start)
+        sac_start = 1;
+        
+    elseif isempty(sac_end) && ~isempty(sac_start)
+        sac_end = length(omitH);
+        
+    elseif ~isempty(sac_end) && ~isempty(sac_start)
         if sac_end(1) < sac_start(1)
             sac_start = [1 sac_start];
         end
@@ -84,8 +91,14 @@ if params.NoiseAnalysis
     y = [-20000;-20000;20000;20000];
     y = repmat(y,[1 size(x, 2)]);
     
+    if isempty(sac_end) && isempty(sac_start)
+        x = [];
+        y = [];
+    end
+    
+    
     %% Plot Basic Visuals
-    figure(99);clf
+    figure();
     
     ha = tight_subplot(3,1,[.01 .02],[.1 .01],[.01 .01]);
 
