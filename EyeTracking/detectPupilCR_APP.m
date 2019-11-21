@@ -220,15 +220,9 @@ points = [epx2(:), epy2(:)];
 %% Plotting
 if plotOn
     
-    if side
-        % left
-        fig = app.UIAxes2;
-        color = 'r';
-    else
-        % right
-        fig = app.UIAxes2_2;
-        color = 'm';
-    end
+
+    fig = app.UIAxes2_2;
+    color = 'm';
     
     imagesc(fig, img);  colormap(fig, gray);%  axis off; axis image
     xlim(fig, [0, size(img,2)]);
