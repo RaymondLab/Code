@@ -1,5 +1,5 @@
 %%
-function varargout = eyecam_APP(app, vid, eyetrack, nframes)
+function varargout = eyecam_APP(app, vars, vid, eyetrack, nframes)
 if ~exist('eyetrack','var')
     eyetrack = 0;
 end
@@ -16,9 +16,6 @@ time2 = [];
 % Start recording!
 start(vid(1));
 start(vid(2));
-
-% the very first window that has both eyes.
-fhandle = figure(1);
 
 % Add a figure to begin recording
 if eyetrack
@@ -37,13 +34,13 @@ if eyetrack
     img1_all = uint8(zeros(size(img1,2),size(img1,1),nframes));  %D019
     img2_all = uint8(zeros(size(img1,2),size(img1,1),nframes));  %D019
 else
-    set(gcf, 'Position', get(0,'Screensize')); % Maximize figure.
+    %set(gcf, 'Position', get(0,'Screensize')); % Maximize figure.
 end
 i = 0;
 
 %% collect images until user closes  window
 tic
-while ishandle(fhandle)
+while ~vars.videoSetupComplete
 
     if eyetrack && i>=nframes
         close(gcf)
@@ -81,8 +78,9 @@ while ishandle(fhandle)
 
     % Plot everything the first time
     if isempty(himg1) && isempty(himg2)
-        subplot(1,2,1) % CHANGE TO APP
-        himg1 = imshow(img1);
+        himg1 = imshow(img1, 'Parent', app.UIAxes);
+        hold(app.UIAxes, 'on');
+
 
         cMap = gray(256); % Most of the image is grayscale
         cMap(1,:) = [0 0 1]; % Last row is blue.
@@ -92,15 +90,15 @@ while ishandle(fhandle)
         hold on;
 
         if ~exist('h','var')
-            h(1) = plot(size(img1,2)/2, size(img1,1)/2,'+r', 'MarkerSize',1000);
+            h(1) = plot(app.UIAxes, size(img1,2)/2, size(img1,1)/2,'+r', 'MarkerSize',1000);
         end
 
-        subplot(1,2,2) % CHANGE TO APP
-        himg2 = imshow(img2);
+        himg2 = imshow(img2, 'Parent', app.UIAxes_2);
+        hold(app.UIAxes_2, 'on');
         hold on;     colormap(cMap);
 
         if length(h)<2
-            h(2) = plot(size(img1,2)/2, size(img1,1)/2,'+r', 'MarkerSize',1000);
+            h(2) = plot(app.UIAxes_2, size(img1,2)/2, size(img1,1)/2,'+r', 'MarkerSize',1000);
         end
 
         % After the first time just update

@@ -9,6 +9,7 @@ function chanData = cx2dat(filename, chanAmt, samplerate)
     behavior = readcxdata(filename, 0, chanAmt);
     if isempty(behavior.data)
         warning('Something went wrong!')
+        disp(filename);
         chanData = [];
         return
     end

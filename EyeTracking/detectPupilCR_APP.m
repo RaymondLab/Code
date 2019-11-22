@@ -24,7 +24,7 @@
 %   cry - the y coordinate of circle center
 %   crr - the radius of circle
 % points        = actual points on pupil detected
-% edgeThresh    = actual edgeThresh used for pupil 
+% edgeThresh    = actual edgeThresh used for pupil
 %
 % Authors: Hannah Payne
 % Date: 2014
@@ -59,7 +59,7 @@
 % Copyright (c) 2005
 % All Rights Reserved.
 
-function [pupil, cr1, cr2, points, edgeThresh] = detectPupilCR_APP( app, side, img, varargin)
+function [pupil, cr1, cr2, points, edgeThresh, crx, cry, epx, epy, epx2, epy2] = detectPupilCR_APP( app, side, img, plotOn, crxPrevious, cryPrevious, varargin)
 
 
 %% Process imputs
@@ -86,13 +86,46 @@ radiiCR = p.Results.radiiCR;
 gridthresh = p.Results.CRthresh;
 fltr4LM_R = p.Results.CRfilter;
 
-plotOn = p.Results.PlotOn;
+%plotOn = p.Results.PlotOn;
 debugOn = p.Results.DebugOn;
 
 img = double(img);
 
 %% Find corneal reflections
-[A, circen, crr] = CircularHough_Grd(img,radiiCR ,gridthresh,fltr4LM_R,1);
+
+% only search through portion of image, Corneal reflections shouldn't move
+try 
+    if ~isempty(crxPrevious) && ~any(isnan(crxPrevious))
+
+        TOP     = max( min(cryPrevious) - max(radiiCR)*2, 1 );
+        BOTTOM  = min( max(cryPrevious) + max(radiiCR)*2, size(img,1) );
+        LEFT    = max( min(crxPrevious) - max(radiiCR)*2, 1 );
+        RIGHT   = min( max(crxPrevious) + max(radiiCR)*2, size(img,2) );
+
+        newImg = img(TOP:BOTTOM, LEFT:RIGHT);
+        [~, circen, crr] = CircularHough_Grd(newImg,radiiCR ,gridthresh,fltr4LM_R,1);
+
+    %     figure(3); clf; hold on
+    %     image(img)
+    %     rectangle('Position', [LEFT (BOTTOM-abs(TOP-BOTTOM)) abs(RIGHT-LEFT) abs(TOP-BOTTOM)]) 
+    %     scatter(circen(:,1)+LEFT, circen(:,2)+TOP)
+    %     hold off
+    %     
+    %     figure(4); clf; hold on
+    %     image(newImg)
+    %     scatter(circen(:,1), circen(:,2))
+    %     hold off
+
+        circen(:,1) = circen(:,1)+ LEFT-1;
+        circen(:,2) = circen(:,2)+ TOP-1;
+    else
+        [A, circen, crr] = CircularHough_Grd(img,radiiCR ,gridthresh,fltr4LM_R,1);
+    end
+catch
+    [A, circen, crr] = CircularHough_Grd(img,radiiCR ,gridthresh,fltr4LM_R,1);
+    disp('ff')
+end
+
 maxvals = diag(img(round(circen(:,2)),round(circen(:,1))));
 
 %% Check for duplicates
@@ -126,16 +159,6 @@ else
     crr(2) = NaN;
 end
 
-%% DEBUG: Plot CR circles ***
-if debugOn
-    figure; imagesc(A); axis image; colormap(gray)
-    a = 0:.001:2*pi; hold on
-    plot(crr(1).*cos(a) + crx(1), crr(1).*sin(a)+cry(1),'b')
-    plot(crr(2).*cos(a) + crx(2), crr(2).*sin(a)+cry(2),'c')
-    plot(crx, cry, 'r+')
-end
-%  END DEBUG ***%
-
 %% For time locking of video to light pulses (optional)
 % output the high y-coordinate, but the exact x of the corresponding lower cr
 if length(crx)==3
@@ -150,26 +173,22 @@ cr2 = [crx(2) cry(2) crr(2)];
 
 %% Remove corneal reflection
 if ~isempty(circen)
-            
-removeCRthresh = max(maxvals)*3/4; % Remove any bright spots
-totalMask = img>removeCRthresh;
-InoCR = img;
-
-for i = 1:length(crx) % Remove each CR
-[X, Y] = meshgrid(1:size(img,2), 1:size(img,1));
-maskCurr = ((X-crx(i)).^2 + (Y-cry(i)).^2) < crr(i).^2;
-totalMask(maskCurr) = true;
-end
-totalMaskDilate = imdilate(totalMask,strel('disk', 8)); %***10
-InoCR(totalMaskDilate) = NaN;
-
-gaussian_smooth_image = @(I, sigma) imfilter(I, fspecial('gaussian', [ceil(2.5*sigma) ceil(2.5*sigma)], sigma), 'symmetric');
-InoCR = gaussian_smooth_image(InoCR,3);
-
-%% ***   DEBUG   ***%
-if debugOn;  figure; colormap(gray);  imagesc(InoCR); end
-%*** ENG DEBUG ***%
-
+    
+    removeCRthresh = max(maxvals)*3/4; % Remove any bright spots
+    totalMask = img>removeCRthresh;
+    InoCR = img;
+    
+    for i = 1:length(crx) % Remove each CR
+        [X, Y] = meshgrid(1:size(img,2), 1:size(img,1));
+        maskCurr = ((X-crx(i)).^2 + (Y-cry(i)).^2) < crr(i).^2;
+        totalMask(maskCurr) = true;
+    end
+    totalMaskDilate = imdilate(totalMask,strel('disk', 8)); %***10
+    InoCR(totalMaskDilate) = NaN;
+    
+    gaussian_smooth_image = @(I, sigma) imfilter(I, fspecial('gaussian', [ceil(2.5*sigma) ceil(2.5*sigma)], sigma), 'symmetric');
+    InoCR = gaussian_smooth_image(InoCR,3);
+    
 else
     InoCR = img;
 end
@@ -186,7 +205,6 @@ end
 [epx, epy, edgeThresh] = starburst_pupil_contour_detection(InoCR, pupilStart(1),...
     pupilStart(2), edgeThresh,round(radiiPupil),minfeatures);
 [~, inliers] = fit_ellipse_ransac(epx(:), epy(:), radiiPupil + [-15 15]);
-
 epx2 = epx(inliers);
 epy2 = epy(inliers);
 
@@ -202,12 +220,14 @@ points = [epx2(:), epy2(:)];
 %% Plotting
 if plotOn
     
-    if side 
+    if side
         % left
         fig = app.UIAxes2;
+        color = 'r';
     else
         % right
         fig = app.UIAxes2_2;
+        color = 'm';
     end
     
     imagesc(fig, img);  colormap(fig, gray);%  axis off; axis image
@@ -215,17 +235,18 @@ if plotOn
     ylim(fig, [0, size(img,1)]);
     hold(fig, 'on');
     a = 0:.1:2*pi;
-    plot(fig, cr1(3).*cos(a) + cr1(1), cr1(3).*sin(a)+cr1(2),'b'); hold on
+    plot(fig, cr1(3).*cos(a) + cr1(1), cr1(3).*sin(a)+cr1(2),'b')
     plot(fig, cr2(3).*cos(a) + cr2(1), cr2(3).*sin(a)+cr2(2),'c')
-    plot(fig, crx, cry,'+r')
+    plot(fig, crx(1), cry(1),'+b')
+    plot(fig, crx(2), cry(2),'+c')
     
     % Plot ellipse
     the=linspace(0,2*pi,100);
     line(fig, pupil(3)*cos(the)*cos(pupil(5)) - sin(pupil(5))*pupil(4)*sin(the) + pupil(1), ...
         pupil(3)*cos(the)*sin(pupil(5)) + cos(pupil(5))*pupil(4)*sin(the) + pupil(2),...
-        'Color','k');
+        'Color',color);
     
-    plot(fig, pupil(1), pupil(2),'+y','LineWidth',2, 'MarkerSize',10)
+    plot(fig, pupil(1), pupil(2),['+', color],'LineWidth',2, 'MarkerSize',10)
     if exist('epx','var')
         plot(fig, epx, epy,'.c')
         plot(fig, epx2, epy2,'.y')

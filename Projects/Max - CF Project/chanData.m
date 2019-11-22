@@ -88,7 +88,7 @@ classdef chanData
         end
         
         function plotAllChans(~, datObj)
-            figure(1); clf
+            figure(); clf
             ha = tight_subplot(9,1,[.03 .03],[.03 .03],[.03 .03]);
             for i = 1:8
                 
@@ -114,7 +114,7 @@ classdef chanData
                     case 8 % ephys?
                 end
                 
-                title(datObj(i).chanlabel)
+                %title(datObj(i).chanlabel)
                 % Only show Tick labels on bottom (Epyhs Channel)
                 if i ~= length(ha)-1
                     xticks([]);

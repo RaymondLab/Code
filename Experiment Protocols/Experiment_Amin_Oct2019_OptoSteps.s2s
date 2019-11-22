@@ -1,0 +1,294 @@
+'--------------------------------------------------------------------------------
+' Rig-Specific parameters file Location
+'--------------------------------------------------------------------------------
+'D019
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D019.s2s"
+
+'D253
+''#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D253.s2s"
+
+'--------------------------------------------------------------------------------
+' Universal Parameters File Location
+'--------------------------------------------------------------------------------
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal.s2s"
+
+
+' Experiment Specific Parameters
+sinAmpChair := 0;
+sinAmpDrum := 0;
+stepPeriod := 1000;
+stepLength := 250;
+pulseDuration := 250;
+nBlocks% := 3;
+runLength := 600;
+expmtMode := 4;
+var stepAmpChairOriginal := 0;
+var stepAmpDrumOriginal := 0;
+var pulseDurationOriginal := 250;
+var pNumberOriginal := 1;
+
+'--------------------------------------------------------------------------------
+' MAIN PROGRAM
+'--------------------------------------------------------------------------------
+ToolbarConfig();
+
+
+'--------------------------------------------------------------------------------
+' Toolbar Callbacks
+'--------------------------------------------------------------------------------
+Func ToolbarIdle%()
+  'This function calls repeatedly whenever nothing else is happening
+  'if runExmpt=1, it is used to run a full expmt automatically.  -HP
+  'expmtMode: 0=habit, 1=0x, 2=2x, 3=ipsi stim, 4=contra stim
+  'test: 0=wait, 1=test, 2=train
+  ' Check a valid sampling view is running
+  var currView := ViewKind();
+  if  currView <> 0 then
+    return 1;
+  endif;
+
+  ' Keep sine wave from drifting
+  if MaxTime() > (prevTime + 1000/stepPeriod) then
+    if driftFix = 1 then
+      driftFix%();
+    endif;
+  endif;
+
+
+  'If an experiment is running:
+  if runExpmt% = 1 then
+
+      'Check the time. Seconds is the current time - compare it to the goal time of each segment
+      if  MaxTime() > goalTime then
+
+        ' Show experiment Config menues before experiment starts'
+        if checkConfig = 1 then
+          checkConfig := 0;
+  		    ToolbarConfigExpmt%();
+  		    Yield(.2);
+          StepConfigWindow%();
+          Yield(.2);
+          ToolbarPulseConfig%();
+          Yield(.2);
+          stepAmpChairOriginal := stepAmpChair;
+          stepAmpDrumOriginal := stepAmpDrum;
+          pulseDurationOriginal := pulseDuration;
+          pNumberOriginal := pNumber;
+        endif
+
+        docase
+
+        'Pause
+        case test% = 0 then             ' Run Stim test and bilat test
+          SampleKey("x");
+          goalTime := MaxTime() + 5;
+          ToolbarStimoff%(); Yield();
+          ToolbarStepOff%(); Yield();
+          ToolbarInit%(); Yield();
+          test% := 7;
+
+        case test% = 7 then
+          goalTime := MaxTime() + 5;
+          runFlash();
+
+          ' Go to Pre/Post or Train/Test Section
+          if expmtLoc% = 2 then
+              test% := 2;
+              ' If you have already done the test/train blocks, quit instead.
+              if trainAmount = nBlocks%  then
+                ToolbarQuitExpmt%();
+                Return(1);
+              endif
+          endif
+
+          if expmtLoc% = 1 then
+              test% := 1;
+          endif
+
+        ' Pre and Post testing
+        case test% = 1 then
+            docase
+
+            ' STIM only
+            case prePostNum = 1 or prePostNum = 6 or prePostNum = 7 then
+              SampleKey("X");
+              goalTime := MaxTime() + testLength;
+              prePostNum := prePostNum + 1;
+
+              ' Only STIM
+              ' No head, no chair, no light, only STIM
+              pNumber := pNumberOriginal;
+              pulseDuration := pulseDurationOriginal;
+              SetPulseSettings%(); Yield();
+              ToolbarStimOn%();
+              test% := 0;
+              if prePostNum = 8 then
+                prePostNum := 1;
+                expmtLoc% := 2;
+                test% := 0;
+              endif
+
+            ' VORD
+            case prePostNum = 2 then
+              SampleKey("X");
+              goalTime := MaxTime() + testLength;
+              prePostNum := prePostNum + 1;
+              ' NO STIM
+
+              ' YES CHAIR
+              stepAmpChair := stepAmpChairOriginal;
+              sAmpChair := ChairVel2Int32%( stepAmpChair );   ' Amp chair
+              sAmpChairN := 0-sAmpChair;                      ' Amp chair (opposite direction)
+
+              ' NO DRUM
+              stepAmpDrum := 0;
+              sAmpDrum := DrumVel2Int32%( stepAmpDrum );   ' Amp drum
+              sAmpDrumN := 0-sAmpDrum;                      ' Amp drum (opposite direction)
+
+              ' NO LIGHT
+              stepLight := 0;
+              stepStim := 0;
+              ToolbarStepConfig%(); Yield();
+              SetSequencerValues(); Yield();
+              ToolbarStepOn%();
+              test% := 0;
+
+            ' OKR
+          case prePostNum = 3 or prePostNum = 4 or prePostNum = 5 then
+              SampleKey("X");
+              goalTime := MaxTime() + testLength;
+              prePostNum := prePostNum + 1;
+              ' NO STIM
+
+              ' NO CHAIR
+              stepAmpChair := 0;
+              sAmpChair := ChairVel2Int32%( stepAmpChair );   ' Amp chair
+              sAmpChairN := 0-sAmpChair;                      ' Amp chair (opposite direction)
+
+              ' YES DRUM
+              stepAmpDrum := stepAmpDrumOriginal;
+              sAmpDrum := DrumVel2Int32%( stepAmpDrum );   ' Amp drum
+              sAmpDrumN := 0-sAmpDrum;                      ' Amp drum (opposite direction)
+
+              ' YES LIGHT
+              stepLight := 1; ' BUT NOT STEP LIGHT
+              'toolbarLightOn%();
+
+              ToolbarStepConfig%(); Yield();
+              SetSequencerValues(); Yield();
+              ToolbarStepOn%();
+              test% := 0
+
+            endcase
+
+        ' test-train blocks
+        case test% = 2 then
+          docase
+
+          ' Training
+          case trainLoc% = 1 then
+            SampleKey("X");
+            goalTime := MaxTime() + runLength;
+            trainLoc% := trainLoc% + 1;
+            trainAmount := trainAmount + 1;
+            ToolbarInit%();
+
+            ' STEP LIGHT ON
+            stepLight := 1;
+            stepStim := 1;
+
+            ' NO Chair
+            stepAmpChair := 0;
+            sAmpChair := ChairVel2Int32%( stepAmpChair );   ' Amp chair
+            sAmpChairN := 0-sAmpChair;                      ' Amp chair (opposite direction)
+
+            ' YES DRUM
+            stepAmpDrum := stepAmpDrumOriginal;
+            sAmpDrum := DrumVel2Int32%( stepAmpDrum );    ' Amp drum
+            sAmpDrumN := 0-sAmpDrum;                      ' Amp drum (opposite direction)
+
+            ToolbarStepConfig%(); Yield();
+            SetSequencerValues(); Yield();
+            ToolbarStepOn%();
+
+          ' STIM only
+          case trainLoc% = 2 then
+            SampleKey("x");
+            SampleKey("X");
+            test% := 0;
+            goalTime := MaxTime() + testLength;
+            trainLoc% := trainLoc% - 1;
+            'sToolbarInit%();
+
+            ' Only STIM
+            ' No head, no chair, no light, only STIM
+            toolbarLightOff%();
+            pNumber := pNumberOriginal;
+            pulseDuration := pulseDurationOriginal;
+            SetPulseSettings%(); Yield();
+            ToolbarStimOn%();
+
+
+            if trainAmount = nBlocks% then
+              expmtLoc% := 1;
+            endif
+          endcase;
+        endcase;
+      endif;
+  endif;
+  Return(1);
+End
+
+'--------------------------------------------------------------------------------
+'Configure expmt settings window
+'--------------------------------------------------------------------------------
+Func ToolbarConfigExpmt%()
+  DlgCreate("Experiment settings");  'Start new dialog
+  DlgInteger(1,"Number of run-test blocks",0,100,0,0,1);
+  DlgInteger(2,"Number of tests per block",1,100,0,0,1);    'set to 0 if not using Chair
+  DlgReal(3,"Run length (s)",0,5000);
+  DlgReal(4,"Test length (s)",0,5000);
+  DlgList(5,"Expmt mode", "habit|x0|x2|ipsi|contra|steps");
+  DlgInteger(6,"Light flash on?)",0,1,0,0,"0|1");
+  DlgReal(7,"Test stim and bilat (0 or 1)",0,1);
+
+  DlgShow(nBlocks%, nTestreps%, runLength, testLength, expmtMode, flashon%,testStim);
+
+  docase
+  case expmtMode = 0 then     'habit
+      sinPhDrum := 90;
+      sinPhChair := 90;
+      sinAmpChair := 10;
+      sinAmpDrum := 0;
+  case expmtMode = 1 then     'x0
+      sinPhDrum := 90;
+      sinPhChair := 90;
+      sinAmpChair := 10;
+      sinAmpDrum := 10;
+  case expmtMode = 2 then     'x2
+      sinPhDrum := -90;
+      sinPhChair := 90;
+      sinAmpChair := 10;
+      sinAmpDrum := 10;
+  case expmtMode = 3  then     'ipsi
+      stepAmpChair := 10;
+      stepAmpDrum := 10;
+      sinPhChair := 0;
+      sinAmpDrum := 0;
+  case expmtMode = 4 then      'contra
+      stepAmpChair := -10;
+    	stepAmpDrum := -10;
+      sinPhChair := 0;
+      sinAmpDrum := 0;
+  case expmtMode = 5 then      'steps
+      ToolbarStepConfig%();
+  endcase;
+
+
+  if testStim > 0 then
+      ToolbarPulseConfig%()
+  endif;
+
+  SetSequencerValues();
+  Return(1);
+End
