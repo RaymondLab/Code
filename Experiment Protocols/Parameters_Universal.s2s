@@ -534,6 +534,12 @@ Proc WindowConfig()
   'SampleTitle$(7,"phys");
   'SampleComment$(7, "phys");
 
+  'Channel 7 UNCOMMENT THIS FOR HD MOTOR
+  'SampleTalker(7,"LS7366",0);
+  'SampleCalibrate(7,"deg",1111.111,0);
+  'SampleTitle$(7,"DrumPos");
+  'SampleComment$(7,"Drum Position");
+
   'Channel 8
   SampleWaveform(hhvelCh%,7,1000);
   SampleCalibrate(hhvelCh%,"deg/s",ChairVelReadoutScale,ChairVelReadoutOffset);
@@ -617,8 +623,9 @@ Proc WindowConfig()
   XRange( 0, 20);      ' Set the default X axis time range
 
   ' Channel order
-  ChanOrder(0, -1, "5, 4, 8, 13, 3, 2, 1, 12, 11, 10, 9, 30, 31");
+  'ChanOrder(0, -1, "5, 4, 8, 13, 3, 2, 1, 12, 11, 10, 9, 30, 31");
   'ChanOrder(0, -1, "5, 4, 8, 13, 3, 2, 1, 12, 11, 10, 9, 30, 31, 15"); 'Alex Fanning
+  ChanOrder(0, -1, "2,4,8,1,3,13,5,6,9,10,11,12,30,31"); 'Trace Stay
 
   ' Background Colour'
   ViewColour(0,5);

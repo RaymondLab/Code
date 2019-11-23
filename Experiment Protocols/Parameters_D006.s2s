@@ -11,6 +11,12 @@ var SequencerFile$ := "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\
 var sinAmpChair := 10;
 var sinAmpDrum := 10;
 
+  'Channel 7 FOR HD MOTOR IF NOT IN PARAMETERS UNIVERSAL
+  'SampleTalker(7,"LS7366",0);
+  'SampleCalibrate(7,"deg",1111.111,0);
+  'SampleTitle$(7,"DrumPos");
+  'SampleComment$(7,"Drum Position");
+
 '--------------------------------------------------------------------------------
 ' MOTOR CALIBRATION PARAMETERS
 '--------------------------------------------------------------------------------
