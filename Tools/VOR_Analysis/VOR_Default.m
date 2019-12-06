@@ -157,3 +157,4 @@ xlswrite(fullfile(params.folder,[params.file '.xlsx']),result.header(4:end),'She
 
 %% === Save .mat file of results ======================================= %%
 save(fullfile(params.folder, 'result'), 'result','T');
+save(fullfile(params.folder, [params.file, '_DatObject.mat']), 'data')

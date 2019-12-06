@@ -12,10 +12,10 @@ csFiles2 = allFiles;
 csFiles2(~contains({csFiles2.name}, {'sortedCS'})) = [];
 allFiles(~contains({allFiles.name}, {'aligned'})) = [];
 
+
+superGoodCSIso = {};
 %% loop through each one
 for j = 1:height(dataTable)
-    disp(j)
-    
     %% Skip non-related recordings
     
     % Bad Recording Files
@@ -29,23 +29,23 @@ for j = 1:height(dataTable)
     end
     
     % Expmt Condition Filtering
-    if ~contains(dataTable.sineStep(j), 'sine')
-        continue
-    end
-    if dataTable.freq(j) ~= .5
-        continue
-    end
-    if ~contains(dataTable.learningType(j), 'x2')
-        continue
-    end
+%     if ~contains(dataTable.sineStep(j), 'sine')
+%         continue
+%     end
+%     if dataTable.freq(j) ~= .5
+%         continue
+%     end
+%     if ~contains(dataTable.learningType(j), 'OKR')
+%         continue
+%     end
 
     % Other Condition
-    if isnan(dataTable.maxSortedCS(j))
+    if ~isnan(dataTable.maxSortedCS(j))
         continue
     end
-    if ~dataTable.maxSortedCS(j)
-        continue
-    end
+%     if ~dataTable.maxSortedCS(j)
+%         continue
+%     end
 %     if isnan(dataTable.goodCSIsolation(j))
 %         continue
 %     end
@@ -62,10 +62,20 @@ for j = 1:height(dataTable)
         disp('Opening Failed!')
         continue
     end
-    
+    disp(j)
     %% Add Sorted CS to behavior File
     try
         alignedFile = dataTable.alignedMat{j};
+        rootName = alignedFile(1:11);
+        csFileIndx = contains({csFiles2.name}, {rootName});
+        if ~any(csFileIndx)
+            continue
+        end
+        % Load sortedCS File
+        sortedCSFileInfo = csFiles2(find(csFileIndx));
+        load(fullfile(sortedCSFileInfo(1).folder, sortedCSFileInfo(1).name));
+        
+        % Load Aligned File
         fileInfo = allFiles(contains({allFiles.name}, {alignedFile}));
         load(fullfile(fileInfo(1).folder, fileInfo(1).name));
         
@@ -73,22 +83,29 @@ for j = 1:height(dataTable)
         timeVec = dattime(behaviorEphysAligned(1,10));
         plot(timeVec, behaviorEphysAligned(10).data)
         title(dataTable.name(j))
+ 
+%         list = {'Use', 'Dont', 'Other'};
+%         [indx,tf] = listdlg('ListString',list);
+%         if indx == 1 
+%             superGoodCSIso(end+1) = dataTable.ephysMat(j);
+%         end
+
         vline(Channel01(:,1)+behaviorEphysAligned(10).tstart)
         behaviorEphysAligned(9).data = Channel01(:,1)+behaviorEphysAligned(10).tstart;
         save(fullfile(fileInfo(1).folder, fileInfo(1).name), 'behaviorEphysAligned')
-        
-    if ~isempty(behaviorEphysAligned(1,9).data)
-        dataTable.sortedCS(j) = 1;
-    else
-        dataTable.sortedCS(j) = 0;
-    end
+
+        if ~isempty(behaviorEphysAligned(1,9).data)
+            dataTable.sortedCS(j) = 1;
+        else
+            dataTable.sortedCS(j) = 0;
+        end
+    
+    
     catch
         disp('Failed!')
         continue
     end
     
-    
-    %%
     
     %% Visualize 
 %     try
