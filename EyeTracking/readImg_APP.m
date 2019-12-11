@@ -1,4 +1,4 @@
-function [img] = readImg_APP(imAdjust, cam, frame, pos1, pos)
+function [img] = readImg_APP(imAdjust, cam, frame, pos)
     %% Load sample images
     img = imread(fullfile(cd, ['img' cam, '.tiff']),'Index',frame);
 

@@ -21,7 +21,7 @@ CRfilter2 = p.Results.CRfilter2;
 minfeatures = p.Results.MinFeatures;
 imAdjust = p.Results.ImAdjust;
 
-edgeThresh1 = app.edgeThreshCam1EditField.Value; % Initial gradient threshold of pupil edge detection for cam 1
+edgeThresh1 = app.edgeThreshEditField.Value; % Initial gradient threshold of pupil edge detection for cam 1
 plotall= 1;
 debugOn = 0;
 ok = 0;

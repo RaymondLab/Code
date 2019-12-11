@@ -30,7 +30,6 @@ best_vid = vars.vidH_upsample(vars.keep_start(best_stretch):vars.keep_end(best_s
 lag_Segment = lag_Segment(find(c==max(c)));
 lag_Segment = lag_Segment - 1000; % General trend seems to be this slignment method will be one phase off
 
-
 %% Method 2
 [c,lags] = crosscorr(vars.chosenMag,vars.vidH_upsample,'NumLags',length(vars.chosenMag)-1);
 lag_Whole = lags(find(c == max(c)));
@@ -86,25 +85,34 @@ elseif contains(app.AlignmentMethodDropDown.Value, 'Saccade Overlap')
 end
 
 %% Alternate Alignment Algorithm
-
+disp(['Lag Calculated from Saccade Matching: ', num2str(lag)]);
 
 if lag < 0
+    vars.mag1_aligned = vars.mag1.data((-lag)+1:end);
+    vars.mag2_aligned = vars.mag2.data((-lag)+1:end);
+    
+    vars.mag1_vel_aligned = vars.mag1Vel((-lag)+1:end);
+    vars.mag2_vel_aligned = vars.mag2Vel((-lag)+1:end);
+
     vars.mag_aligned = vars.chosenMag((-lag)+1:end);
     vars.mag_keep = ~vars.chosenMagSacLoc((-lag)+1:end);
     vars.mag_keep2 = ~vars.notChosenMagScaleLoc((-lag)+1:end);
     vars.time_aligned = vars.tmag((-lag)+1:end);
     
     vars.vid_aligned = vars.vidH_upsample(1:end+lag);
-    vars.vidV_aligned = vars.vidV_upsample(1:end+lag);
+    vars.vidV_aligned = vars.vidVel(1:end+lag);
     vars.vid_keep = ~vars.sacLoc_vid(1:end+lag);
 else
+    vars.mag1_aligned = vars.mag1.data(1:end-lag);
+    vars.mag2_aligned = vars.mag2.data(1:end-lag);
+    
     vars.mag_aligned = vars.chosenMag(1:end-lag);
     vars.mag_keep = ~vars.chosenMagSacLoc(1:end-lag);
     vars.mag_keep2 = ~vars.notChosenMagScaleLoc(1:end-lag);
     vars.time_aligned = vars.tmag(1:end-lag);
     
     vars.vid_aligned = vars.vidH_upsample((lag)+1:end);
-    vars.vidV_aligned = vars.vidV_upsample((lag)+1:end);
+    vars.vidV_aligned = vars.vidVel((lag)+1:end);
     vars.vid_keep = ~vars.sacLoc_vid((lag)+1:end);
 end
 vars.lag = lag;
