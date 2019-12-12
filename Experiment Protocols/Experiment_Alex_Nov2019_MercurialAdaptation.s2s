@@ -25,6 +25,12 @@ const Order%[] := {0, 1, 2,
 var expmtIndx := 0;
 runLength := 3600; '1 Hour (60 minutes x 60 seconds)
 testLength := 45;
+QueTime := 0;
+
+stepPeriod := 10000;
+stepLength := 5000;
+stepAmpChair := 0;
+stepAmpDrum := -5;
 
 ToolbarConfig();
 
@@ -44,7 +50,7 @@ Func ToolbarIdle%()
   endif;
 
   ' Keep sine wave from drifting
-  if MaxTime() > (prevTime + 1/((stepPeriod+245)/1000)) then
+  if MaxTime() > (prevTime + 1/((stepPeriod/3)/1000)) then
     if driftFix = 1 then
       driftFix%();
     endif;
@@ -78,7 +84,7 @@ Func ToolbarIdle%()
             goalTime := MaxTime() + testLength;
             stepPeriod := 1000;
             stepLength := 250;
-            stepAmpChair := 10;
+            stepAmpChair := 15;
             stepAmpDrum := 0;
             ToolbarStepConfig%();
 
@@ -92,8 +98,8 @@ Func ToolbarIdle%()
             stepPeriod := 10000;
             stepLength := 5000;
             stepAmpChair := 0;
-            stepAmpDrum := -10;
-            QueTime := 495;
+            stepAmpDrum := -15;
+            QueTime := 245;
             ToolbarStepConfig%();
             toolbarStepOn%();
 

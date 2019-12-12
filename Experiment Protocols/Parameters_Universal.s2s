@@ -10,6 +10,8 @@ var sinHzDrum := 1;
 var sinPhDrum := 90;
 var actualDrumPh;
 var sineOn% := 0;
+var sinAmpChair := 10;
+var sinAmpDrum := 10;
 
 '--------------------------------------------------------------------------------
 ' STEP PARAMETERS
