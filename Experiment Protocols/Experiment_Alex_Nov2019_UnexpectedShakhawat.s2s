@@ -25,17 +25,19 @@
 ' 9 = quit experiment
 
 const Order%[] := {0, 1, 2,
-                   0, 1, 2,
-                   0, 1, 2,
                    0, 1, 3,
-                   0, 1, 2,
-                   0, 1, 2,
                    0, 1, 2,
                    9};
 
 var expmtIndx := 0;
 runLength := 3600; '1 Hour (60 minutes x 60 seconds)
-testLength := 45;
+testLength := 300;
+QueTime := 0;
+
+stepPeriod := 10000;
+stepLength := 5000;
+stepAmpChair := 0;
+stepAmpDrum := -5;
 
 ToolbarConfig();
 
@@ -87,14 +89,15 @@ Func ToolbarIdle%()
           case Order%[expmtIndx] = 2 then
             SampleKey("X");
             goalTime := MaxTime() + testLength;
-            stepPeriod := 1000;
-            stepLength := 250;
-            stepAmpChair := 10;
-            stepAmpDrum := 0;
+            stepPeriod := 20000;
+            stepLength := 10000;
+            stepAmpChair := 0;
+            stepAmpDrum := -5;
+            QueTime := 0;
             ToolbarStepConfig%();
 
+            ToolbarLightOn%(); Yield();
             toolbarStepOn%();
-
 
           ' TRAIN
           case Order%[expmtIndx] = 3 then
@@ -103,9 +106,11 @@ Func ToolbarIdle%()
             stepPeriod := 10000;
             stepLength := 5000;
             stepAmpChair := 0;
-            stepAmpDrum := -10;
-            QueTime := 495;
+            stepAmpDrum := -5;
+            QueTime := 0;
             ToolbarStepConfig%();
+
+            ToolbarLightOn%(); Yield();
             toolbarStepOn%();
 
           ' QUIT EXPMT
