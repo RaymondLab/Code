@@ -20,7 +20,7 @@ const Order%[] := {0, 1, 2,
                    0, 1, 2,
                    0, 1, 2,
                    0, 1, 2,
-                   9};
+                   0, 9};
 
 var expmtIndx := 0;
 runLength := 3600; '1 Hour (60 minutes x 60 seconds)
