@@ -40,7 +40,7 @@ if nargout>1
 
     removeoutliers = @(x) (abs(x-medfilt1(x,width)) > 2*nanstd(medfilt1(x,width)));
 
-    rP = calcEyeRadius(results,theta)
+    rP = calcEyeRadius(results,theta);
 
     cr1y = results.cr1a(:,2);
     cr1y(removeoutliers(cr1y))= NaN;

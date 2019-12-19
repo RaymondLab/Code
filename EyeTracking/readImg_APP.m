@@ -1,7 +1,7 @@
-function [img] = readImg_APP(imAdjust, cam, frame, pos)
+function [img] = readImg_APP(imAdjust, cam, frame, roi)
     %% Load sample images
     img = imread(fullfile(cd, ['img' cam, '.tiff']),'Index',frame);
-
+   
     % Upsample image for better detection of CR
     img = imresize(img,2);
 
@@ -9,7 +9,9 @@ function [img] = readImg_APP(imAdjust, cam, frame, pos)
     if imAdjust
         img = imadjust(img);
     end
-    if exist('pos','var')
-        img = img(pos(2):pos(2)+pos(4), pos(1):pos(1)+pos(3));
+    
+    if exist('roi','var')
+        img(~roi) = nan;
     end
+
 end

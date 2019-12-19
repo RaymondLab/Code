@@ -112,7 +112,7 @@ ep_num = 0;  % ep stands for edge point
 ep_num1 = 0;
 step = 3; %***2
 halfStep = step/2;
-disMax = 80;
+disMax = 40;
 distances = dis:step:(dis+step*disMax);
 angles = (angle_normal-angle_spread/2+0.0001):angle_step:(angle_normal+angle_spread/2);
 

@@ -1,4 +1,4 @@
-function videoTest_APP(app, cam, radiiPupil, varargin)
+function setupEyeTracking_APP(app, cam, radiiPupil, varargin)
 
 manual = 1;
 p = inputParser;
@@ -26,20 +26,19 @@ plotall= 1;
 debugOn = 0;
 ok = 0;
 
-
 %% Load image to test
 frame = 1;
 [imgLarge] = readImg_APP(imAdjust, cam, frame);
 
 %% User finds pupil center and analysis ROI
 [pupilStartLarge] = testradiipupilmanual_APP(app, imgLarge);
+pupilStart = [round(pupilStartLarge(1)), round(pupilStartLarge(2))];
 
-disp('Draw a box around analysis ROI.')
+disp('Draw an elipse around analysis ROI.')
 disp('When finished, press any key.');
 
-hRecta = drawrectangle;
-pos = round(hRecta.Position);
-pupilStart = [round(pupilStartLarge(1)) - pos(1), round(pupilStartLarge(2)) - pos(2)];
+roi = drawellipse;
+pos = double(roi.createMask());
 
 pause
 close all;
@@ -75,7 +74,6 @@ disp('Radii: ')
 disp(['Pupil: ', num2str(max(pupil(3:4)))]);
 disp(['CR a : ', num2str(CRa(3))]);
 disp(['CR b : ', num2str(CRb(3))]);
-
 
 %% Save settings
 save('settings','pos','radiiPupil','minfeatures',...

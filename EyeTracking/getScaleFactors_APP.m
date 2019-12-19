@@ -1,5 +1,6 @@
-function vars = findmagscaleVel_APP(app, vars)
+function vars = getScaleFactors(app, vars)
 
+% Frequency that calibration was run at
 freq = app.CalibrationStimFrequencyEditField.Value;
 
 
@@ -42,7 +43,7 @@ else
     vars.tvid = vars.vidResults.time1;
 end
 vars.tvid = vars.tvid-vars.tvid(1);
-[vars.tscale, temp] = fminsearchbnd(@(x)vidTimeFcn_APP(app, vars.tvid,vars.vidH,freq,x),1,.7, 1.4);
+[vars.tscale, ~] = fminsearchbnd(@(x)vidTimeFcn_APP(app, vars.tvid,vars.vidH,freq,x),1,.7, 1.4);
 vars.tvid = vars.tvid/vars.tscale;%.995;
 vars.samplerate_Video = 1/mean(diff(vars.tvid));
 
@@ -125,34 +126,22 @@ vars.r2vid = r2vid;
 
 
 %% SAVE SCALE FACTOR
-% Add term for 180 deg phase - negate?
-if r2mag1>r2mag2
-    scaleCh1 = vidAmp/mag1Amp * (2*(abs(mag1Phase)<90)-1); % Change sign if needed
-    vars.scaleCh1x = scaleCh1;
-    vars.scaleCh1 = scaleCh1;
-    scaleCh2 = 0;
-    vars.scaleCh2 = scaleCh2;
-    vars.chosenMag = vars.mag1.data;
-    vars.chosenMagVel = vars.mag1Vel;
-    vars.chosenScale = scaleCh1;
-    vars.chosenMagSacLoc = vars.sacLoc_mag1;
-    vars.scaleCh2x = vidAmp/mag2Amp * (2*(abs(mag2Phase)<90)-1);
-    vars.notChosenMagScaleLoc = vars.sacLoc_mag2;
-else
-    scaleCh1 = 0;
-    vars.scaleCh1 = scaleCh1;
-    scaleCh2 = vidAmp/mag2Amp * (2*(abs(mag2Phase)<90)-1); % Change sign if needed
-    vars.scaleCh2x = scaleCh2;
-    vars.scaleCh2 = scaleCh2;
-    vars.chosenMag = vars.mag2.data;
-    vars.chosenMagVel = vars.mag2Vel;
-    vars.chosenScale = scaleCh2;
-    vars.chosenMagSacLoc = vars.sacLoc_mag2;
-    vars.scaleCh1x = vidAmp/mag1Amp * (2*(abs(mag1Phase)<90)-1);
-    vars.notChosenMagScaleLoc = vars.sacLoc_mag1;
-end
-fprintf('Scale: Chan 1 = %.2f\nScale: Chan 2 = %.2f\n',vars.scaleCh1, vars.scaleCh2)
-fprintf('r^2: Chan 1 = %.4f\nr^2: Chan 2 = %.4f\n',r2mag1, r2mag2)
+scaleCh1 = vidAmp/mag1Amp * (2*(abs(mag1Phase)<90)-1);
+vars.scaleCh1 = scaleCh1;
+scaleCh2 = vidAmp/mag2Amp * (2*(abs(mag2Phase)<90)-1);
+vars.scaleCh2 = scaleCh2;
+
+fprintf('Chan 1: Scale = %.2f\n',vars.scaleCh1)
+fprintf('Chan 1: Fit Amp = %.2f\n',vars.mag1Amp)
+fprintf('Chan 1: Fit r^2 = %.2f\n',r2mag1)
+fprintf('Chan 1: Saccade = %.2f\n\n',mean(vars.sacLoc_mag1))
+
+
+fprintf('Chan 2: Scale = %.2f\n',vars.scaleCh2)
+fprintf('Chan 2: Fit Amp = %.2f\n',vars.mag2Amp)
+fprintf('Chan 2: Fit r^2 = %.2f\n',r2mag2)
+fprintf('Chan 2: Saccade = %.2f\n\n',mean(vars.sacLoc_mag2))
+
 save(fullfile(cd, [filenameroot '.mat']),'scaleCh1', 'scaleCh2',...
     'vidAmp','mag1Amp','mag1Phase','mag2Amp','mag2Phase',...
     'r2mag1','r2mag2','r2vid','threshVid','threshMagChan1','threshMagChan2', 'freq');
