@@ -125,7 +125,7 @@ try
         circen(:,2) = circen(:,2)+ TOP-1;
         
         for i = length(circen):-1:1
-            img(floor(circen(i,2)), floor(circen(i,1)))
+            img(floor(circen(i,2)), floor(circen(i,1)));
             if img(floor(circen(i,2)), floor(circen(i,1))) == 0
                 circen(i,:) = [];
                 crr(i) = [];
