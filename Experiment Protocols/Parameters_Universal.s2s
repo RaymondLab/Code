@@ -12,6 +12,7 @@ var actualDrumPh;
 var sineOn% := 0;
 var sinAmpChair := 10;
 var sinAmpDrum := 10;
+var halfPhaseDelay := (sinHzDrum * 1000) / 2;
 
 '--------------------------------------------------------------------------------
 ' STEP PARAMETERS
@@ -166,6 +167,8 @@ Func ToolbarSineConfig%()
   DlgReal(5,"Drum Peak Velocity (deg/sec)",0,100);   'set to 0 if not using Drum
   DlgReal(6,"Drum Phase (degree)",-180,180);
   DlgShow(sinHzChair,sinAmpChair, sinPhChair, sinHzDrum, sinAmpDrum,  sinPhDrum);
+
+  halfPhaseDelay := (sinHzDrum * 1000) / 2;
 
   SetPulseSettings%();
 
@@ -705,6 +708,7 @@ Func ToolbarInit%()
   ToolbarStepOff%(); Yield();
   ToolbarSineStop%(); Yield(.01);
   ToolbarStimoff%(); Yield();
+  ToolbarLasersOff%(); Yield();
   prevTime := 0;  ' Reset prev time so sine offset code continues running in a new file
   SampleKey( "I" );
   Return( 1 );
@@ -771,6 +775,7 @@ Proc SetSequencerValues()
   SampleSeqVar( 55, QueTime );
   SampleSeqVar( 56, DrumAmp2Int32%( DrumDegreesPerSecondOffsetDefault ) );
   SampleSeqVar( 57, ChairAmp2Int32%( ChairDegreesPerSecondOffsetDefault ) );
+  SampleSeqVar( 58, halfPhaseDelay);
 
 
   'Rotation Parameters

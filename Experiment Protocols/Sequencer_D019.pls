@@ -51,6 +51,7 @@
                 VAR    V55,QueTime=250
                 VAR    V56,DOffOrig=vdac16(0)
                 VAR    V57,COffOrig=vdac16(0)
+                VAR    V58,pDelay=500
 ;-----------------------------------------------------------------------------
 ; LOOP: our idle loop.
 ;-----------------------------------------------------------------------------
@@ -325,6 +326,7 @@ STEPK2: 'k  DAC    0,SAmpD
             DAC    1,Chairoff
             JUMP   STEPK2
 
+;-----------------------------------------------------------------------------
 ;Set step command to move chair and drum with Light Queue. For Experiment for Alex F. -- Maxwell 11/19
 ;-----------------------------------------------------------------------------
 STEPK:  'K  DAC    0,SAmpD
@@ -340,6 +342,7 @@ STEPK:  'K  DAC    0,SAmpD
             DELAY  QueTime
             JUMP   STEPK
 
+;-----------------------------------------------------------------------------
 ;Set step command to move chair and drum in random directions. For Experiment for Alex F. -- Maxwell 11/19
 ;-----------------------------------------------------------------------------
 STEPg:  'g  BRAND STEPg2,.5
@@ -397,6 +400,27 @@ SINEOFF: 's RATE   0,0             ;stop cosine on drum
             DAC    1,Chairoff      ;stop the chair
 
             JUMP   KCHAIR          ;return chair to zero
+
+;-----------------------------------------------------------------------------
+;Sine command with light on only ipsi or contra head movement. For Experiment for Hyun Geun. -- Maxwell Jan 2020
+;-----------------------------------------------------------------------------
+SINE1: 'M   SZ     0,DrumAmp       ;set cosine amplitude
+            OFFSET 0,DrumOff       ;cosine centre
+            ANGLE  0,DrumPh        ;cosine phase
+            RATE   0,DrumFreq      ;set rate and start cosine off
+
+            SZ     1,ChrAmp        ;set cosine amplitude
+            OFFSET 1,Chairoff      ;cosine offset command to chair b/c DAC1 has bias of -0.8 mV
+            ANGLE  1,ChrPh         ;cosine phase
+            RATE   1,ChrFreq       ;set rate and start cosine off
+
+SINE2:      DIGOUT [.......1]
+            DELAY  498
+            DIGOUT [.......0]
+            DELAY  495
+            OFFSET 0,DrumOff
+            OFFSET 1,Chairoff
+            JUMP   SINE2
 ;-----------------------------------------------------------------------------
 
 SETOFF: 'A  OFFSET 0,DrumOff
