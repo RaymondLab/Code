@@ -7,9 +7,37 @@
 '--------------------------------------------------------------------------------
 ' MAIN PROGRAM
 '--------------------------------------------------------------------------------
+var originalsinAmpChair := sinAmpChair;
 ToolbarConfig();
+var blockNum := 1;
+var expmtIndx := 1;
 
+' 0 = GAP A
+' 1 = Gap B
+' 2 = pre/post OKR
+' 3 = test
+' 4 = train
+' 5 = Dark Resting
+' 9 = quit experiment
+const Order%[] := {0, 1, 2,
+                   0, 1, 2,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
 
+                   0, 1, 4, 3,
+
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 2,
+                   0, 1, 2,
+
+                   0, 5,
+
+                   0, 1, 3,
+
+                   0, 9};
 '--------------------------------------------------------------------------------
 ' Toolbar Callbacks
 '--------------------------------------------------------------------------------
@@ -32,7 +60,6 @@ Func ToolbarIdle%()
     endif;
   endif;
 
-
   'If an experiment is running:
   if runExpmt% = 1 then
 
@@ -41,94 +68,56 @@ Func ToolbarIdle%()
 
           docase
 
-          ' GAP A
-          case test% = 0 then
-            SampleKey("0");
-            SampleKey("x");
-            goalTime := MaxTime() + 5;
-            ToolbarInit%(); Yield();
-            test% := 7;
+            ' GAP A
+            case Order%[expmtIndx] = 0 then
+              SampleKey("x");
+              goalTime := MaxTime() + 5;
+              ToolbarInit%(); Yield();
 
-          ' GAP B
-          case test% = 7 then
-            SampleKey("7");
-            goalTime := MaxTime() + 5;
-            ToolbarInit%(); Yield();
+            ' GAP B
+            case Order%[expmtIndx] = 1 then
+              goalTime := MaxTime() + 5;
+              ToolbarInit%(); Yield();
+              runFlash(); Yield();
+              ToolbarInit%(); Yield();
 
+            ' pre/post OKR
+            case Order%[expmtIndx] = 2 then
+              SampleKey("X");
+              goalTime := MaxTime() + testLength;
+              sinAmpChair := 0;
+              SetSequencerValues();
+              ToolbarLightOn%(); Yield();
+              ToolbarSineStart%();
 
-            ' Go to Pre/Post or Train/Test Section
-            docase
-              ' PRE & POST Tests
-              case expmtLoc% = 1 then
-                test% := 1;
-              ' TEST/TRAIN Blocks
-              case expmtLoc% = 2 then
-                test% := 2;
-                ' If you have already done the test/train blocks, quit instead.
-                if rep% = (nBlocks%+1)  then
-                  ToolbarQuitExpmt%();
-                  Return(1);
-                endif
-            endcase
-            runFlash(); Yield();
-            ToolbarInit%(); Yield();
+            ' test
+            case Order%[expmtIndx] = 3 then
+              goalTime := MaxTime() + testLength;
 
-          ' PRE AND POST TEST
-          case test% = 1 then
-            SampleKey("1");
-            SampleKey("X");
-            goalTime := MaxTime() + testLength;
-            test% := 0;
-
-            ' Keep track of how many PRE/POST tests that you've run
-            prePostNum := prePostNum + 1;
-
-            if prePostNum > 2 then
-              expmtLoc% := 2;
-              ' This check is for the 'T-35' test
-              if rep% < nBlocks% then
-                prePostNum := 1;
+              if sineOn% then
+                SampleKey("x");
+                SampleKey("X");
+                ToolbarLightOff%();
+              else
+                SampleKey("X");
+                sinAmpChair := originalsinAmpChair;
+                SetSequencerValues(); Yield();
+                ToolbarSineStart%();
               endif
-            else
-              expmtLoc% := 1;
-            endif
 
-            if expmtMode = 5 then
-              ToolbarStepOn%();
-            else
-              ToolbarSineStart%();
-            endif;
+              ' To keep variable test-train block amounts
+              if Order%[expmtIndx-1] = 4 then
+                blockNum := blockNum + 1;
+                if blockNum > nBlocks% then
+                else
+                  expmtIndx := expmtIndx - 4;
+                endif
+              endif
 
-          ' BLOCK: TEST
-          case test% = 2 then
-            SampleKey("2");
-            SampleKey("X");
-            goalTime := MaxTime() + testLength;
-
-            testrep% := testrep% + 1;
-
-            if testrep% = nTestreps% then
-              test% := 3;
-              rep% := rep% + 1;
-            else
-              test% := 0;
-            endif;
-
-            ' Start correct Stim, STEP or SINE
-            if expmtMode = 5 then
-              ToolbarStepOn%();
-            else
-              ToolbarSineStart%();
-            endif;
-
-          ' BLOCK: TRAIN
-          case test% = 3 then
-            SampleKey("3");
-            SampleKey("x");
-            SampleKey("X");
-            goalTime := MaxTime() + runLength;
-
-            if rep% < (nBlocks%+1) then
+            ' train
+            case Order%[expmtIndx] = 4 then
+              SampleKey("X");
+              goalTime := MaxTime() + runLength;
               docase
                 '3 = ipsi, 4 = contra
                 case expmtMode = 3 or expmtMode = 4 then
@@ -142,20 +131,19 @@ Func ToolbarIdle%()
                     ToolbarLightOn%(); Yield();
                     ToolbarStepOn%();
               endcase;
-            else
-              ToolbarSineStop%();
-              ToolbarStepOff%();
-              expmtLoc% := 1;
-            endif;
+              ToolbarSineStart%();
 
-            if rep% = nBlocks% then
-              expmtLoc% := 1;
-            endif
+            ' Dark Resting
+            case Order%[expmtIndx] = 5 then
+              SampleKey("X");
+              goalTime := MaxTime() + (runLength - (testLength + testLength + 10 + 10));
 
-            test% := 0;
-            testrep% := 0;
 
+            case Order%[expmtIndx] = 9 then
+              ToolbarQuitExpmt%();
+              Return(1);
           endcase;
+          expmtIndx := expmtIndx + 1;
       endif;
   endif;
   Return(1);
@@ -174,7 +162,7 @@ Func ToolbarConfigExpmt%()
   DlgInteger(6,"Light flash on?)",0,1,0,0,"0|1");
   DlgReal(7,"Test stim and bilat (0 or 1)",0,1);
 
-  DlgShow(nBlocks%, nTestreps%, runLength, testLength, expmtMode, flashon%,testStim);
+  DlgShow(nBlocks%, nTestreps%, runLength, testLength, expmtMode, flashon%, testStim);
 
   docase
   case expmtMode = 0 then     'habit

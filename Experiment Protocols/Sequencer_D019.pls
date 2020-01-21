@@ -3,54 +3,55 @@
 ;-----------------------------------------------------------------------------
 
         ; for IntTo32bit: *429496729.6,   for IntTo16bit: 6553.6
-            SET    1.000,1,0       ;Get rate at 1 ms & scaling O command
+                SET    1.000,1,0       ;Get rate at 1 ms & scaling O command
 			;rate msPerStep, DACscale(1 = +-5V), DACoffset
             ;offset for Drum because of the DAC0 output bias of about 700uV
-            VAR    V22,DrumOff=VDAC32(0.0000) ;HP .0003 - 0 1/10/14
+                VAR    V22,DrumOff=VDAC32(0.0000) ;HP .0003 - 0 1/10/14
 
             ;offset for Chair because of the DAC0 output bias
-            VAR    V23,Chairoff=VDAC32(0.0000) ;HP .0004 1/13/14  Now set in Spike2
+                VAR    V23,Chairoff=VDAC32(0.0000) ;HP .0004 1/13/14  Now set in Spike2
 
 
-            VAR    V24,DrumAmp=VDAC16(0.05) ;V24: Amplitude of Drum Velocity command
-            VAR    V25,DrumPh=VAngle(0) ;V25: Phase of Drum Velocity command
-            VAR    V26,DrumFreq=VHz(1) ;V26: Frequency of Drum Velocity command
+                VAR    V24,DrumAmp=VDAC16(0.05) ;V24: Amplitude of Drum Velocity command
+                VAR    V25,DrumPh=VAngle(0) ;V25: Phase of Drum Velocity command
+                VAR    V26,DrumFreq=VHz(1) ;V26: Frequency of Drum Velocity command
 
-            VAR    V27,ChrAmp=VDAC16(0.1) ;V27: Amplitude of Chair Velocity command
-            VAR    V28,ChrPh=VAngle(0) ;V28: Phase of Chair Velocity command
-            VAR    V29,ChrFreq=VHz(1) ;V29: Fequency of Chair Velocity command
+                VAR    V27,ChrAmp=VDAC16(0.1) ;V27: Amplitude of Chair Velocity command
+                VAR    V28,ChrPh=VAngle(0) ;V28: Phase of Chair Velocity command
+                VAR    V29,ChrFreq=VHz(1) ;V29: Fequency of Chair Velocity command
 
-            VAR    V31,ChAmpOff=vdac16(0)
-            VAR    V32,DrAmpOff=vdac16(0)
+                VAR    V31,ChAmpOff=vdac16(0)
+                VAR    V32,DrAmpOff=vdac16(0)
 
-            VAR    V33,PulseWai=1  ;variables for stimulation pulses (opto)
-            VAR    V34,PulseNum=1
-            VAR    V35,PulseDur=1
-            VAR    V36,PulseInt=1
-            VAR    V37,PulseSta=1
+                VAR    V33,PulseWai=1  ;variables for stimulation pulses (opto)
+                VAR    V34,PulseNum=1
+                VAR    V35,PulseDur=1
+                VAR    V36,PulseInt=1
+                VAR    V37,PulseSta=1
 
-            VAR    V38,StepRes2=100 ;variables for steps (drum & chair)
-            VAR    V39,StepStar=100 ; Not currently used 12/16
-            VAR    V40,StepLeng=500
-            VAR    V41,SteLeng1=500
-            VAR    V42,StepRes1=500
-            VAR    V43,SAmpC=VDAC32(.01)        ; Step amp chair
-            VAR    V44,SAmpD=VDAC32(.001)       ; Step amp drum
-            VAR    V45,SAmpCn=VDAC32(-.01)      ; Step amp chair inverse
-            VAR    V46,SAmpDn=VDAC32(-.001)     ; Step amp drum inverse
+                VAR    V38,StepRes2=100 ;variables for steps (drum & chair)
+                VAR    V39,StepStar=100 ;Not currently used 12/16
+                VAR    V40,StepLeng=500
+                VAR    V41,SteLeng1=500
+                VAR    V42,StepRes1=500
+                VAR    V43,SAmpC=VDAC32(.01) ;Step amp chair
+                VAR    V44,SAmpD=VDAC32(.001) ;Step amp drum
+                VAR    V45,SAmpCn=VDAC32(-.01) ;Step amp chair inverse
+                VAR    V46,SAmpDn=VDAC32(-.001) ;Step amp drum inverse
 
-            VAR    V47,stepLen1=0  ;variables for step DELAYED light pulses
-            VAR    V48,stepLen2=500
-            VAR    V49,stepLen3=0
+                VAR    V47,stepLen1=0  ;variables for step DELAYED light pulses
+                VAR    V48,stepLen2=500
+                VAR    V49,stepLen3=0
 
-            VAR    V50,PulseDuV=33      ; pulse Duration V
-            VAR    V51,PulseWaV=966  ; pulse wait V
-            VAR    V52,PulsePer=1000 ; pulse period duration
-            VAR    V53,PulseHPe=500  ; Half Period duration
+                VAR    V50,PulseDuV=33 ;pulse Duration V
+                VAR    V51,PulseWaV=966 ;pulse wait V
+                VAR    V52,PulsePer=1000 ;pulse period duration
+                VAR    V53,PulseHPe=500 ;Half Period duration
 
                 VAR    V55,QueTime=250
                 VAR    V56,DOffOrig=vdac16(0)
                 VAR    V57,COffOrig=vdac16(0)
+                VAR    V58,pDelay=500
 ;-----------------------------------------------------------------------------
 ; LOOP: our idle loop.
 ;-----------------------------------------------------------------------------
@@ -325,6 +326,7 @@ STEPK2: 'k  DAC    0,SAmpD
             DAC    1,Chairoff
             JUMP   STEPK2
 
+;-----------------------------------------------------------------------------
 ;Set step command to move chair and drum with Light Queue. For Experiment for Alex F. -- Maxwell 11/19
 ;-----------------------------------------------------------------------------
 STEPK:  'K  DAC    0,SAmpD
@@ -339,6 +341,38 @@ STEPK:  'K  DAC    0,SAmpD
             DIGOUT [.......1]
             DELAY  QueTime
             JUMP   STEPK
+
+;-----------------------------------------------------------------------------
+;Set step command to move chair and drum in random directions. For Experiment for Alex F. -- Maxwell 11/19
+;-----------------------------------------------------------------------------
+STEPg:  'g  BRAND STEPg2,.5
+            DAC    0,SAmpD
+            DAC    1,SAmpC
+            DELAY  StepLeng
+            DAC    0,DOffOrig
+            DAC    1,COffOrig
+            DELAY  StepRes1
+            DAC    0,SAmpDn
+            DAC    1,SAmpCn
+            DELAY  StepLeng
+            DAC    0,DOffOrig
+            DAC    1,COffOrig
+            DELAY  StepRes2
+            JUMP   STEPg
+
+STEPg2:  'G DAC    0,SAmpDn
+            DAC    1,SAmpCn
+            DELAY  StepLeng
+            DAC    0,DOffOrig
+            DAC    1,COffOrig
+            DELAY  StepRes1
+            DAC    0,SAmpD
+            DAC    1,SAmpC
+            DELAY  StepLeng
+            DAC    0,DOffOrig
+            DAC    1,COffOrig
+            DELAY  StepRes2
+            JUMP   STEPg
 
 ;-----------------------------------------------------------------------------
 ;SINEON: Set sine command to DRUM Velocity DAC0 & to CHAIR Velocity DAC1
@@ -366,6 +400,27 @@ SINEOFF: 's RATE   0,0             ;stop cosine on drum
             DAC    1,Chairoff      ;stop the chair
 
             JUMP   KCHAIR          ;return chair to zero
+
+;-----------------------------------------------------------------------------
+;Sine command with light on only ipsi or contra head movement. For Experiment for Hyun Geun. -- Maxwell Jan 2020
+;-----------------------------------------------------------------------------
+SINE1: 'M   SZ     0,DrumAmp       ;set cosine amplitude
+            OFFSET 0,DrumOff       ;cosine centre
+            ANGLE  0,DrumPh        ;cosine phase
+            RATE   0,DrumFreq      ;set rate and start cosine off
+
+            SZ     1,ChrAmp        ;set cosine amplitude
+            OFFSET 1,Chairoff      ;cosine offset command to chair b/c DAC1 has bias of -0.8 mV
+            ANGLE  1,ChrPh         ;cosine phase
+            RATE   1,ChrFreq       ;set rate and start cosine off
+
+SINE2:      DIGOUT [.......1]
+            DELAY  498
+            DIGOUT [.......0]
+            DELAY  495
+            OFFSET 0,DrumOff
+            OFFSET 1,Chairoff
+            JUMP   SINE2
 ;-----------------------------------------------------------------------------
 
 SETOFF: 'A  OFFSET 0,DrumOff

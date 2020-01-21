@@ -45,7 +45,7 @@ if length(params.segStarts) ~= params.segAmt
         if length(params.segStarts) ~= params.segAmt
             error(sprintf(['\n\n\nSegment Count Error \n', ...
                'Segments Listed in Excel File: ', num2str(params.segAmt), '\n', ...
-               'Segments Found After Listed Start Time(', num2str(4), '): ', num2str(length(params.segStarts)), '\n', ...
+               'Segments Found After Listed Start Time: ', num2str(length(params.segStarts)), '\n', ...
                'Listed start time needs to be before the first segment starts\n\n']))
         end
     end
@@ -157,3 +157,4 @@ xlswrite(fullfile(params.folder,[params.file '.xlsx']),result.header(4:end),'She
 
 %% === Save .mat file of results ======================================= %%
 save(fullfile(params.folder, 'result'), 'result','T');
+save(fullfile(params.folder, [params.file, '_DatObject.mat']), 'data')

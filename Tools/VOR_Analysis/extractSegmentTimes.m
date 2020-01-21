@@ -10,10 +10,20 @@ rawdata = importSpike(fullfile(folder,[file '.smr']),chanindsAll(chaninds));
 SampleKeys = strcat(rawdata.samplerate(any(rawdata.samplerate == ['X' 'x'], 2))');
 SampleKeyTimes = rawdata.data(any(rawdata.samplerate == ['X' 'x'], 2))';
 
-starts = SampleKeyTimes(strfind(SampleKeys, 'Xx'));
-ends = SampleKeyTimes(strfind(SampleKeys, 'Xx')+1);
+%% BUG FIX for an experiment protocol error - December 2019 (Max's Fault)
+% There was an error in a VERY small amount of experiments where the final
+% segment did not record the 'x' that denoted the end of a segment. This
+% bug was fixed in the experiment protcol late December 2019. 
+
+if SampleKeys(end) == 'X'
+    SampleKeys(end+1) = 'x';
+    SampleKeyTimes(end+1) = SampleKeyTimes(end) + 45;
+end
+   
 
 %% Combine
+starts = SampleKeyTimes(strfind(SampleKeys, 'Xx'));
+ends = SampleKeyTimes(strfind(SampleKeys, 'Xx')+1);
 startTimes = sort(starts)';
 endTimes = sort(ends)';
 

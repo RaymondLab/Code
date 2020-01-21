@@ -77,12 +77,12 @@ addParamValue(p,'DebugOn',0);
 parse(p,varargin{:})
 
 pupilStart = p.Results.pupilStart;
-radiiPupil = p.Results.radiiPupil;
+radiiPupil = [app.RadiusPupilEditField.Value app.RadiusPupilEditField_2.Value];
 
 edgeThresh = p.Results.edgeThresh;
-minfeatures = p.Results.MinFeatures;
+minfeatures = app.MinimumFeaturesEditField.Value;;
 
-radiiCR = p.Results.radiiCR;
+radiiCR = [app.RadiusCornealReflectionEditField.Value app.radiiCR1EditField_2.Value];
 gridthresh = p.Results.CRthresh;
 fltr4LM_R = p.Results.CRfilter;
 
@@ -105,25 +105,40 @@ try
         newImg = img(TOP:BOTTOM, LEFT:RIGHT);
         [~, circen, crr] = CircularHough_Grd(newImg,radiiCR ,gridthresh,fltr4LM_R,1);
 
-    %     figure(3); clf; hold on
-    %     image(img)
-    %     rectangle('Position', [LEFT (BOTTOM-abs(TOP-BOTTOM)) abs(RIGHT-LEFT) abs(TOP-BOTTOM)]) 
-    %     scatter(circen(:,1)+LEFT, circen(:,2)+TOP)
-    %     hold off
-    %     
-    %     figure(4); clf; hold on
-    %     image(newImg)
-    %     scatter(circen(:,1), circen(:,2))
-    %     hold off
+        %DEBUG FIGURES
+%         figure(3); clf; hold on
+%         image(img)
+%         rectangle('Position', [LEFT (BOTTOM-abs(TOP-BOTTOM)) abs(RIGHT-LEFT) abs(TOP-BOTTOM)]) 
+%         scatter(circen(:,1)+LEFT, circen(:,2)+TOP)
+%         hold off
+%         figure(5); clf
+%         surf(img)
+%         colormap(jet)
+%         shading interp
+        
+%         figure(4); clf; hold on
+%         image(newImg)
+%         scatter(circen(:,1), circen(:,2))
+%         hold off
 
         circen(:,1) = circen(:,1)+ LEFT-1;
         circen(:,2) = circen(:,2)+ TOP-1;
+        
+        for i = length(circen):-1:1
+            img(floor(circen(i,2)), floor(circen(i,1)));
+            if img(floor(circen(i,2)), floor(circen(i,1))) == 0
+                circen(i,:) = [];
+                crr(i) = [];
+            elseif img(floor(circen(i,2)), floor(circen(i,1))) < 150
+                circen(i,:) = [];
+                crr(i) = [];
+            end
+        end
     else
         [A, circen, crr] = CircularHough_Grd(img,radiiCR ,gridthresh,fltr4LM_R,1);
     end
 catch
     [A, circen, crr] = CircularHough_Grd(img,radiiCR ,gridthresh,fltr4LM_R,1);
-    disp('ff')
 end
 
 maxvals = diag(img(round(circen(:,2)),round(circen(:,1))));
@@ -220,15 +235,8 @@ points = [epx2(:), epy2(:)];
 %% Plotting
 if plotOn
     
-    if side
-        % left
-        fig = app.UIAxes2;
-        color = 'r';
-    else
-        % right
-        fig = app.UIAxes2_2;
-        color = 'm';
-    end
+    fig = app.UIAxes2_2;
+    color = 'm';
     
     imagesc(fig, img);  colormap(fig, gray);%  axis off; axis image
     xlim(fig, [0, size(img,2)]);

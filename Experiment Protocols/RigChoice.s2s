@@ -1,0 +1,11 @@
+'--------------------------------------------------------------------------------
+' Rig-Specific parameters file Location
+'--------------------------------------------------------------------------------
+'D006
+''#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D006.s2s"
+
+'D019
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D019.s2s"
+
+'D253
+''#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D253.s2s"

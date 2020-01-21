@@ -7,9 +7,8 @@
 '--------------------------------------------------------------------------------
 ' MAIN PROGRAM
 '--------------------------------------------------------------------------------
+var lightPhase;
 ToolbarConfig();
-
-
 '--------------------------------------------------------------------------------
 ' Toolbar Callbacks
 '--------------------------------------------------------------------------------
@@ -43,7 +42,6 @@ Func ToolbarIdle%()
 
           ' GAP A
           case test% = 0 then
-            SampleKey("0");
             SampleKey("x");
             goalTime := MaxTime() + 5;
             ToolbarInit%(); Yield();
@@ -51,10 +49,8 @@ Func ToolbarIdle%()
 
           ' GAP B
           case test% = 7 then
-            SampleKey("7");
             goalTime := MaxTime() + 5;
             ToolbarInit%(); Yield();
-
 
             ' Go to Pre/Post or Train/Test Section
             docase
@@ -75,7 +71,6 @@ Func ToolbarIdle%()
 
           ' PRE AND POST TEST
           case test% = 1 then
-            SampleKey("1");
             SampleKey("X");
             goalTime := MaxTime() + testLength;
             test% := 0;
@@ -93,15 +88,10 @@ Func ToolbarIdle%()
               expmtLoc% := 1;
             endif
 
-            if expmtMode = 5 then
-              ToolbarStepOn%();
-            else
-              ToolbarSineStart%();
-            endif;
+            ToolbarSineStart%();
 
           ' BLOCK: TEST
           case test% = 2 then
-            SampleKey("2");
             SampleKey("X");
             goalTime := MaxTime() + testLength;
 
@@ -114,34 +104,22 @@ Func ToolbarIdle%()
               test% := 0;
             endif;
 
-            ' Start correct Stim, STEP or SINE
-            if expmtMode = 5 then
-              ToolbarStepOn%();
-            else
-              ToolbarSineStart%();
-            endif;
+            ToolbarSineStart%();
 
           ' BLOCK: TRAIN
           case test% = 3 then
-            SampleKey("3");
             SampleKey("x");
             SampleKey("X");
             goalTime := MaxTime() + runLength;
 
             if rep% < (nBlocks%+1) then
-              docase
-                '3 = ipsi, 4 = contra
-                case expmtMode = 3 or expmtMode = 4 then
-                    ToolbarStimOn%();
-                '1 = x0, 2 = x2
-                case expmtMode = 1 or expmtMode = 2 then
-                    ToolbarLightOn%();
-                '5 = step
-                case expmtMode = 5 then
-                    ToolbarStepOff%(); Yield();
-                    ToolbarLightOn%(); Yield();
-                    ToolbarStepOn%();
-              endcase;
+              prevTime := MaxTime();
+              measuredZeroChair := ChanMeasure(hhposCh%, 2, prevTime-2, prevTime-.5);
+              measuredZeroDrum := ChanMeasure(htposCh%, 2, prevTime-2, prevTime-.5);
+              SampleKey( "M" );
+              sineOn% := 1;
+              Yield();
+              ToolbarSet(SinePos, "Sine Off",ToolbarSineStop%);
             else
               ToolbarSineStop%();
               ToolbarStepOff%();
@@ -156,6 +134,7 @@ Func ToolbarIdle%()
             testrep% := 0;
 
           endcase;
+
       endif;
   endif;
   Return(1);
@@ -170,36 +149,23 @@ Func ToolbarConfigExpmt%()
   DlgInteger(2,"Number of tests per block",1,100,0,0,1);    'set to 0 if not using Chair
   DlgReal(3,"Run length (s)",0,5000);
   DlgReal(4,"Test length (s)",0,5000);
-  DlgList(5,"Expmt mode", "habit|x0|x2|ipsi|contra|steps");
+  DlgList(5,"Expmt mode", "x0|x2s");
+  dlgList(6, "Head Phase of Light On", "ipsi|contra");
   DlgInteger(6,"Light flash on?)",0,1,0,0,"0|1");
-  DlgReal(7,"Test stim and bilat (0 or 1)",0,1);
 
-  DlgShow(nBlocks%, nTestreps%, runLength, testLength, expmtMode, flashon%,testStim);
+  DlgShow(nBlocks%, nTestreps%, runLength, testLength, expmtMode, lightPhase, flashon%);
 
   docase
-  case expmtMode = 0 then     'habit
-      sinPhDrum := 90;
-      sinPhChair := 90;
-      sinAmpChair := 10;
-      sinAmpDrum := 0;
-  case expmtMode = 1 then     'x0
+  case expmtMode = 0 then     'x0
       sinPhDrum := 90;
       sinPhChair := 90;
       sinAmpChair := 10;
       sinAmpDrum := 10;
-  case expmtMode = 2 then     'x2
+  case expmtMode = 1 then     'x2
       sinPhDrum := -90;
       sinPhChair := 90;
       sinAmpChair := 10;
       sinAmpDrum := 10;
-  case expmtMode = 3  then     'ipsi
-      sinPhChair := 90;
-      sinAmpDrum := 0;
-  case expmtMode = 4 then      'contra
-      sinPhChair := -90;
-      sinAmpDrum := 0;
-  case expmtMode = 5 then      'steps
-      StepConfigWindow%();
   endcase;
 
 
