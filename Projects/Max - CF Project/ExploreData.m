@@ -1,32 +1,36 @@
 %% Open Excel File
 clear;clc;close all
 
-[dataTable] = readtable('G:\My Drive\Expmt Data\Max\Climbing Fiber Project\ExperimentMetadata_B.xlsx');
+[dataTable] = readtable('G:\My Drive\Expmt Data\Max\Climbing Fiber Project\ExperimentMetadata_C.xlsx');
 writetable(dataTable, 'G:\My Drive\Expmt Data\Max\Climbing Fiber Project\ExperimentMetadata_Backup.xlsx')
 
-expmtDataFolder = 'G:\My Drive\Expmt Data\Max\Climbing Fiber Project\Jennifer Data\jennifer_arch';
+expmtDataFolder = 'G:\My Drive\Expmt Data\Max\Climbing Fiber Project\Jennifer Data\Jennifer Data Reorganized';
 
 allFiles = dir([expmtDataFolder, '\**\*']);
 
-csFiles2 = allFiles;
-csFiles2(~contains({csFiles2.name}, {'sortedCS'})) = [];
-allFiles(~contains({allFiles.name}, {'aligned'})) = [];
-
+% csFiles2 = allFiles;
+% csFiles2(~contains({csFiles2.name}, {'sortedCS'})) = [];
+%allFiles(~contains({allFiles.name}, {'aligned.mat'})) = [];
 
 superGoodCSIso = {};
+
 %% loop through each one
 for j = 1:height(dataTable)
     %% Skip non-related recordings
     
     % Bad Recording Files
-    if ~isnan(dataTable.maxRemoved(j))
-        continue
-    end
+%     if ~isnan(dataTable.maxRemoved(j))
+%         continue
+%     end
     
     % Only Aligned Files
     if ~contains(dataTable.alignedMat(j), 'aligned') 
         continue
     end
+    
+%     if contains(dataTable.behaviorMat(j), 'behavior') 
+%         continue
+%     end
     
     % Expmt Condition Filtering
 %     if ~contains(dataTable.sineStep(j), 'sine')
@@ -40,9 +44,9 @@ for j = 1:height(dataTable)
 %     end
 
     % Other Condition
-    if ~isnan(dataTable.maxSortedCS(j))
-        continue
-    end
+%     if ~isnan(dataTable.maxSortedCS(j))
+%         continue
+%     end
 %     if ~dataTable.maxSortedCS(j)
 %         continue
 %     end
@@ -62,50 +66,54 @@ for j = 1:height(dataTable)
         disp('Opening Failed!')
         continue
     end
-    disp(j)
-    %% Add Sorted CS to behavior File
-    try
-        alignedFile = dataTable.alignedMat{j};
-        rootName = alignedFile(1:11);
-        csFileIndx = contains({csFiles2.name}, {rootName});
-        if ~any(csFileIndx)
-            continue
-        end
-        % Load sortedCS File
-        sortedCSFileInfo = csFiles2(find(csFileIndx));
-        load(fullfile(sortedCSFileInfo(1).folder, sortedCSFileInfo(1).name));
-        
-        % Load Aligned File
-        fileInfo = allFiles(contains({allFiles.name}, {alignedFile}));
-        load(fullfile(fileInfo(1).folder, fileInfo(1).name));
-        
-        figure(1); clf
-        timeVec = dattime(behaviorEphysAligned(1,10));
-        plot(timeVec, behaviorEphysAligned(10).data)
-        title(dataTable.name(j))
- 
-%         list = {'Use', 'Dont', 'Other'};
-%         [indx,tf] = listdlg('ListString',list);
-%         if indx == 1 
-%             superGoodCSIso(end+1) = dataTable.ephysMat(j);
-%         end
-
-        vline(Channel01(:,1)+behaviorEphysAligned(10).tstart)
-        behaviorEphysAligned(9).data = Channel01(:,1)+behaviorEphysAligned(10).tstart;
-        save(fullfile(fileInfo(1).folder, fileInfo(1).name), 'behaviorEphysAligned')
-
-        if ~isempty(behaviorEphysAligned(1,9).data)
-            dataTable.sortedCS(j) = 1;
-        else
-            dataTable.sortedCS(j) = 0;
-        end
-    
-    
-    catch
-        disp('Failed!')
-        continue
+    if ~isempty(behaviorEphysAligned(9).data)
+        disp('empty!')
     end
     
+    disp(j)
+
+    %% Add Sorted CS to behavior File
+%     try
+%         alignedFile = dataTable.alignedMat{j};
+%         rootName = alignedFile(1:11);
+%         csFileIndx = contains({csFiles2.name}, {rootName});
+%         if ~any(csFileIndx)
+%             continue
+%         end
+%         % Load sortedCS File
+%         sortedCSFileInfo = csFiles2(find(csFileIndx));
+%         load(fullfile(sortedCSFileInfo(1).folder, sortedCSFileInfo(1).name));
+%         
+%         % Load Aligned File
+%         fileInfo = allFiles(contains({allFiles.name}, {alignedFile}));
+%         load(fullfile(fileInfo(1).folder, fileInfo(1).name));
+%         
+%         figure(1); clf
+%         timeVec = dattime(behaviorEphysAligned(1,10));
+%         plot(timeVec, behaviorEphysAligned(10).data)
+%         title(dataTable.name(j))
+%  
+% %         list = {'Use', 'Dont', 'Other'};
+% %         [indx,tf] = listdlg('ListString',list);
+% %         if indx == 1 
+% %             superGoodCSIso(end+1) = dataTable.ephysMat(j);
+% %         end
+% 
+%         vline(Channel01(:,1)+behaviorEphysAligned(10).tstart)
+%         behaviorEphysAligned(9).data = Channel01(:,1)+behaviorEphysAligned(10).tstart;
+%         save(fullfile(fileInfo(1).folder, fileInfo(1).name), 'behaviorEphysAligned')
+% 
+%         if ~isempty(behaviorEphysAligned(1,9).data)
+%             dataTable.sortedCS(j) = 1;
+%         else
+%             dataTable.sortedCS(j) = 0;
+%         end
+%     
+%     
+%     catch
+%         disp('Failed!')
+%         continue
+%     end
     
     %% Visualize 
 %     try
@@ -153,4 +161,4 @@ end
 
 
 %%
-writetable(dataTable, 'G:\My Drive\Expmt Data\Max\Climbing Fiber Project\ExperimentMetadata_B.xlsx')
+writetable(dataTable, 'G:\My Drive\Expmt Data\Max\Climbing Fiber Project\ExperimentMetadata_C.xlsx')
