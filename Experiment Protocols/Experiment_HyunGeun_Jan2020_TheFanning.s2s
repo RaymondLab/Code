@@ -14,6 +14,8 @@ var segIndex := 0;
 var nSegs := 10;
 var segLength := 45;
 var ExpmtType;
+var prevExpmtType;
+var indx := 1;
 '--------------------------------------------------------------------------------
 ' Toolbar Callbacks
 '--------------------------------------------------------------------------------
@@ -70,8 +72,19 @@ Func ToolbarIdle%()
         case test% = 2 then
           SampleKey("X");
           goalTime := MaxTime() + segLength;
+
+
+
           ' Get random Number
-          ExpmtType := Floor(Rand(4, 0));
+          if indx = 3 then
+            prevExpmtType := ExpmtType;
+            while prevExpmtType = ExpmtType do
+              ExpmtType := Floor(Rand(4, 0));
+            wend
+            indx := 1;
+          endif
+
+          indx := indx + 1;
 
           docase
           ' VORD
