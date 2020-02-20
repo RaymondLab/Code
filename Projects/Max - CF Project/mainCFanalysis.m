@@ -1,4 +1,4 @@
-function [ss_times_diff, alldiffs, allgoodcsLocs, allcs, allCycles_ss, z] = mainCFanalysis(tableRow, allFiles, expmtFreq, learningType, condition, preProcess, ss_fr_calc, plots )
+function [ss_times_diff, alldiffs, allgoodcsLocs, allcs, allCycles_ss, z] = mainCFanalysis(tableRow, allFiles, expmtFreq, learningType, condition, preProcess, ss_fr_calc, plots, expmtDataFolder, csLocFilename )
 
 %% Open the File
 renamedFile = strrep(tableRow.name, '.', '_');
@@ -15,7 +15,8 @@ z.startpt_e = findstartpt(recData, 10, learningType, expmtFreq);
 
 z.sr_b = recData(7).samplerate;
 z.cycleLen_b = z.sr_b * (1/expmtFreq);
-z.cycleTime_b = 0:1/500:(z.cycleLen_b-1)/500;
+z.cycleTime_b = 0:1/z.sr_b:(z.cycleLen_b-1)/z.sr_b;
+z.segTime_b = dattime(recData(7));
 z.startpt_b = findstartpt(recData, 7, learningType, expmtFreq);
 
 %% MAKE matrixes
@@ -79,7 +80,7 @@ disp(['     Removed: ', num2str(totalRemoved), ' | ', num2str(percentRemoved), '
 
 switch ss_fr_calc
     case 'spikeDensityFunction'
-        segment_ssfr = plotSpikeDensityfunction(recData(8).data, kernel_sd);
+        segment_ssfr = calc_spikeDensityFunction(recData(8).data, kernel_sd, z.sr_e);
         [cycleMat_ss, cycleMean_ss] = VOR_breakTrace(z.cycleLen_e, z.startpt_e, segment_ssfr);
         z.bin_size_e = 1;
         
@@ -96,33 +97,15 @@ switch ss_fr_calc
         [cycleMat_ss, cycleMean_ss] = VOR_breakTrace(cycleLen_ss, startpnt_ss, segment_ssfr);
         
     case 'RecipInterval'
-        tic
-        z.bin_size_e = 1;
-        segment_ssfr = nan(length(recData(10).data),1);
-        
-        data = recData(8).data;
-        AAA = data(2:end) - data(1:end-1);
-        BBB = AAA(1:end-1) - AAA(2:end);
-
-        for w = 1:length(BBB)
-            if BBB(w) > 0
-                segment_ssfr(round(data(w+1)*z.sr_e:data(w+2)*z.sr_e)) = 1/AAA(w);
-            else
-                start = data(w+1)*z.sr_e;
-                middle  = data(w+1)*z.sr_e + AAA(w)*z.sr_e;
-                stop = data(w+2)*z.sr_e;
-                
-                segment_ssfr(round(start : middle)) = 1/AAA(w);
-                segment_ssfr(round(middle+1 : stop)) = 1/AAA(w+1);
-            end
-        end
-        
+        segment_ssfr = calc_recipInterval(recData(8).data, length(recData(10).data), z.sr_e);
         [cycleMat_ss, cycleMean_ss] = VOR_breakTrace(z.cycleLen_e, z.startpt_e, segment_ssfr);
+        z.bin_size_e = 1;
 end
 
 z.segTime_ssfr = linspace(0,recData(8).data(end), length(segment_ssfr));
 z.segLength_ss = length(segment_ssfr);
 z.cycleTime_ss = linspace(0, 1/expmtFreq, length(cycleMean_ss));
+[z.ssfr_amp, z.ssfr_phase] = fit_sineWave(segment_ssfr(z.startpt_e:end), z.sr_e, expmtFreq);
 
 %% PLOT 5: FR & Ephys & Spike Locations
 if plots(5)
@@ -143,8 +126,8 @@ end
 
 %% PLOT 1: Sanity Check
 if plots(1)
-    figure('Position', [2 557 958 439])
-    overviewPlot = tight_subplot(2,3,[.05 .01],[.03 .03],[.01 .01]);
+    figure('Position', get(0,'Screensize'));
+    overviewPlot = tight_subplot(3,3,[.05 .01],[.03 .03],[.01 .01]);
     
     axes(overviewPlot(1));
     plot(z.segTime_ssfr, segment_ssfr);
@@ -194,10 +177,27 @@ if plots(1)
     axes(overviewPlot(4));
     title(tableRow.name)
     text(1,9, ['Align Val: ', num2str(tableRow.maxAlignVal)] )
-    text(1,8, ['Sample Start Point Ephys: ', num2str(z.startpt_e)])
-    text(1,7, ['Sample Start Point Behav: ', num2str(z.startpt_b)])
+    text(1,8, ['Sample Start Point Ephys: ', num2str(z.startpt_e/z.sr_e)])
+    text(1,7, ['Sample Start Point Behav: ', num2str(z.startpt_b/z.sr_b)])
     xlim([0 10])
     ylim([0 10])
+    
+    axes(overviewPlot(7));
+    title('Start Time Check')
+    btimeVec = dattime(recData(1,7));
+    plot(z.segTime_b, recData(7).data, 'r'); hold on
+    plot(z.segTime_b, recData(5).data, 'b');
+    yticks([]);
+
+    xlim([0 2])
+    ylim([-30 30])
+    vline(z.startpt_b/z.sr_b, '--k')
+    vline(z.startpt_e/z.sr_e, 'c')
+    hline(0, 'k')
+    legend('T Vel', 'H Vel')
+    
+    axes(overviewPlot(8));
+    polarplot(deg2rad(z.ssfr_phase), z.ssfr_amp, '*k')
 end
 
 %% PLOT 2: All Channels
@@ -281,7 +281,11 @@ switch condition
         z.csWindow_bad2 = z.csWindow_good;
         conds(:,2)  = ~any(cycleMat_cs(:,z.csWindow_bad2),2);
         conds(:,2)  = [conds(2:end,2); 0];
+        
+    case 'allcs'
+        
 end
+
 disp(find(~any(~conds,2)))
 goodCycles = ~any(~conds,2);
 
@@ -305,7 +309,6 @@ for k = 1:min(size(cycleMat_cs, 1), size(cycleMat_ss, 1))-1
                 csLoc_cycle = find(cycleMat_cs(k,min(z.csWindow_good):end), 1);
                 csLoc_cycle = csLoc_cycle+(min(z.csWindow_good)-1);
         end
-        
         csLoc_cycle_bin = floor(csLoc_cycle/z.bin_size_e);
         csLoc_seg = (k-1)*z.cycleLen_e+csLoc_cycle+z.startpt_e-1;
         ssLoc_seg = floor(csLoc_seg/z.bin_size_e);
@@ -319,7 +322,7 @@ for k = 1:min(size(cycleMat_cs, 1), size(cycleMat_ss, 1))-1
             continue
         end
 
-        
+
         %% PLOT individual examples
         if plots(4)
             figure()
@@ -379,15 +382,11 @@ for k = 1:min(size(cycleMat_cs, 1), size(cycleMat_ss, 1))-1
     end
     
 end
-allcs = [allcs, find(nansum(cycleMat_cs))];
 
-figure();
-plot(cycleMat_ss'); hold on
-plot(mean(cycleMat_ss), 'k', 'LineWidth', 2)
-ylim([0 200])
+allcs = [allcs, find(nansum(cycleMat_cs))];
 allCycles_ss = [allCycles_ss; cycleMat_ss];
 
-
+%% testing
 
 
 

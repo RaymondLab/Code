@@ -1,7 +1,8 @@
 %% Open Excel File
-clear;clc;close all
+clear;clc;
 
 [dataTable] = readtable('G:\My Drive\Expmt Data\Max\Climbing Fiber Project\ExperimentMetadata_C.xlsx');
+writetable(dataTable, 'G:\My Drive\Expmt Data\Max\Climbing Fiber Project\ExperimentMetadata_D.xlsx')
 writetable(dataTable, 'G:\My Drive\Expmt Data\Max\Climbing Fiber Project\ExperimentMetadata_Backup.xlsx')
 
 expmtDataFolder = 'G:\My Drive\Expmt Data\Max\Climbing Fiber Project\Jennifer Data\Jennifer Data Reorganized';
@@ -13,46 +14,64 @@ allFiles = dir([expmtDataFolder, '\**\*']);
 %allFiles(~contains({allFiles.name}, {'aligned.mat'})) = [];
 
 superGoodCSIso = {};
-
+d = 1;
 %% loop through each one
 for j = 1:height(dataTable)
     %% Skip non-related recordings
     
-    % Bad Recording Files
-%     if ~isnan(dataTable.maxRemoved(j))
-%         continue
-%     end
-    
-    % Only Aligned Files
-    if ~contains(dataTable.alignedMat(j), 'aligned') 
+    % SKIP BAD RECORDINGS
+    if dataTable.maxRemoved(j)
         continue
     end
     
+    % ALIGNED FILES
+    if ~contains(dataTable.alignedMat(j), 'aligned') 
+        continue
+    end
 %     if contains(dataTable.behaviorMat(j), 'behavior') 
 %         continue
 %     end
+
+
+    % SINE/STEP
+    if ~contains(dataTable.sineStep(j), 'step')
+        continue
+    end
     
-    % Expmt Condition Filtering
-%     if ~contains(dataTable.sineStep(j), 'sine')
-%         continue
-%     end
+    
+    % FREQUENCY/STEP TYPE
 %     if dataTable.freq(j) ~= .5
 %         continue
 %     end
-%     if ~contains(dataTable.learningType(j), 'OKR')
+    if contains(dataTable.stepType(j), '?')
+        continue
+    end
+
+    
+    % LEARNING TYPE
+%     if contains(dataTable.learningType(j), '?')
 %         continue
 %     end
-
-    % Other Condition
+%     if contains(dataTable.learningType(j), 'Shift')
+%         continue
+%     end
+    
+    
+    % OTHER
 %     if ~isnan(dataTable.maxSortedCS(j))
 %         continue
 %     end
-%     if ~dataTable.maxSortedCS(j)
+    if ~dataTable.maxSortedCS(j)
+        continue
+    end
+%     if ~dataTable.goodCSIsolation(j)
 %         continue
 %     end
-%     if isnan(dataTable.goodCSIsolation(j))
+    
+%     if dataTable.sortedCS(j)
 %         continue
 %     end
+
 %     if dataTable.goodCSIsolation(j) == 0
 %         continue
 %     end
@@ -66,96 +85,115 @@ for j = 1:height(dataTable)
         disp('Opening Failed!')
         continue
     end
-    if ~isempty(behaviorEphysAligned(9).data)
-        disp('empty!')
-    end
     
     disp(j)
-
-    %% Add Sorted CS to behavior File
-%     try
-%         alignedFile = dataTable.alignedMat{j};
-%         rootName = alignedFile(1:11);
-%         csFileIndx = contains({csFiles2.name}, {rootName});
-%         if ~any(csFileIndx)
-%             continue
-%         end
-%         % Load sortedCS File
-%         sortedCSFileInfo = csFiles2(find(csFileIndx));
-%         load(fullfile(sortedCSFileInfo(1).folder, sortedCSFileInfo(1).name));
-%         
-%         % Load Aligned File
-%         fileInfo = allFiles(contains({allFiles.name}, {alignedFile}));
-%         load(fullfile(fileInfo(1).folder, fileInfo(1).name));
-%         
-%         figure(1); clf
-%         timeVec = dattime(behaviorEphysAligned(1,10));
-%         plot(timeVec, behaviorEphysAligned(10).data)
-%         title(dataTable.name(j))
-%  
-% %         list = {'Use', 'Dont', 'Other'};
-% %         [indx,tf] = listdlg('ListString',list);
-% %         if indx == 1 
-% %             superGoodCSIso(end+1) = dataTable.ephysMat(j);
-% %         end
-% 
-%         vline(Channel01(:,1)+behaviorEphysAligned(10).tstart)
-%         behaviorEphysAligned(9).data = Channel01(:,1)+behaviorEphysAligned(10).tstart;
-%         save(fullfile(fileInfo(1).folder, fileInfo(1).name), 'behaviorEphysAligned')
-% 
-%         if ~isempty(behaviorEphysAligned(1,9).data)
-%             dataTable.sortedCS(j) = 1;
-%         else
-%             dataTable.sortedCS(j) = 0;
-%         end
-%     
-%     
-%     catch
-%         disp('Failed!')
-%         continue
-%     end
+       
+    %% ADD SORTED CS TO BEHAVIOR FILE
+    csFileName = fullfile(fileInfo(1).folder, fileInfo(1).name);
+    csFileName = strrep(csFileName, 'aligned', 'sortedCS');
+    try 
+        load(csFileName);
+    catch
+        disp('apple')
+    end
+    if ~isempty(behaviorEphysAligned(9).data)
+        continue
+    end
     
-    %% Visualize 
+    figure(1); clf
+    timeVec = dattime(behaviorEphysAligned(1,10));
+    plot(timeVec, behaviorEphysAligned(10).data)
+    title(dataTable.name(j))
+    vline(Channel01(:,1)+behaviorEphysAligned(10).tstart)
+    xlim([10 20])
+    
+    list = {'good', 'bad', 'Other'};
+    [indx,tf] = listdlg('ListString',list);
+    if indx == 1 
+        behaviorEphysAligned(9).data = Channel01(:,1)+behaviorEphysAligned(10).tstart;
+        save(fullfile(fileInfo(1).folder, fileInfo(1).name), 'behaviorEphysAligned')
+    elseif indx == 2
+        dataTable.sortedCS(j) = 0;
+    elseif indx == 3
+        disp('apples')
+    end
+    
+    %% MANUAL: Is this a good CS?
 %     try
-%         figure(2);clf
-%         disp(dataTable.maxAlignVal(j))
+%         figure(1);clf
+%         Summary = tight_subplot(1,1,[.03 .03],[.03 .03],[.03 .03]);
+%         axes(Summary(1))
 %         timeVec = dattime(behaviorEphysAligned(10));
-%         plot(timeVec(1:end/2), behaviorEphysAligned(10).data(1:end/2))
-%         vline(behaviorEphysAligned(8).data(100:150))
-%         xlim([behaviorEphysAligned(8).data(100), behaviorEphysAligned(8).data(150)]) 
-%         drawnow
+%         plot(timeVec, behaviorEphysAligned(10).data);
+% 
+%         list = {'Good', 'Bad', 'Other'};
+%         [indx,tf] = listdlg('ListString',list);
+%         switch indx
+%             case 1
+%                 dataTable.goodCSIsolation(j) = 1;
+%             case 2
+%                 dataTable.goodCSIsolation(j) = 0;
+%         end
+% 
 %     catch
-%         disp('Plotting Failed!')
-%         continue
 %     end
-%     list = {'Good', 'Bad', 'Other'};
-%     [indx,tf] = listdlg('ListString',list);
-%     if indx-1 == 1 
-%         dataTable.maxRemoved(j) = 1;
-%     elseif indx-1 == 2
-%         disp('apple')
+   
+    %% MANUAL: Sine/Step
+%     try
+%         figure(1);clf
+%         timeVec = dattime(behaviorEphysAligned(5));
+%         plot(timeVec, behaviorEphysAligned(7).data, 'b'); hold on
+%         plot(timeVec, behaviorEphysAligned(5).data, 'r'); 
+%         legend('Target Vel', 'Head Vel')
+%          
+%         xlim([10 20])
+%         ylim([-100 100])
+% 
+%         list = {'step', 'sine', 'Other'};
+%         [indx,tf] = listdlg('ListString',list);
+%         switch indx
+%             case 1
+%                 dataTable.sineStep{j} = 'step';
+%             case 2
+%                 dataTable.sineStep{j} = 'sine';
+%             case 3
+%                 dataTable.sineStep{j} = '?';
+%         end
+%         
+%     catch
+%     end
+
+    %% MANUAL: Stim Type (x2, x0, OKR, VORD, Shift, Other)
+%     try
+%         figure(1);clf
+%         timeVec = dattime(behaviorEphysAligned(5));
+%         plot(timeVec, behaviorEphysAligned(7).data, 'b'); hold on
+%         plot(timeVec, behaviorEphysAligned(5).data, 'r'); 
+%         legend('Target Vel', 'Head Vel')
+%          
+%         xlim([10 20])
+%         ylim([-100 100])
+% 
+%         list = {'x2', 'x0', 'OKR', 'VORD', 'Shift', 'Other'};
+%         [indx,tf] = listdlg('ListString',list);
+%         switch indx
+%             case 1
+%                 dataTable.learningType{j} = 'x2';
+%             case 2
+%                 dataTable.learningType{j} = 'x0';
+%             case 3
+%                 dataTable.learningType{j} = 'OKR';
+%             case 4
+%                 dataTable.learningType{j} = 'VORD';
+%             case 5
+%                 dataTable.learningType{j} = 'Shift';
+%             case 6
+%                 dataTable.learningType{j} = 'Unknown';
+%         end
+%         
+%     catch
 %     end
     
-    %% Get Manual Input
-%     try
-%         ephysData = behaviorEphysAligned(10).data;
-%         figure(11); clf
-%         ssLocs = zeros(length(ephysData),1);
-%         behaviorEphysAligned(8).data(behaviorEphysAligned(8).data < 0) = [];
-%         
-%         for k = 1:length(behaviorEphysAligned(8).data) 
-%             ssLocs(round(behaviorEphysAligned(8).data(k)*behaviorEphysAligned(10).samplerate)) = 1;
-%         end
-%         [c,lags] = xcorr(ephysData,ssLocs);
-%         plot(lags/50000, c);
-%         xCorrShiftVal = lags(find(c == max(c)))/behaviorEphysAligned(10).samplerate;    
-%         disp(['     ', num2str(xCorrShiftVal)]);
-%         [behaviorDat, shiftAmt, shiftConfidence] = alignCXandMaestro(behaviorEphysAligned(1:end-1), behaviorEphysAligned(10).data, 1);
-%         
-%         dataTable.xcorrAlignVal(j) = xCorrShiftVal;
-%     catch
-%         disp('xcorr Failed!')
-%     end
     
 end
 
