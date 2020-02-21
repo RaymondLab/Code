@@ -427,6 +427,28 @@ SETOFF: 'A  OFFSET 0,DrumOff
             OFFSET 1,Chairoff
 
             JUMP   LOOP
+;-----------------------------------------------------------------------------
+; SINE COMMAND | SPECIAL | with light on only ipsi or contra head movement. For Experiment for Amin. -- Maxwell Jan 2020
+;-----------------------------------------------------------------------------
+SINE5: 'U   SZ     0,DrumAmp       ;set cosine amplitude
+            SZ     1,ChrAmp        ;set cosine amplitude
+            OFFSET 0,DrumOff       ;cosine offset
+            OFFSET 1,Chairoff      ;cosine offset
+            ANGLE  0,DrumPh        ;cosine phase
+            ANGLE  1,ChrPh         ;cosine phase
+
+            RATE   1,ChrFreq       ;set rate and start cosine
+            RATE   0,DrumFreq      ;set rate and start cosine
+
+SINE6:      DIGOUT [.......1]
+            DELAY  483
+            DIGOUT [....11..]
+            DELAY  13
+            DIGOUT [....00.0]
+            DELAY  495
+            OFFSET 0,DrumOff
+            OFFSET 1,Chairoff
+            JUMP   SINE6
 
 ;-----------------------------------------------------------------------------
 ;LIGHTON: 'L SZ     0,DrumAmp       ;set cosine amplitude
