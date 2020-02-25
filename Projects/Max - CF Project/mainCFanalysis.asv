@@ -151,24 +151,33 @@ for f = 1:length(segData(9).data)
 
     csInfo(f).cycleNum = ceil(csInfo(f).timeRel2Mat_sec / z.cycleLen_sec);
     
-    % remove CS that are before the start of cycle 1
     if csInfo(f).cycleNum < 1
         csInfo(f).cycleNum = nan;
         csInfo(f).usable = 0;
-    % remove CS that are in last cycle or later
-    elseif csInfo(f).cycleNum == size(cycleMat_ss,1)
+    elseif csInfo.cycleNum == size(cycleMat_ss,1)
         csInfo(f).usable = 0;
-    elseif csInfo(f).cycleNum > size(cycleMat_ss,1)
+    elseif csInfo.cycleNum > size(cycleMat_ss,1)
         csInfo(f).cycleNum = nan;
         csInfo(f).usable = 0;
-    else
-        csInfo(f).usable = 1;
     end
     
     if csInfo(f).timeAbs_sec > z.segLen_s
         csInfo(f).usable = 0;
     end
 
+end
+
+
+for f = 1:length(csInfo)
+    % Remove CS that occur in the partial (final) cycle
+    if isempty(csInfo(f).cycleNum)
+        csInfo(f).cycleNum = nan;
+        csInfo(f).usable = 0;
+    end
+    % Remove CS that occur after the ephys stopped recording (rare, but it happens)
+    if csInfo(f).timeAbs_sec > z.segLen_s
+        csInfo(f).usable = 0;
+    end
 end
 
 %% FIND appropriate Cycles & complex spikes

@@ -2,84 +2,102 @@
 clear;clc;%close all
 try
     [dataTable] = readtable('G:\My Drive\Expmt Data\Max\Climbing Fiber Project\ExperimentMetadata_C.xlsx');
-    expmtDataFolder = 'G:\My Drive\Expmt Data\Max\Climbing Fiber Project\Jennifer Data\Jennifer Data Reorganized';
+    p.expmtDataFolder = 'G:\My Drive\Expmt Data\Max\Climbing Fiber Project\Jennifer Data\Jennifer Data Reorganized';
 catch
     [dataTable] = readtable('D:\My Drive\Expmt Data\Max\Climbing Fiber Project\ExperimentMetadata_C.xlsx');
-    expmtDataFolder = 'D:\My Drive\Expmt Data\Max\Climbing Fiber Project\Jennifer Data\Jennifer Data Reorganized';
+    p.expmtDataFolder = 'D:\My Drive\Expmt Data\Max\Climbing Fiber Project\Jennifer Data\Jennifer Data Reorganized';
 end
 
 % Only keep 'Aligned Files'
-allFiles = dir([expmtDataFolder, '\**\**']);
-allFiles(~contains({allFiles.name}, {'aligned'})) = [];
+cd(p.expmtDataFolder);
+allFiles = dir('**/*aligned*.mat');
 dataTable(~contains(dataTable.alignedMat, {'aligned'}),:) = [];
+dataTable(logical(dataTable.maxRemoved),:) = []; % Bad Files
+dataTable(~(dataTable.sortedCS),:) = [];
 
 %% PARAMETERS
 
 % SS FIRING RATE CALULATION
-ss_fr_calc = 'RecipInterval'; % RecipInterval, InstFiringRate, spikeDensityFunction'
+p.ss_fr_calc = 'RecipInterval'; % RecipInterval, InstFiringRate, spikeDensityFunction'
 
-binSize = 50; % (ms)
-kernel_sd = .01; % Seconds
-bin_ifr = .02; % Seconds
+p.binSize = 50; % (ms)
+p.kernel_sd = .01; % Seconds
+p.bin_ifr = .02; % Seconds
 
 % 3 Riciprical interval Method
-fr_thresh = 500;
+p.fr_thresh = 500;
 
 % EXPERIMENTAL CONDITIONS
-condition    = {'csNOcs'}; %{'csNOcs', 'csNOcs_B', 'NOcsNOcs', '2csNOcs', 'allcs'};
-stimType     = {'step'}; % 'sine', 'step'
-expmtFreq    = [.5]; % .5, 1, 2, 5
-stepType     = {'50msAccel_200msVel', '1000', '500', '250', '150', '80'}; % '50msAccel_200msVel', '1000', '500', '250', '150' '80'
-learningType = {'x2', 'x0', 'OKR', 'VOR'};%, 'x0', 'OKR', 'VOR'};
+p.conditions    = {'csNOcs'}; %{'csNOcs', 'csNOcs_B', 'NOcsNOcs', '2csNOcs', 'allcs'};
+p.stimTypes     = {'sine'}; % 'sine', 'step'
+p.expmtFreqs    = [.5]; % .5, 1, 2, 5
+p.stepTypes     = {'50msAccel_200msVel', '1000', '500', '250', '150' '80'}; % '50msAccel_200msVel', '1000', '500', '250', '150' '80'
+p.learningTypes = {'x2', 'x0', 'OKR', 'VOR'};%, 'x0', 'OKR', 'VOR'};
 
 % PLOTTING CHOICES
-plots = [1, ... % Sanity Check Plot
-         0, ... % All Channels Plot
-         0, ... % Final Average plots
-         0, ... % Individual Example Plots
-         0, ... % Visualize Relationship between CS, Ephys, and Firing Rate
-         0, ... % Same as 3, but for a single cell recording
-         0, ... % radial plots for ss tuning checks
-         0];    % radial plots for ss tuning checks ALL CELLS
-
-% REMOVE NOT-RELAVANT FILES
-dataTable(logical(dataTable.maxRemoved),:) = []; % Bad Files
-dataTable(~(dataTable.sortedCS),:) = [];
-
+p.plots = [0, ... % Sanity Check Plot
+           0, ... % All Channels Plot
+           1, ... % Final Average plots
+           0, ... % Individual Example Plots
+           0, ... % Visualize Relationship between CS, Ephys, and Firing Rate
+           0, ... % Same as 3, but for a single cell recording
+           0, ... % radial plots for ss tuning checks
+           0];    % radial plots for ss tuning checks ALL CELLS
 % OTHER
-preProcess = [1, 1, 1];
+p.preProcess = [1, ... % Remove Complex Spikes from Simple Spike Data
+                1, ... % Remove Complex Spike Spikelets from Simple Spike Data
+                1];    % Remove Simple Spikes that are too close together
 
-%% Loop through all combinations of parameters
-for stimType_indx = 1:length(stimType)
-    %for expmtFreq_indx = 1:length(expmtFreq)
-    for expmtFreq_indx = 1:length(stepType)
-        for condition_indx = 1:length(condition)
-            for learningtype_indx = 1:length(learningType)
+%% SINE or STEP
+for stimType_indx = 1:length(p.stimTypes)
+    switch p.stimTypes{stimType_indx}
+        case 'sine'
+            relaventLen = length(p.expmtFreqs);
+        case 'step'
+            relaventLen = length(p.stepTypes);
+    end
+    
+    for expmtFreq_indx = 1:relaventLen
+        
+        for condition_indx = 1:length(p.conditions)
+            
+            for learningtype_indx = 1:length(p.learningTypes)
                 
                 %% SELECT THE DATA THAT YOU ARE INTERESTED IN
                 tempTable = dataTable;
-                tempTable(~contains(tempTable.sineStep, stimType(stimType_indx)),:) = [];
-                tempTable(~contains(tempTable.learningType, learningType(learningtype_indx)),:) = [];
+                tempTable(~contains(tempTable.sineStep, p.stimTypes(stimType_indx)),:) = [];
+                tempTable(~contains(tempTable.learningType, p.learningTypes(learningtype_indx)),:) = [];
                 
-                if contains(stimType{stimType_indx}, 'sine')
-                    tempTable(~(tempTable.freq == expmtFreq(expmtFreq_indx)),:) = [];
-                    metainfoTitle = [' | ', stimType{stimType_indx}, ' | ', ...
-                                    num2str(expmtFreq(expmtFreq_indx)), 'Hz | ', ...
-                                    condition{condition_indx}, ' | ', ...
-                                    learningType{learningtype_indx}, ' | '];
-                                
-                elseif contains(stimType{stimType_indx}, 'step')
-                    
-                    tempTable(~contains(tempTable.stepType, stepType(expmtFreq_indx)),:) = [];
-                    
-                    metainfoTitle = [' | ', stimType{stimType_indx}, ' | ', ...
-                                    stepType(expmtFreq_indx), 'Hz | ', ...
-                                    condition{condition_indx}, ' | ', ...
-                                    learningType{learningtype_indx}, ' | '];
+                switch p.stimTypes{stimType_indx}
+                    case 'sine'
+                        tempTable(~(tempTable.freq == p.expmtFreqs(expmtFreq_indx)),:) = [];
+                        
+                        metainfoTitle = [' | ', p.stimTypes{stimType_indx}, ' | ', ...
+                                        num2str(p.expmtFreqs(expmtFreq_indx)), 'Hz | ', ...
+                                        p.conditions{condition_indx}, ' | ', ...
+                                        p.learningTypes{learningtype_indx}, ' | '];
+                        p.csLocFilename = ['CSLocations_csNOcs_', ...
+                                        p.stimTypes{stimType_indx}, '_', ...
+                                        p.learningTypes{learningtype_indx}, '_', ...
+                                        num2str(p.expmtFreqs), '.mat'];
+                    case 'step'
+                        tempTable(~contains(tempTable.stepType, p.stepTypes(expmtFreq_indx)),:) = [];
+                        
+                        metainfoTitle = [' | ', p.stimTypes{stimType_indx}, ' | ', ...
+                                        p.stepTypes{expmtFreq_indx}, ' ms | ', ...
+                                        p.conditions{condition_indx}, ' | ', ...
+                                        p.learningTypes{learningtype_indx}, ' | '];
+                        p.csLocFilename = ['CSLocations_csNOcs_', ...
+                                        p.stimTypes{stimType_indx}, '_', ...
+                                        p.stepTypes{expmtFreq_indx}, '.mat'];
                 end
                 
+                %% Printing
                 disp(metainfoTitle)
                 disp(['Files Found: ', num2str(height(tempTable))]);
+                if height(tempTable) == 0
+                    continue
+                end
                 
                 %% PREALLOCATE
                 alldiffs = [];
@@ -91,87 +109,44 @@ for stimType_indx = 1:length(stimType)
                 allCycles_ss = [];
                 allPhase = [];
                 allAmp = [];
-                csLocFilename = ['CSLocations_csNOcs_', stimType{:},'_', learningType{:}, '_', num2str(expmtFreq), '.mat'];
                 
                 %% LOOP THROUGH EACH FILE
                 for i = 1:height(tempTable)
                     disp(tempTable.name{i})
-                    [ss_times_diff, diffs, goodcsLocs, cs, Cycles_ss, z] = mainCFanalysis(tempTable(i,:), allFiles, ...
-                                                    expmtFreq(expmtFreq_indx), ...
-                                                    learningType{learningtype_indx}, ...
-                                                    condition{condition_indx}, ...
-                                                    preProcess, ss_fr_calc, plots, expmtDataFolder, csLocFilename );
-                                                
+                    
+                    % Open the File
+                    renamedFile = strrep(tempTable.name{i}, '.', '_');
+                    expmtRow = allFiles( contains({allFiles.name}, renamedFile ));
+                    load(fullfile(expmtRow(1).folder, expmtRow(1).name));
+                    segData = behaviorEphysAligned;
+                    if isempty(segData(9).data)
+                        disp([renamedFile, ' Contains no CS!!!']);
+                        continue
+                    end
+                    
+                    % Run Analysis
+                    [ss_times_diff, diffs, goodcsLocs, cs, Cycles_ss, z, csInfo] = mainCFanalysis(segData, tempTable(i,:), p, ...
+                                                    p.expmtFreqs(expmtFreq_indx), ...
+                                                    p.learningTypes{learningtype_indx}, ...
+                                                    p.conditions{condition_indx});
+                                                    %p.stepTypes{expmtFreq_indx}, ...
+                    % Collect running data
                     ss_times_diff_all = [ss_times_diff_all; ss_times_diff];
-                    alldiffs = [alldiffs; diffs];
-                    allgoodcsLocs = [allgoodcsLocs goodcsLocs];
-                    allcs = [allcs cs];
+                    alldiffs = [alldiffs diffs];
+                    allgoodcsLocs = [allgoodcsLocs; goodcsLocs];
+                    allcs = [allcs; cs];
                     allCycles_ss = [allCycles_ss; Cycles_ss];
                     allPhase = [allPhase; z.ssfr_phase];
                     allAmp = [allAmp; z.ssfr_amp];
                     
-                    %% PLOT Summary: Single Cell Averages
-                    if plots(6)
-                        figure()
-                        Summary = tight_subplot(3,1,[.03 .03],[.03 .03],[.03 .03]);
-                        
-                        % Stim, and CSs
-                        axes(Summary(1))
-                        histogram(cs/z.sr_e, linspace(0,max(z.cycleTime_b), 50), 'FaceColor', 'k'); hold on
-                        histogram(goodcsLocs/z.sr_e, linspace(0,max(z.cycleTime_b), 50), 'FaceColor', 'c');
-                        yyaxis right
-                        plot(z.cycleTime_b, nanmean(z.cycleMat_tVel), 'Color', [0.8500, 0.3250, 0.0980], 'LineWidth', 2); hold on
-                        plot(z.cycleTime_b, nanmean(z.cycleMat_hVel), 'Color', [0, 0.4470, 0.7410] , 'LineWidth', 2);
-                        title([metainfoTitle, ' ', tempTable.name{i}])
-                        legend('Binned CS: All', 'Binned CS: Relevant', 'T Vel', 'H Vel')
-                        xlim([0 max(z.cycleTime_b)])
-                        xticklabels(xticks)
-                        
-                        % Simple Spike Firing
-                        axes(Summary(2)); hold on
-                        plot(z.cycleTime_ss, nanmean(Cycles_ss, 1),'Color', [0.4940, 0.1840, 0.5560], 'LineWidth', 1);
-                        ylim([30 110])
-                        % good in cycle N
-                        rectangle('Position',[min(z.csWindow_good)/z.sr_e,nanmean(Cycles_ss(:)),(max(z.csWindow_good)-min(z.csWindow_good))/z.sr_e,max(ylim)], ...
-                            'FaceColor',[.85 .85 .95], 'EdgeColor', [.85 .85 .95])
-                        % bad in cycle N
-                        rectangle('Position',[min(z.csWindow_bad)/z.sr_e,nanmean(Cycles_ss(:)),(max(z.csWindow_bad)-min(z.csWindow_bad))/z.sr_e,max(ylim)], ...
-                            'FaceColor',[.95 .85 .85], 'EdgeColor', [.95 .85 .85])
-                        % Bad in cycle 2
-                        rectangle('Position',[min(z.csWindow_bad2)/z.sr_e,min(ylim),(max(z.csWindow_bad2)-min(z.csWindow_bad2))/z.sr_e,abs(nanmean(Cycles_ss(:))-min(ylim))], ...
-                            'FaceColor',[.95 .85 .85], 'EdgeColor', [.95 .85 .85])
-                        
-                        plot(z.cycleTime_ss, nanmean(Cycles_ss, 1),'Color', [0.4940, 0.1840, 0.5560], 'LineWidth', 1);
-                        hline(nanmean(Cycles_ss(:)), ':k');
-                        legend(['Average ss firing rate: All cycles (', num2str(size(Cycles_ss,1)), ') in Current Recording'])
-                        xticklabels(xticks)
-                        
-                        % Average of Differences
-                        axes(Summary(3)); hold on
-                        
-                        ylim([-100 100]);
-                        hline(0, ':k');
-
-                        legendText = ['Average Cycle ss fr Difference | ', num2str(size(diffs, 1)), ' Examples'];
-                        yThing = (1:((z.ssWindow_bin*2)+1))/z.sr_e;
-                        color = [0.4940, 0.1840, 0.5560];
-                        
-                        try
-                            alldiffsMean = nanmean(alldiffs);
-                            plot(yThing, alldiffsMean, 'Color', color, 'LineWidth', 1);
-                            xlim([0 z.chunkLength/z.sr_e])
-                        catch
-                        end
-                        vline(mean(xlim), ':k');
-                        vline(mean(xlim)-.120, ':k');
-                        xticklabels(xticks);
-                        legend(legendText)
-                        drawnow
+                    % PLOT Summary: Single Cell Averages
+                    if p.plots(6)
+                        plot_summary1(cs, z, goodcsLocs, [metainfoTitle, ' ', tempTable.name{i}], Cycles_ss, diffs)
                     end
                     
                 end
                 
-                if plots(8)
+                if p.plots(8)
                     figure()
                     rplots = tight_subplot(1,1,[.03 .03],[.1 .1],[.03 .03]);
                     axes(rplots(1))
@@ -181,54 +156,9 @@ for stimType_indx = 1:length(stimType)
                 end
 
                 
-                %% PLOT 3: Across Trial Averages
-                if plots(3)
-                 
-                    figure()
-                    Summary = tight_subplot(3,1,[.03 .03],[.03 .03],[.03 .03]);
-                    
-                    % Stim, and CSs
-                    axes(Summary(1))
-                    histogram(allcs/z.sr_e, linspace(0,max(z.cycleTime_b), 50), 'FaceColor', 'k'); hold on
-                    histogram(allgoodcsLocs/z.sr_e, linspace(0,max(z.cycleTime_b), 50), 'FaceColor', 'c');
-                    yyaxis right
-                    plot(z.cycleTime_b, nanmean(z.cycleMat_tVel), 'Color', [0.8500, 0.3250, 0.0980], 'LineWidth', 2); hold on
-                    plot(z.cycleTime_b, nanmean(z.cycleMat_hVel), 'Color', [0, 0.4470, 0.7410] , 'LineWidth', 2);
-                    title([metainfoTitle, ' All Cells'])
-                    legend('Binned CS: All', 'Binned CS: Relevant', 'T Vel', 'H Vel')
-                    xlim([0 max(z.cycleTime_b)])
-                    xticklabels(xticks)
-                
-                    % Simple Spike Firing
-                    axes(Summary(2)); hold on
-                    plot(z.cycleTime_ss, nanmean(allCycles_ss, 1),'Color', [0.4940, 0.1840, 0.5560], 'LineWidth', 1);
-                    ylim([30 110])
-                    % good in cycle N
-                    rectangle('Position',[min(z.csWindow_good)/z.sr_e,nanmean(allCycles_ss(:)),(max(z.csWindow_good)-min(z.csWindow_good))/z.sr_e,max(ylim)], ...
-                              'FaceColor',[.85 .85 .95], 'EdgeColor', [.85 .85 .95])
-                    % bad in cycle N
-                    rectangle('Position',[min(z.csWindow_bad)/z.sr_e,nanmean(allCycles_ss(:)),(max(z.csWindow_bad)-min(z.csWindow_bad))/z.sr_e,max(ylim)], ...
-                              'FaceColor',[.95 .85 .85], 'EdgeColor', [.95 .85 .85])
-                    % Bad in cycle 2
-                    rectangle('Position',[min(z.csWindow_bad2)/z.sr_e,min(ylim),(max(z.csWindow_bad2)-min(z.csWindow_bad2))/z.sr_e,abs(nanmean(allCycles_ss(:))-min(ylim))], ...
-                              'FaceColor',[.95 .85 .85], 'EdgeColor', [.95 .85 .85])
-                
-                    plot(z.cycleTime_ss, nanmean(allCycles_ss, 1),'Color', [0.4940, 0.1840, 0.5560], 'LineWidth', 1);
-                    hline(nanmean(allCycles_ss(:)), ':k');
-                    legend('Average ss firing rate: All cycles in All Segements')
-                    xticklabels(xticks)
-                
-                    % Average of Differences
-                    axes(Summary(3)); hold on
-                    plot((1:((z.ssWindow_bin*2)+1))/z.sr_e, nanmean(alldiffs), 'Color', [0.4940, 0.1840, 0.5560], 'LineWidth', 1);
-                    legend('Average Cycle ss Firing Rate Difference')
-                    xlim([0 z.chunkLength/z.sr_e])
-                    ylim([-100 100])
-                    hline(0, ':k')
-                    vline(mean(xlim), ':k');
-                    vline(mean(xlim)-.120, ':k');
-                    xticklabels(xticks)
-                
+                % PLOT 3: Across Trial Averages
+                if p.plots(3)
+                    plot_summary1(allcs, z, allgoodcsLocs, [metainfoTitle, ' All Cells'], allCycles_ss, alldiffs)
                 end
             end
         end
