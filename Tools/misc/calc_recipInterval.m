@@ -3,18 +3,28 @@ function firingRate = calc_recipInterval(spikeTimes, ephysLength, sampleRate)
     firingRate = nan(ephysLength,1);
     
     AAA = spikeTimes(2:end) - spikeTimes(1:end-1);
-    BBB = AAA(1:end-1) - AAA(2:end);
     
-    for w = 1:length(BBB)
-        if BBB(w) > 0
-            firingRate(round(spikeTimes(w+1)*sampleRate:spikeTimes(w+2)*sampleRate)) = 1/AAA(w);
+    eIndex = 0;
+    tic
+    for i = 1:length(firingRate)
+        
+        if eIndex >= length(spikeTimes)
+            break
+        end
+        
+        if (i / sampleRate) >= spikeTimes(eIndex+1)
+            eIndex = eIndex + 1;
+        end
+        
+        if eIndex == 1 || eIndex == 0
+            continue
+        end
+        
+        if AAA(eIndex-1) > ((i / sampleRate) - spikeTimes(eIndex))
+           firingRate(i) = 1/AAA(eIndex-1);
         else
-            start   = spikeTimes(w+1)*sampleRate;
-            middle  = spikeTimes(w+1)*sampleRate + AAA(w)*sampleRate;
-            stop    = spikeTimes(w+2)*sampleRate;
-
-            firingRate(round(start : middle)) = 1/AAA(w);
-            firingRate(round(middle+1 : stop)) = 1/AAA(w+1);
+            firingRate(i) = 1/AAA(eIndex);
         end
     end
+    toc
 end

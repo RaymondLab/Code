@@ -1,4 +1,4 @@
-function [ss_times_diff, chunkDiffs, csLoc_cycle, allcs, cycleMat_ss, z, csInfo] = mainCFanalysis(segData, segInfo, p, expmtFreq, learningType, condition)
+function [csInfo, csInfo_good, z] = mainCFanalysis(segData, segInfo, p, expmtFreq, learningType, condition)
 
 
 %% Get Useful values
@@ -96,8 +96,12 @@ disp(['     Removed: ', num2str(totalRemoved), ' | ', num2str(percentRemoved), '
 
 switch p.ss_fr_calc
     case 'spikeDensityFunction'
-        segment_ssfr = calc_spikeDensityFunction(segData(8).data, kernel_sd, z.sr_e);
-        [cycleMat_ss, z.cycleMean_ss] = VOR_breakTrace(z.cycleLen_e, z.startpt_e, segment_ssfr);
+        segment_ssfr = calc_spikeDensityFunction(segData(8).data, p.kernel_sd, z.sr_e);
+        [z.cycleMat_ss, z.cycleMean_ss] = VOR_breakTrace(z.cycleLen_e, z.startpt_e, segment_ssfr);
+        z.bin_size_e = 1;
+    case 'sawtooth'
+        segment_ssfr = calc_spikeDensityFunction_sawtooth(segData(8).data, p.kernel_sd, z.sr_e);
+        [z.cycleMat_ss, z.cycleMean_ss] = VOR_breakTrace(z.cycleLen_e, z.startpt_e, segment_ssfr);
         z.bin_size_e = 1;
         
     case 'InstFiringRate'
@@ -110,11 +114,11 @@ switch p.ss_fr_calc
         segment_ssfr = mean(vec2mat(binned, z.bin_size_e), 2);
         z.cycleLen_ss = floor(z.cycleLen_e/z.bin_size_e);
         z.startpnt_ss = floor(z.startpt_e/z.bin_size_e);
-        [cycleMat_ss, z.cycleMean_ss] = VOR_breakTrace(cycleLen_ss, startpnt_ss, segment_ssfr);
+        [z.cycleMat_ss, z.cycleMean_ss] = VOR_breakTrace(cycleLen_ss, startpnt_ss, segment_ssfr);
         
     case 'RecipInterval'
         segment_ssfr = calc_recipInterval(segData(8).data, length(segData(10).data), z.sr_e);
-        [cycleMat_ss, z.cycleMean_ss] = VOR_breakTrace(z.cycleLen_e, z.startpt_e, segment_ssfr);
+        [z.cycleMat_ss, z.cycleMean_ss] = VOR_breakTrace(z.cycleLen_e, z.startpt_e, segment_ssfr);
         z.bin_size_e = 1;
 end
 
@@ -126,7 +130,7 @@ z.cycleTime_ss = linspace(0, z.cycleLen_e/z.sr_e, length(z.cycleMean_ss));
 
 % PLOT 1: Single File Sanity check
 if p.plots(1)
-    plot_singleFileSanityCheck(segData, z, segInfo, segment_ssfr, p, cycleMat_ss, z.cycleMean_ss)
+    plot_singleFileSanityCheck(segData, z, segInfo, segment_ssfr, p, z.cycleMat_ss, z.cycleMean_ss)
 end
 
 % PLOT 2: All Channels
@@ -140,36 +144,7 @@ if p.plots(5)
 end
 
 %% Organize important CS information
-
-% Update CS times to reflect their time relative to the calculated adjusted
-% segment 'start' time'
-for f = 1:length(segData(9).data)
-    
-    csInfo(f).timeAbs_sec = segData(9).data(f);
-    csInfo(f).timeRel2Mat_sec = segData(9).data(f) - (z.startpt_e/z.sr_e);
-    csInfo(f).timeRel2Cycle_sec = mod(csInfo(f).timeRel2Mat_sec, z.cycleLen_sec);
-
-    csInfo(f).cycleNum = ceil(csInfo(f).timeRel2Mat_sec / z.cycleLen_sec);
-    
-    % remove CS that are before the start of cycle 1
-    if csInfo(f).cycleNum < 1
-        csInfo(f).cycleNum = nan;
-        csInfo(f).usable = 0;
-    % remove CS that are in last cycle or later
-    elseif csInfo(f).cycleNum == size(cycleMat_ss,1)
-        csInfo(f).usable = 0;
-    elseif csInfo(f).cycleNum > size(cycleMat_ss,1)
-        csInfo(f).cycleNum = nan;
-        csInfo(f).usable = 0;
-    else
-        csInfo(f).usable = 1;
-    end
-    
-    if csInfo(f).timeAbs_sec > z.segLen_s
-        csInfo(f).usable = 0;
-    end
-
-end
+csInfo = make_csInfo(segData, z);
 
 %% FIND appropriate Cycles & complex spikes
 switch condition
@@ -185,33 +160,31 @@ switch condition
         [csInfo, z] = t2t_2csNOcs(segData(9).data, z.cycleMat_cs, z, whichSpike);
 
     case 'csNOcs_B' % Variable Window
-        window = [.075 .2];
-        [csInfo, z] = t2t_csNOcs_B(segData(9).data, z.cycleMat_cs, z, window);
+        window = [.1788 .3129];
+        [csInfo, z] = t2t_csNOcs(csInfo, z, window);
+        
+    case 'csNOcs_C' % Variable Window
+        window = [1.2 1.5];
+        [csInfo, z] = t2t_csNOcs(csInfo, z, window);
 
     case 'allcs'
         csInfo = ones(1, length(csTimes));
 end
 
 %% Find Chunk Difference
-windowSize = .6;
-[chunkAs, chunkBs, chunkDiffs] = t2t_ExtractChunks(csInfo, segment_ssfr, z, windowSize);
+z.comparisonWindowSize = .6;
+[csInfo] = t2t_ExtractChunks(csInfo, segment_ssfr, z);
+csInfo_good = csInfo(logical([csInfo.usable]));
 
-plot_individualExampleCheck(chunkAs, chunkBs, chunkDiffs, segData, csInfo, z, windowSize)
 
-z.chunkTime = linspace(0, windowSize, size(chunkDiffs, 1));
-
-goodcsInfo = csInfo(csInfo(:,1) == 1,:);
-
-% PLOT individual examples
-for i = 1:size(chunkDiffs,2)
-    if p.plots(4)
-        plot_individualExamples(z, goodcsInfo(i,3), windowSize/2, segInfo, cycleMat_ss, goodcsInfo(i,4), chunkAs(:,i), chunkBs(:,i), chunkDiffs(:,i))
-    end
+if ~isempty(csInfo_good)
+    z.chunkTime = linspace(0, z.comparisonWindowSize, size(csInfo_good(1).chunkDiff, 1));
+else
+    % to make sure you match dimensions
+    csInfo(1).chunkA = [];
+    csInfo(1).chunkB = [];
+    csInfo(1).chunkDiff = [];
 end
-
-%% Retain important values
-csLoc_cycle = goodcsInfo(:,3);
-allcs = csInfo(:,3);
 
 %% Extra Saving
 % switch condition

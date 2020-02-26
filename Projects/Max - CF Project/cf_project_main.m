@@ -18,7 +18,7 @@ dataTable(~(dataTable.sortedCS),:) = [];
 %% PARAMETERS
 
 % SS FIRING RATE CALULATION
-p.ss_fr_calc = 'RecipInterval'; % RecipInterval, InstFiringRate, spikeDensityFunction'
+p.ss_fr_calc = 'RecipInterval'; % RecipInterval, InstFiringRate, spikeDensityFunction', 'sawtooth'
 
 p.binSize = 50; % (ms)
 p.kernel_sd = .01; % Seconds
@@ -28,11 +28,11 @@ p.bin_ifr = .02; % Seconds
 p.fr_thresh = 500;
 
 % EXPERIMENTAL CONDITIONS
-p.conditions    = {'csNOcs'}; %{'csNOcs', 'csNOcs_B', 'NOcsNOcs', '2csNOcs', 'allcs'};
-p.stimTypes     = {'sine'}; % 'sine', 'step'
+p.conditions    = {'csNOcs_B', 'csNOcs_C'}; %{'csNOcs', 'csNOcs_B', 'NOcsNOcs', '2csNOcs', 'allcs', 'csNOcs_B'};
+p.stimTypes     = {'step'}; % 'sine', 'step'
 p.expmtFreqs    = [.5]; % .5, 1, 2, 5
 p.stepTypes     = {'50msAccel_200msVel', '1000', '500', '250', '150' '80'}; % '50msAccel_200msVel', '1000', '500', '250', '150' '80'
-p.learningTypes = {'x2', 'x0', 'OKR', 'VOR'};%, 'x0', 'OKR', 'VOR'};
+p.learningTypes = {'x2', 'x0'};%, 'x0', 'OKR', 'VOR'};
 
 % PLOTTING CHOICES
 p.plots = [0, ... % Sanity Check Plot
@@ -99,22 +99,15 @@ for stimType_indx = 1:length(p.stimTypes)
                     continue
                 end
                 
-                %% PREALLOCATE
-                alldiffs = [];
-                alldiffPercent = [];
-                allgoodcsLocs = [];
-                allcs = [];
-                allDeltas = [];
-                ss_times_diff_all = [];
-                allCycles_ss = [];
-                allPhase = [];
-                allAmp = [];
-                
                 %% LOOP THROUGH EACH FILE
+                csInfo_all = [];
+                csInfo_goodAll = [];
+                cycleMat_ss_all = [];
+                
                 for i = 1:height(tempTable)
                     disp(tempTable.name{i})
                     
-                    % Open the File
+                    %% Open the File
                     renamedFile = strrep(tempTable.name{i}, '.', '_');
                     expmtRow = allFiles( contains({allFiles.name}, renamedFile ));
                     load(fullfile(expmtRow(1).folder, expmtRow(1).name));
@@ -124,28 +117,39 @@ for stimType_indx = 1:length(p.stimTypes)
                         continue
                     end
                     
-                    % Run Analysis
-                    [ss_times_diff, diffs, goodcsLocs, cs, Cycles_ss, z, csInfo] = mainCFanalysis(segData, tempTable(i,:), p, ...
-                                                    p.expmtFreqs(expmtFreq_indx), ...
+                    %% Run Analysis
+                    [csInfo, csInfo_good, z] = mainCFanalysis(segData, tempTable(i,:), p, ...
+                                                    p.stepTypes{expmtFreq_indx}, ...
                                                     p.learningTypes{learningtype_indx}, ...
                                                     p.conditions{condition_indx});
                                                     %p.stepTypes{expmtFreq_indx}, ...
+                                                    %p.expmtFreqs(expmtFreq_indx), ...
                     % Collect running data
-                    ss_times_diff_all = [ss_times_diff_all; ss_times_diff];
-                    alldiffs = [alldiffs diffs];
-                    allgoodcsLocs = [allgoodcsLocs; goodcsLocs];
-                    allcs = [allcs; cs];
-                    allCycles_ss = [allCycles_ss; Cycles_ss];
-                    allPhase = [allPhase; z.ssfr_phase];
-                    allAmp = [allAmp; z.ssfr_amp];
+                    csInfo_all = [csInfo_all csInfo];
+                    if ~isempty(csInfo_good)
+                        csInfo_goodAll = [csInfo_goodAll csInfo_good];
+                    end
+                    cycleMat_ss_all = [cycleMat_ss_all z.cycleMat_ss'];
                     
-                    % PLOT Summary: Single Cell Averages
+                    %% Plotting
+                    
+                    % PLOT: Visualize Each Example
+                    if p.plots(4)
+                        for q = 1:size(csInfo_good,2)
+                            plot_individualExamples(csInfo_good(q), z, tempTable(i,:))
+                        end
+                    end
+                    
+                    % PLOT: Visualize Each Cell
                     if p.plots(6)
-                        plot_summary1(cs, z, goodcsLocs, [metainfoTitle, ' ', tempTable.name{i}], Cycles_ss, diffs)
+                        plot_summary1(csInfo, z, [metainfoTitle, ' ', tempTable.name{i}])
                     end
                     
                 end
                 
+                %% More Plotting
+                
+                % PLOT 8? 
                 if p.plots(8)
                     figure()
                     rplots = tight_subplot(1,1,[.03 .03],[.1 .1],[.03 .03]);
@@ -153,12 +157,13 @@ for stimType_indx = 1:length(p.stimTypes)
 
                     polarplot(deg2rad(allPhase), allAmp, '*k')
                     title([metainfoTitle, ' All cells '])
-                end
+                end 
 
                 
-                % PLOT 3: Across Trial Averages
+                % PLOT 3: Visualize Each paradigm
                 if p.plots(3)
-                    plot_summary1(allcs, z, allgoodcsLocs, [metainfoTitle, ' All Cells'], allCycles_ss, alldiffs)
+                    z.cycleMat_ss = cycleMat_ss_all'; % kind of a hack???
+                    plot_summary1(csInfo_all, z, [metainfoTitle, ' All Cells'])
                 end
             end
         end

@@ -18,7 +18,7 @@ stdev = nanstd(segment_ssfr);
 
 thresh = stdev*5 + nanmean(segment_ssfr);
 mad = nanmedian(abs(segment_ssfr - nanmedian(segment_ssfr)))*20+ nanmedian(segment_ssfr);
-hline(500)
+%hline(500)
 %ylim([0 mad*1.75])
 %yticks([]);
 %         figure()
