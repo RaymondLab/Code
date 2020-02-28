@@ -38,9 +38,9 @@ disp('Draw an elipse around analysis ROI.')
 disp('When finished, press any key.');
 
 roi = drawellipse;
-pos = double(roi.createMask());
 
 pause
+pos = createMask(roi);
 close all;
 
 while ~ok && frame<10

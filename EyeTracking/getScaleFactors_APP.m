@@ -65,9 +65,9 @@ vars.mag2.data = double(vars.mag2.data);
 vars.tmag = dattime(vars.mag1);
 
 %% Upsample Video Traces
-vars.vidH_upsample = interp1(vars.tvid,vars.vidH,vars.tmag(:),'linear');
+vars.vidH_upsample = interp1(vars.tvid,vars.vidH,vars.tmag(:),'spline');
 vars.vidH_upsample = inpaint_nans(vars.vidH_upsample);
-vars.vidV_upsample = interp1(vars.tvid,vars.vidV,vars.tmag(:),'linear');
+vars.vidV_upsample = interp1(vars.tvid,vars.vidV,vars.tmag(:),'spline');
 vars.vidV_upsample = inpaint_nans(vars.vidV_upsample);
 
 %% Desaccade
