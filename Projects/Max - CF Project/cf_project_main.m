@@ -28,14 +28,14 @@ p.bin_ifr = .02; % Seconds
 p.fr_thresh = 500;
 
 % EXPERIMENTAL CONDITIONS
-p.conditions    = {'csNOcs_B', 'csNOcs_C'}; %{'csNOcs', 'csNOcs_B', 'NOcsNOcs', '2csNOcs', 'allcs', 'csNOcs_B'};
-p.stimTypes     = {'step'}; % 'sine', 'step'
+p.conditions    = {'csNOcs_C'}; %{'csNOcs', 'csNOcs_B', 'NOcsNOcs', '2csNOcs', 'allcs', 'csNOcs_B', 'csNOcs_C'};
+p.stimTypes     = {'sine'}; % 'sine', 'step'
 p.expmtFreqs    = [.5]; % .5, 1, 2, 5
-p.stepTypes     = {'50msAccel_200msVel', '1000', '500', '250', '150' '80'}; % '50msAccel_200msVel', '1000', '500', '250', '150' '80'
-p.learningTypes = {'x2', 'x0'};%, 'x0', 'OKR', 'VOR'};
+p.stepTypes     = {'500'}; % '50msAccel_200msVel', '1000', '500', '250', '150' '80'
+p.learningTypes = {'Pursuit'};%, 'x0', 'Pursuit', 'VOR'};
 
 % PLOTTING CHOICES
-p.plots = [0, ... % Sanity Check Plot
+p.plots = [1, ... % Sanity Check Plot
            0, ... % All Channels Plot
            1, ... % Final Average plots
            0, ... % Individual Example Plots
@@ -119,7 +119,7 @@ for stimType_indx = 1:length(p.stimTypes)
                     
                     %% Run Analysis
                     [csInfo, csInfo_good, z] = mainCFanalysis(segData, tempTable(i,:), p, ...
-                                                    p.stepTypes{expmtFreq_indx}, ...
+                                                    p.expmtFreqs(expmtFreq_indx), ...
                                                     p.learningTypes{learningtype_indx}, ...
                                                     p.conditions{condition_indx});
                                                     %p.stepTypes{expmtFreq_indx}, ...

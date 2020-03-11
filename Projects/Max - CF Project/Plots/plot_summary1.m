@@ -7,8 +7,11 @@ Summary = tight_subplot(3,1,[.03 .03],[.03 .03],[.03 .03]);
 
 %% FIG A: Stim, and CSs
 axes(Summary(1))
-histogram([csInfo.timeRel2Cycle_sec], linspace(0,max(z.cycleTime_b), 50), 'FaceColor', 'k'); hold on
-histogram([csInfo_good.timeRel2Cycle_sec], linspace(0,max(z.cycleTime_b), 50), 'FaceColor', 'c');
+histogram([csInfo.timeRel2Cycle_sec], linspace(0,z.cycleLen_sec, 51), 'FaceColor', 'k', 'Normalization','probability'); hold on
+eee = [csInfo_good.timeRel2Cycle_sec]; % hack b/c matlab is dumb
+ddd = nan(length([csInfo.timeRel2Cycle_sec]) - length(eee),1); % hack b/c matlab is dumb
+ddd = [ddd; eee']; % hack b/c matlab is dumb
+histogram(ddd, linspace(0,z.cycleLen_sec, 51), 'FaceColor', 'c', 'Normalization','probability');
 
 yyaxis right
 plot(z.cycleTime_b, nanmean(z.cycleMat_tVel), 'Color', [0.8500, 0.3250, 0.0980], 'LineWidth', 2); hold on
@@ -47,6 +50,7 @@ legendText = ['Average Cycle ss fr Difference | ', num2str(size(csInfo_good, 2))
 try
     alldiffsMean = nanmean([csInfo_good.chunkDiff],2);
     color = [0.4940, 0.1840, 0.5560];
+    z.chunkTime = linspace(0, z.comparisonWindowSize, size(csInfo_good(1).chunkDiff, 1));
     plot(z.chunkTime, alldiffsMean, 'Color', color, 'LineWidth', 1);
     xlim([0 max(z.chunkTime)])
 catch

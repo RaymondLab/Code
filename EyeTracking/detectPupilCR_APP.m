@@ -59,37 +59,25 @@
 % Copyright (c) 2005
 % All Rights Reserved.
 
-function [pupil, cr1, cr2, points, edgeThresh, crx, cry, epx, epy, epx2, epy2] = detectPupilCR_APP( app, side, img, plotOn, crxPrevious, cryPrevious, varargin)
-
+function [trackParams, frameData, plotData] = detectPupilCR_APP( app, side, img, crxPrevious, cryPrevious, trackParams)
 
 %% Process imputs
-p = inputParser;
-addOptional(p,'pupilStart',[]);
-addParamValue(p,'radiiPupil',60);
-addParamValue(p,'edgeThresh',30);
-addParamValue(p,'MinFeatures',.6,@(x)x<1||x>0)
-addParamValue(p,'radiiCR',[2 8]);
-addParamValue(p,'CRthresh',3);
-addParamValue(p,'CRfilter',3);
-addParamValue(p,'PlotOn',0);
-addParamValue(p,'DebugOn',0);
-
-parse(p,varargin{:})
-
-pupilStart = p.Results.pupilStart;
-radiiPupil = [app.RadiusPupilEditField.Value app.RadiusPupilEditField_2.Value];
-
-edgeThresh = p.Results.edgeThresh;
-minfeatures = app.MinimumFeaturesEditField.Value;;
-
-radiiCR = [app.RadiusCornealReflectionEditField.Value app.radiiCR1EditField_2.Value];
-gridthresh = p.Results.CRthresh;
-fltr4LM_R = p.Results.CRfilter;
-
-%plotOn = p.Results.PlotOn;
-debugOn = p.Results.DebugOn;
-
+gridthresh = trackParams.CRthresh;
+fltr4LM_R = trackParams.CRfilter;
 img = double(img);
+
+%% Preallocate
+plotData.epx = nan;
+plotData.epx2 = nan;
+plotData.epy = nan;
+plotData.epy2 = nan;
+plotData.points = nan;
+
+frameData.crx = [nan; nan];
+frameData.cry = [nan; nan];
+frameData.cr1 = [nan, nan, nan];
+frameData.cr2 = [nan, nan, nan];
+frameData.pupil = [nan, nan, nan, nan, nan];
 
 %% Find corneal reflections
 
@@ -97,13 +85,13 @@ img = double(img);
 try 
     if ~isempty(crxPrevious) && ~any(isnan(crxPrevious))
 
-        TOP     = max( min(cryPrevious) - max(radiiCR)*2, 1 );
-        BOTTOM  = min( max(cryPrevious) + max(radiiCR)*2, size(img,1) );
-        LEFT    = max( min(crxPrevious) - max(radiiCR)*2, 1 );
-        RIGHT   = min( max(crxPrevious) + max(radiiCR)*2, size(img,2) );
+        TOP     = max( min(cryPrevious) - max(trackParams.radiiCR)*2, 1 );
+        BOTTOM  = min( max(cryPrevious) + max(trackParams.radiiCR)*2, size(img,1) );
+        LEFT    = max( min(crxPrevious) - max(trackParams.radiiCR)*2, 1 );
+        RIGHT   = min( max(crxPrevious) + max(trackParams.radiiCR)*2, size(img,2) );
 
         newImg = img(TOP:BOTTOM, LEFT:RIGHT);
-        [~, circen, crr] = CircularHough_Grd(newImg,radiiCR ,gridthresh,fltr4LM_R,1);
+        [~, circen, crr] = CircularHough_Grd(newImg,trackParams.radiiCR ,gridthresh,fltr4LM_R,1);
 
         %DEBUG FIGURES
 %         figure(3); clf; hold on
@@ -135,10 +123,10 @@ try
             end
         end
     else
-        [A, circen, crr] = CircularHough_Grd(img,radiiCR ,gridthresh,fltr4LM_R,1);
+        [A, circen, crr] = CircularHough_Grd(img,trackParams.radiiCR ,gridthresh,fltr4LM_R,1);
     end
 catch
-    [A, circen, crr] = CircularHough_Grd(img,radiiCR ,gridthresh,fltr4LM_R,1);
+    [A, circen, crr] = CircularHough_Grd(img,trackParams.radiiCR ,gridthresh,fltr4LM_R,1);
 end
 
 maxvals = diag(img(round(circen(:,2)),round(circen(:,1))));
@@ -209,17 +197,19 @@ else
 end
 
 %% Find guess for pupil center using radial symmetry transform
-if isempty(pupilStart) || any(isnan(pupilStart)) || pupilStart(1)==0
+if isempty(trackParams.pupilStart) || any(isnan(trackParams.pupilStart)) || trackParams.pupilStart(1)==0
     alphaFRST = 0.5;           % Sensitivity to radial symmetry
-    imgRadialPupil = Radial_Sym_Transform(img, radiiPupil, alphaFRST);
+    imgRadialPupil = Radial_Sym_Transform(img, trackParams.radiiPupil, alphaFRST);
     [pupilY, pupilX] = find(min(imgRadialPupil(:))==imgRadialPupil);
-    pupilStart = [pupilX pupilY];
+    trackParams.pupilStart = [pupilX pupilY];
 end
 
 %% Detect pupil borders using starburst algorithm
-[epx, epy, edgeThresh] = starburst_pupil_contour_detection(InoCR, pupilStart(1),...
-    pupilStart(2), edgeThresh,round(radiiPupil),minfeatures);
-[~, inliers] = fit_ellipse_ransac(epx(:), epy(:), radiiPupil + [-15 15]);
+[epx, epy, trackParams.edgeThresh] = starburst_pupil_contour_detection(InoCR, trackParams.pupilStart(1),...
+    trackParams.pupilStart(2), trackParams.edgeThresh,round(trackParams.radiiPupil),trackParams.minfeatures);
+[~, inliers] = fit_ellipse_ransac(epx(:), epy(:), trackParams.radiiPupil + [-15 15]);
+%[r, rotated_ellipse] = fit_ellipse_altMethod( epx(:),epy(:),app.UIAxes2_2 );
+
 epx2 = epx(inliers);
 epy2 = epy(inliers);
 
@@ -233,7 +223,7 @@ pupil(5) = -ellipseResult.phi;
 points = [epx2(:), epy2(:)];
 
 %% Plotting
-if plotOn
+if trackParams.plotOn
     
     fig = app.UIAxes2_2;
     color = 'm';
@@ -247,6 +237,7 @@ if plotOn
     plot(fig, cr2(3).*cos(a) + cr2(1), cr2(3).*sin(a)+cr2(2),'c')
     plot(fig, crx(1), cry(1),'+b')
     plot(fig, crx(2), cry(2),'+c')
+    %plot(fig, rotated_ellipse(1,:),rotated_ellipse(2,:),'w' );
     
     % Plot ellipse
     the=linspace(0,2*pi,100);
@@ -261,5 +252,18 @@ if plotOn
     end
     hold(fig, 'off');
 end
+
+%% Add data to frameData object
+plotData.epx = epx;
+plotData.epx2 = epx2;
+plotData.epy = epy;
+plotData.epy2 = epy2;
+plotData.points = points;
+
+frameData.crx = crx;
+frameData.cry = cry;
+frameData.cr1 = cr1;
+frameData.cr2 = cr2;
+frameData.pupil = pupil;
 
 

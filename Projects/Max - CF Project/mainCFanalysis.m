@@ -127,10 +127,13 @@ z.segLength_ss = length(segment_ssfr);
 z.cycleTime_ss = linspace(0, z.cycleLen_e/z.sr_e, length(z.cycleMean_ss));
 [z.ssfr_amp, z.ssfr_phase] = fit_sineWave(segment_ssfr(z.startpt_e:end), z.sr_e, 1/(z.cycleLen_e/z.sr_e));
 
+%% PLOTTING
 
 % PLOT 1: Single File Sanity check
 if p.plots(1)
     plot_singleFileSanityCheck(segData, z, segInfo, segment_ssfr, p, z.cycleMat_ss, z.cycleMean_ss)
+    
+    
 end
 
 % PLOT 2: All Channels
@@ -160,11 +163,11 @@ switch condition
         [csInfo, z] = t2t_2csNOcs(segData(9).data, z.cycleMat_cs, z, whichSpike);
 
     case 'csNOcs_B' % Variable Window
-        window = [.1788 .3129];
+        window = [.3 .5];
         [csInfo, z] = t2t_csNOcs(csInfo, z, window);
         
     case 'csNOcs_C' % Variable Window
-        window = [1.2 1.5];
+        window = [.05 .25];
         [csInfo, z] = t2t_csNOcs(csInfo, z, window);
 
     case 'allcs'

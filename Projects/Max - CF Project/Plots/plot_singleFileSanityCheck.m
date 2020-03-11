@@ -14,8 +14,8 @@ axes(overviewPlot(6));
 plot(z.cycleTime_e, cycleMat_ss'); hold on
 plot(z.cycleTime_e, cycleMean_ss, 'k', 'LineWidth', 5);
 title('Cont. Firing Rate: Cycles');
-stdev = nanstd(segment_ssfr);
 
+stdev = nanstd(segment_ssfr);
 thresh = stdev*5 + nanmean(segment_ssfr);
 mad = nanmedian(abs(segment_ssfr - nanmedian(segment_ssfr)))*20+ nanmedian(segment_ssfr);
 %hline(500)
@@ -31,7 +31,12 @@ plot(z.cycleTime_b, z.cycleMean_tVel, 'r'); hold on
 plot(z.cycleTime_b, z.cycleMean_hVel, 'b');
 yticks([]);
 title('Stim')
-legend('T Vel', 'H Vel')
+vline(mean(xlim), ':k')
+yyaxis right
+[~, ~, ~, d] = fit_sineWave(cycleMean_ss', z.sr_e, 1/(length(cycleMean_ss)/z.sr_e));
+plot(z.cycleTime_e, d+mean(cycleMean_ss));
+ylim([mean(cycleMean_ss)-100 mean(cycleMean_ss)+100])
+legend('T Vel', 'H Vel', 'ssfr sinefit')
 
 axes(overviewPlot(2));
 plot(dattime(recData(10)), recData(10).data)
@@ -73,4 +78,3 @@ legend('T Vel', 'H Vel')
 
 axes(overviewPlot(8));
 polarplot(deg2rad(z.ssfr_phase), z.ssfr_amp, '*k')
-

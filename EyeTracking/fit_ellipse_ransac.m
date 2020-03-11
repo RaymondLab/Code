@@ -85,7 +85,6 @@ while N > ransac_iter || ransac_iter < 100 %% Added && ransac_iter < 100 HP 12/2
         nyi=ny(max_inlier_indices);
     end
     A = [nxi.*nxi; nxi.*nyi; nyi.*nyi; nxi; nyi; ones(1,length(nxi))]';
-    
     [~, ~, va] = svd(A);
     nconic_par = va(:,end);
     nconic_matrix = [nconic_par(1) nconic_par(2)/2 nconic_par(4)/2; 

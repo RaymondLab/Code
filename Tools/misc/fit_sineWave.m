@@ -1,4 +1,4 @@
-function [amp, phase, freq] = fit_sineWave(data, samplerate, freq)
+function [amp, phase, freq, fitTrace] = fit_sineWave(data, samplerate, freq)
 
 
 % set up thing to fit
@@ -35,5 +35,7 @@ vars = [y1 y2 constant];
 [b,~,~,~,stat] = regress(data, vars);
 amp = sqrt(b(1)^2+b(2)^2);
 phase = rad2deg(atan2(b(2), b(1)));
+
+fitTrace = sin(2*pi*freq*segTime + deg2rad(phase))*amp;
 
 end

@@ -31,7 +31,7 @@ function startpt = findstartpt(dat, chanNum, expmtType, freq)
             reference_angle = headVel_angle;
         case 'x2'
             reference_angle = headVel_angle;
-        case 'OKR'
+        case {'OKR', 'Pursuit'}
             reference_angle = drumVel_angle;
         case 'VORD'
             reference_angle = headVel_angle;

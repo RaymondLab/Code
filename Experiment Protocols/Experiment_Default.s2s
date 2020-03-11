@@ -162,51 +162,127 @@ Func ToolbarIdle%()
 End
 
 '--------------------------------------------------------------------------------
-'Configure expmt settings window
 '--------------------------------------------------------------------------------
+' Configure expmt settings window
+'--------------------------------------------------------------------------------
+'--------------------------------------------------------------------------------
+
 Func ToolbarConfigExpmt%()
-  DlgCreate("Experiment settings");  'Start new dialog
-  DlgInteger(1,"Number of run-test blocks",0,100,0,0,1);
-  DlgInteger(2,"Number of tests per block",1,100,0,0,1);    'set to 0 if not using Chair
-  DlgReal(3,"Run length (s)",0,5000);
-  DlgReal(4,"Test length (s)",0,5000);
-  DlgList(5,"Expmt mode", "habit|x0|x2|ipsi|contra|steps");
-  DlgInteger(6,"Light flash on?)",0,1,0,0,"0|1");
-  DlgReal(7,"Test stim and bilat (0 or 1)",0,1);
+var movementType;
+var learningType;
 
-  DlgShow(nBlocks%, nTestreps%, runLength, testLength, expmtMode, flashon%,testStim);
+var stimType;
+var lightType;
+var optoType;
+var gp%;
 
-  docase
-  case expmtMode = 0 then     'habit
-      sinPhDrum := 90;
-      sinPhChair := 90;
-      sinAmpChair := 10;
-      sinAmpDrum := 0;
-  case expmtMode = 1 then     'x0
-      sinPhDrum := 90;
-      sinPhChair := 90;
-      sinAmpChair := 10;
-      sinAmpDrum := 10;
-  case expmtMode = 2 then     'x2
-      sinPhDrum := -90;
-      sinPhChair := 90;
-      sinAmpChair := 10;
-      sinAmpDrum := 10;
-  case expmtMode = 3  then     'ipsi
-      sinPhChair := 90;
-      sinAmpDrum := 0;
-  case expmtMode = 4 then      'contra
-      sinPhChair := -90;
-      sinAmpDrum := 0;
-  case expmtMode = 5 then      'steps
-      StepConfigWindow%();
-  endcase;
+DlgCreate("Experiment Settings", 0, 0, 50);  'Start new dialog
+DlgInteger(1,"Number of test/train blocks",0,100,0,0,1);
+DlgInteger(2,"Number of tests per block",1,100,0,0,1);
+DlgReal(3,"Train length (s)",0,5000);
+DlgReal(4,"Test length (s)",0,5000);
+DlgList(5,"Movement Type", "sine|step");
+DlgList(6,"Learning Type", "x2 (gain up)|x0 (gain down)|OKR (drum only)|habituation (chair only)");
+DlgList(7,"Opto During Training", "none|ipsi|contra");
+DlgList(8,"Light During Training", "Always On|none|match Opto");
+
+DlgShow(nBlocks%, nTestreps%, runLength, testLength, movementType, learningType, optoType, lightType);
+
+' DlgCreate("Experiment Settings", 0, 0, 50);  'Start new dialog
+' DlgInteger(2,"Number of test/train blocks",0,100,0,0,1);
+' DlgInteger(3,"Number of test/train blocks",0,100,0,0,1);
+' DlgInteger(5,"Number of test/train blocks",0,100,0,0,1);
+' DlgInteger(6,"Number of test/train blocks",0,100,0,0,1);
+' gp% := DlgGroup("CHAIR",1,1,48,3);
+' gp% := DlgGroup("DRUM",1,4,48,3);
+' DlgShow(nBlocks%, stimType, lightType, gp%, movementType, learningType);
+'--------------------------------------------------------------------------------
+' MOVEMENT AND LEARNING TYPES
+'--------------------------------------------------------------------------------
+docase
+  ' SINE
+  case movementType = 0 then
+
+    docase
+      ' SINE | x2
+      case learningType = 0 then
+        sinPhDrum := -90;
+        sinPhChair := 90;
+        sinAmpChair := 10;
+        sinAmpDrum := 10;
+
+      ' SINE | x0
+      case learningType = 1 then
+        sinPhDrum := 90;
+        sinPhChair := 90;
+        sinAmpChair := 10;
+        sinAmpDrum := 10;
+
+      ' SINE | drum only
+      case learningType = 2 then
+        sinPhDrum := 90;
+        sinPhChair := 90;
+        sinAmpChair := 0;
+        sinAmpDrum := 10;
+
+      ' SINE | chair only
+      case learningType = 3 then
+          sinPhDrum := 90;
+          sinPhChair := 90;
+          sinAmpChair := 10;
+          sinAmpDrum := 0;
 
 
-  if testStim > 0 then
-      ToolbarPulseConfig%()
-  endif;
+    endcase;
+    ToolbarSineConfig%()
 
-  SetSequencerValues();
-  Return(1);
+  ' STEP
+  case movementType = 1 then
+
+    docase
+      ' STEP | x2
+      case learningType = 0 then
+        step_AmpChair := 10;
+        step_AmpDrum := -10;
+
+      ' STEP | x0
+      case learningType = 1 then
+        step_AmpChair := 10;
+        step_AmpDrum := 10;
+
+      ' STEP | drum only
+      case learningType = 2 then
+        step_AmpChair := 0;
+        step_AmpDrum := 10;
+
+      ' STEP | chair only
+      case learningType = 3 then
+        step_AmpChair := 10;
+        step_AmpDrum := 0;
+
+    endcase;
+    StepConfigWindow%()
+
+endcase;
+
+'--------------------------------------------------------------------------------
+' STIM TYPES
+'--------------------------------------------------------------------------------
+docase
+  ' none
+  case optoType = 0 then
+    stepStim := 0;
+
+  ' ipsi
+  case optoType = 1 then
+    ToolbarPulseConfig%()
+
+  ' contra
+  case optoType = 2 then
+    ToolbarPulseConfig%()
+
+endcase;
+
+SetSequencerValues();
+Return(1);
 End

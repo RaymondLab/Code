@@ -191,3 +191,32 @@ ylabel('Mag Chan2 Velocity')
 
 print(gcf, fullfile(cd, 'Linearity_Best_Desacced.pdf'),'-dpdf');
 savefig('Linearity_Best_Desacced.fig');
+
+%% Figure D: Plot Cycle Averages of Video, Mag1, and Mag2 Velocity
+figure(); hold on
+% Get MAtricies
+[~, mag1VelMean] = VOR_breakTrace(1000, 250, vars.mag1_vel_aligned*vars.scaleCh1);
+[~, mag2VelMean] = VOR_breakTrace(1000, 250, vars.mag2_vel_aligned*vars.scaleCh2);
+[~, vidVelMean] = VOR_breakTrace(1000, 250, vars.vidV_aligned);
+plot(mag1VelMean, 'b');
+plot(mag2VelMean, 'c');
+plot(vidVelMean, 'r');
+hline(0,':k');
+vline(500,':k');
+ylim([-15 15]);
+xlabel('ms')
+title('Velocty Cycle Averages (Scaled and Aligned)')
+legend({'Mag1', 'Mag2', 'Video'});
+
+print(gcf, fullfile(cd, 'Velocity Cycle Averages.pdf'),'-dpdf');
+savefig('Velocity Cycle Averages.fig');
+
+disp('apple')
+
+
+
+
+
+
+
+
