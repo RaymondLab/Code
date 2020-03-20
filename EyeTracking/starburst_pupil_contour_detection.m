@@ -53,14 +53,17 @@ while edge_thresh > min_edge_thresh && loop_count <= 10
         [epx, epy, epd] = locate_edge_points(I, cx, cy, dis, angle_step, 0, 2*pi, edge_thresh);
         if length(epx) < minimum_candidate_features
             edge_thresh = edge_thresh - 1;
+            
         end
     end
 %     if edge_thresh <= min_edge_thresh
 %         break;
 %     end
-
+    if edge_thresh < 50
+        disp(edge_thresh)
+    end
     angle_normal = atan2(cy-epy, cx-epx);
-
+    
     for i=1:length(epx)
         [tepx, tepy, ~] = locate_edge_points(I, epx(i), epy(i), dis, angle_step*(edge_thresh/epd(i)), angle_normal(i), angle_spread, edge_thresh);
         epx = [epx tepx];

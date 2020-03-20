@@ -205,8 +205,9 @@ if isempty(trackParams.pupilStart) || any(isnan(trackParams.pupilStart)) || trac
 end
 
 %% Detect pupil borders using starburst algorithm
-[epx, epy, trackParams.edgeThresh] = starburst_pupil_contour_detection(InoCR, trackParams.pupilStart(1),...
+[epx, epy, ~] = starburst_pupil_contour_detection(InoCR, trackParams.pupilStart(1),...
     trackParams.pupilStart(2), trackParams.edgeThresh,round(trackParams.radiiPupil),trackParams.minfeatures);
+
 [~, inliers] = fit_ellipse_ransac(epx(:), epy(:), trackParams.radiiPupil + [-15 15]);
 %[r, rotated_ellipse] = fit_ellipse_altMethod( epx(:),epy(:),app.UIAxes2_2 );
 

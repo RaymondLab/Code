@@ -32,9 +32,10 @@ vars.vidResults.pupil2 = vars.vidResults_cam2.pupil;
 vars.vidResults.cr2a = vars.vidResults_cam2.cra;
 vars.vidResults.cr2b = vars.vidResults_cam2.crb;
 
-
 [vars.vidH, vars.vidV, ~] = calceyeangle(vars.vidResults);
-vars.percent_frames_missed = sum(int64(isnan(vars.vidH)))*100/length(vars.vidH);
+
+vars.vidResults.percent_frames_missed = sum(int64(isnan(vars.vidH)))*100/length(vars.vidH);
+
 if app.Camera2TimestampsCheckBox.Value
     % Camera 2 (default)
     vars.tvid = vars.vidResults.time2;
@@ -46,7 +47,6 @@ vars.tvid = vars.tvid-vars.tvid(1);
 [vars.tscale, ~] = fminsearchbnd(@(x)vidTimeFcn_APP(app, vars.tvid,vars.vidH,freq,x),1,.7, 1.4);
 vars.tvid = vars.tvid/vars.tscale;%.995;
 vars.samplerate_Video = 1/mean(diff(vars.tvid));
-
 
 %% Select Proper Segment
 vars.lightpulse = vars.magnetData(end).data;
@@ -87,7 +87,6 @@ title('Magnet Channel 2 (Unscaled!)')
 [vars.sacLoc_vid , ~, vars.vidVel]  = desaccadeVel_A(vars.vidH_upsample,vars.samplerate_Magnet, 1, windowPre, windowPost, threshVid, minDataLength);
 title('Video')
 
-
 %% SINE FIT FOR MAGET AND VIDEO
 y1 = sin(2*pi*freq*vars.tmag(:));
 y2 = cos(2*pi*freq*vars.tmag(:));
@@ -124,7 +123,6 @@ vidPhase = rad2deg(atan2(vars.bVid(2), vars.bVid(1)));
 r2vid = stat(1);
 vars.r2vid = r2vid;
 
-
 %% SAVE SCALE FACTOR
 scaleCh1 = vidAmp/mag1Amp * (2*(abs(mag1Phase)<90)-1);
 vars.scaleCh1 = scaleCh1;
@@ -135,7 +133,6 @@ fprintf('Chan 1: Scale = %.2f\n',vars.scaleCh1)
 fprintf('Chan 1: Fit Amp = %.2f\n',vars.mag1Amp)
 fprintf('Chan 1: Fit r^2 = %.2f\n',r2mag1)
 fprintf('Chan 1: Saccade = %.2f\n\n',mean(vars.sacLoc_mag1))
-
 
 fprintf('Chan 2: Scale = %.2f\n',vars.scaleCh2)
 fprintf('Chan 2: Fit Amp = %.2f\n',vars.mag2Amp)

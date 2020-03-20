@@ -91,6 +91,10 @@ else
     
 end
 vars.lag = lag;
+vars.mag1_pos_lag = maxLoc(1);
+vars.mag1_vel_lag = maxLoc(2);
+vars.mag2_pos_lag = maxLoc(3);
+vars.mag2_vel_lag = maxLoc(4);
 vars.keep = ~vars.mag1_sac & ~vars.mag2_sac & ~vars.vid_sac;
 keep = vars.keep;
 
@@ -126,97 +130,130 @@ print(gcf, fullfile(cd, 'Linearity_allShifts.pdf'),'-dpdf');
 savefig('Linearity_allShifts.fig');
 
 %% Figure B: Linearity of Best Alignmnet, ALL DATA
-figure();
-plotb = tight_subplot(2,2,[.05 .025],[.05 .025],[.03 .01]); 
-allData = logical(ones(length(keep), 1));
-
-axes(plotb(1)); hold on
-Rsq = linearityScatterPlot(vars.mag1_aligned, vars.vid_aligned, allData, c);
-title(['ALL DATA: r^2: ', num2str(Rsq)])
-xlabel('Video Position')
-ylabel('Mag Chan1 Position')
-
-axes(plotb(2));
-Rsq = linearityScatterPlot(vars.mag1_vel_aligned, vars.vidV_aligned, allData, c);
-title(['r^2: ', num2str(Rsq)])
-xlabel('Video Velocity')
-ylabel('Mag Chan1 Velocity')
-
-
-axes(plotb(3));
-Rsq = linearityScatterPlot(vars.mag2_aligned, vars.vid_aligned, allData, c);
-title(['r^2: ', num2str(Rsq)])
-xlabel('Video Position')
-ylabel('Mag Chan2 Position')
-
-
-axes(plotb(4));
-Rsq = linearityScatterPlot(vars.mag2_vel_aligned, vars.vidV_aligned, allData, c);
-title(['r^2: ', num2str(Rsq)])
-xlabel('Video Velocity')
-ylabel('Mag Chan2 Velocity')
-
-print(gcf, fullfile(cd, 'Linearity_Best_AllData.pdf'),'-dpdf');
-savefig('Linearity_Best_AllData.fig');
+% figure();
+% plotb = tight_subplot(2,2,[.05 .025],[.05 .025],[.03 .01]); 
+% allData = logical(ones(length(keep), 1));
+% 
+% axes(plotb(1)); hold on
+% Rsq = linearityScatterPlot(vars.mag1_aligned, vars.vid_aligned, allData, c);
+% title(['ALL DATA: r^2: ', num2str(Rsq)])
+% ylabel('Mag Chan1 Position')
+% 
+% axes(plotb(2));
+% Rsq = linearityScatterPlot(vars.mag1_vel_aligned, vars.vidV_aligned, allData, c);
+% title(['r^2: ', num2str(Rsq)])
+% ylabel('Mag Chan1 Velocity')
+% 
+% 
+% axes(plotb(3));
+% Rsq = linearityScatterPlot(vars.mag2_aligned, vars.vid_aligned, allData, c);
+% title(['r^2: ', num2str(Rsq)])
+% xlabel('Video Position')
+% ylabel('Mag Chan2 Position')
+% 
+% 
+% axes(plotb(4));
+% Rsq = linearityScatterPlot(vars.mag2_vel_aligned, vars.vidV_aligned, allData, c);
+% title(['r^2: ', num2str(Rsq)])
+% xlabel('Video Velocity')
+% ylabel('Mag Chan2 Velocity')
+% 
+% print(gcf, fullfile(cd, 'Linearity_Best_AllData.pdf'),'-dpdf');
+% savefig('Linearity_Best_AllData.fig');
 
 %% Figure C: Linearity of Best Alignmnet, DESACCADED
-figure();
-plotc = tight_subplot(2,2,[.05 .025],[.05 .025],[.03 .01]); 
+% figure();
+% plotc = tight_subplot(2,2,[.05 .025],[.05 .025],[.03 .01]); 
+% 
+% axes(plotc(1)); hold on
+% Rsq = linearityScatterPlot(vars.mag1_aligned, vars.vid_aligned, keep, c);
+% title(['DESACCADED: r^2: ', num2str(Rsq)])
+% ylabel('Mag Chan1 Position')
+% 
+% 
+% axes(plotc(2));
+% Rsq = linearityScatterPlot(vars.mag1_vel_aligned, vars.vidV_aligned, keep, c);
+% title(['r^2: ', num2str(Rsq)])
+% ylabel('Mag Chan1 Velocity')
+% 
+% axes(plotc(3));
+% Rsq = linearityScatterPlot(vars.mag2_aligned, vars.vid_aligned, keep, c);
+% title(['r^2: ', num2str(Rsq)])
+% xlabel('Video Position')
+% ylabel('Mag Chan2 Position')
+% 
+% axes(plotc(4));
+% Rsq = linearityScatterPlot(vars.mag2_vel_aligned, vars.vidV_aligned, keep, c);
+% title(['r^2: ', num2str(Rsq)])
+% xlabel('Video Velocity')
+% ylabel('Mag Chan2 Velocity')
+% 
+% 
+% print(gcf, fullfile(cd, 'Linearity_Best_Desacced.pdf'),'-dpdf');
+% savefig('Linearity_Best_Desacced.fig');
 
-axes(plotc(1)); hold on
-Rsq = linearityScatterPlot(vars.mag1_aligned, vars.vid_aligned, keep, c);
-title(['DESACCADED: r^2: ', num2str(Rsq)])
-xlabel('Video Position')
-ylabel('Mag Chan1 Position')
+%% Linearity Calculation
 
+% Sac Start and End Times
+sacEndPoints = diff(keep);
+sacStarts = find(sacEndPoints == 1);
+sacStops = find(sacEndPoints == -1);
 
-axes(plotc(2));
-Rsq = linearityScatterPlot(vars.mag1_vel_aligned, vars.vidV_aligned, keep, c);
-title(['r^2: ', num2str(Rsq)])
-xlabel('Video Velocity')
-ylabel('Mag Chan1 Velocity')
+if sacStarts(1) > sacStops(1)
+    sacStarts = [0; sacStarts];
+elseif sacStarts(end) > sacStops(end)
+    sacStops = [sacStops; length(keep)];
+elseif isempty(sacStarts) && isempty(sacStops)
+    disp('No saccades: Cannot calculate piecewise linearity')
+    return
+end
 
-axes(plotc(3));
-Rsq = linearityScatterPlot(vars.mag2_aligned, vars.vid_aligned, keep, c);
-title(['r^2: ', num2str(Rsq)])
-xlabel('Video Position')
-ylabel('Mag Chan2 Position')
+%Whole segments
+mag1Pos_all = measureLinearity(vars.mag1_aligned(keep), vars.vid_aligned(keep));
+mag1Vel_all = measureLinearity(vars.mag1_vel_aligned(keep), vars.vidV_aligned(keep));
+mag2Pos_all = measureLinearity(vars.mag2_aligned(keep), vars.vid_aligned(keep));
+mag2Vel_all = measureLinearity(vars.mag2_vel_aligned(keep), vars.vidV_aligned(keep));
 
-axes(plotc(4));
-Rsq = linearityScatterPlot(vars.mag2_vel_aligned, vars.vidV_aligned, keep, c);
-title(['r^2: ', num2str(Rsq)])
-xlabel('Video Velocity')
-ylabel('Mag Chan2 Velocity')
-
-
-print(gcf, fullfile(cd, 'Linearity_Best_Desacced.pdf'),'-dpdf');
-savefig('Linearity_Best_Desacced.fig');
-
-%% Figure D: Plot Cycle Averages of Video, Mag1, and Mag2 Velocity
-figure(); hold on
-% Get MAtricies
-[~, mag1VelMean] = VOR_breakTrace(1000, 250, vars.mag1_vel_aligned*vars.scaleCh1);
-[~, mag2VelMean] = VOR_breakTrace(1000, 250, vars.mag2_vel_aligned*vars.scaleCh2);
-[~, vidVelMean] = VOR_breakTrace(1000, 250, vars.vidV_aligned);
-plot(mag1VelMean, 'b');
-plot(mag2VelMean, 'c');
-plot(vidVelMean, 'r');
-hline(0,':k');
-vline(500,':k');
-ylim([-15 15]);
-xlabel('ms')
-title('Velocty Cycle Averages (Scaled and Aligned)')
-legend({'Mag1', 'Mag2', 'Video'});
-
-print(gcf, fullfile(cd, 'Velocity Cycle Averages.pdf'),'-dpdf');
-savefig('Velocity Cycle Averages.fig');
-
+% non-saccades, split up into chunks
+for i = 1:length(sacStarts)
+    chunk = sacStarts(i):sacStops(i);
+    mag1Pos_chunks(i) = measureLinearity(vars.mag1_aligned(chunk), vars.vid_aligned(chunk));
+    mag1Vel_chunks(i) = measureLinearity(vars.mag1_vel_aligned(chunk), vars.vidV_aligned(chunk));
+    mag2Pos_chunks(i) = measureLinearity(vars.mag2_aligned(chunk), vars.vid_aligned(chunk));
+    mag2Vel_chunks(i) = measureLinearity(vars.mag2_vel_aligned(chunk), vars.vidV_aligned(chunk));
+end
 disp('apple')
 
+%% Linearity PLots 2.0
+% PLOT_linearityComparison(mag1Pos_all, mag1Pos_chunks, vars.vid_aligned, vars.mag1_aligned, keep, c, sacStarts, sacStops)
+% print(gcf, fullfile(cd, 'Linearity_mag1_pos.pdf'),'-dpdf');
+% savefig('Linearity_mag1_pos.fig');
 
+% PLOT_linearityComparison(mag1Vel_all, mag1Vel_chunks, vars.vidV_aligned, vars.mag1_vel_aligned, keep, c, sacStarts, sacStops)
+% print(gcf, fullfile(cd, 'Linearity_mag1_vel.pdf'),'-dpdf');
+% savefig('Linearity_mag1_vel.fig');
 
+% PLOT_linearityComparison(mag2Pos_all, mag2Pos_chunks, vars.vid_aligned, vars.mag2_aligned, keep, c, sacStarts, sacStops)
+% print(gcf, fullfile(cd, 'Linearity_mag2_pos.pdf'),'-dpdf');
+% savefig('Linearity_mag2_pos.fig');
 
+% PLOT_linearityComparison(mag2Vel_all, mag2Vel_chunks, vars.vidV_aligned, vars.mag2_vel_aligned, keep, c, sacStarts, sacStops)
+% print(gcf, fullfile(cd, 'Linearity_mag2_vel.pdf'),'-dpdf');
+% savefig('Linearity_mag2_vel.fig');
 
+%% Linearity Plots 3.0
+% PLOT_linearityComparison2(vars.mag1_aligned, vars.vid_aligned, sacStarts, sacStops, keep, mag1Pos_all, mag1Pos_chunks);
+% print(gcf, fullfile(cd, 'Linearity2_mag1_pos.pdf'),'-dpdf');
+% savefig('Linearity2_mag1_pos2.fig');
 
+% PLOT_linearityComparison2(vars.mag1_vel_aligned, vars.vidV_aligned, sacStarts, sacStops, keep, mag1Vel_all, mag1Vel_chunks);
+% print(gcf, fullfile(cd, 'Linearity2_mag1_vel.pdf'),'-dpdf');
+% savefig('Linearity2_mag1_vel.fig');
 
+% PLOT_linearityComparison2(vars.mag2_aligned, vars.vid_aligned, sacStarts, sacStops, keep, mag2Pos_all, mag2Pos_chunks);
+% print(gcf, fullfile(cd, 'Linearity2_mag2_pos.pdf'),'-dpdf');
+% savefig('Linearity2_mag2_pos.fig');
 
+% PLOT_linearityComparison2(vars.mag2_vel_aligned, vars.vidV_aligned, sacStarts, sacStops, keep, mag2Vel_all, mag2Vel_chunks);
+% print(gcf, fullfile(cd, 'Linearity2_mag2_vel.pdf'),'-dpdf');
+% savefig('Linearity2_mag2_vel.fig');

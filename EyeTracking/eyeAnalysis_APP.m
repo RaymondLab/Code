@@ -58,12 +58,19 @@ if n ~= n_images
 end
 warning off
 
-frameData(n).crx = nan;
-frameData(n).cry = 0;
-frameData(n).cr1 = 0;
-frameData(n).cr2 = 0;
-frameData(n).pupil = 0;
+frameData(n).crx = [nan; nan];
+frameData(n).cry = [nan; nan];
+frameData(n).cr1 = [nan, nan, nan];
+frameData(n).cr2 = [nan, nan, nan];
+frameData(n).pupil = [nan, nan, nan, nan, nan]; 
 
+for i = 1:n
+    frameData(i).crx = [nan; nan];
+    frameData(i).cry = [nan; nan];
+    frameData(i).cr1 = [nan, nan, nan];
+    frameData(i).cr2 = [nan, nan, nan];
+    frameData(i).pupil = [nan, nan, nan, nan, nan]; 
+end
 pupil = NaN(n,5);
 CRa = NaN(n,3);
 CRb = NaN(n,3);
@@ -111,7 +118,9 @@ for i = 1:n-1
     catch msgid
         fprintf('Error in cam 1 img %i\n',i)
         msgid.message
-        edgeThresh = 35;
+        trackParams.edgeThresh = 35;
+        %crx = frameData(find(sum(isnan([frameData.crx]),1), 1)-1).crx;
+        %cry = frameData(find(sum(isnan([frameData.cry]),1), 1)-1).cry;
     end
     
     %% Plotting
@@ -169,9 +178,28 @@ end
 toc
 
 %% Store results
-results.pupil = frameData(i).pupil;
-results.cra = CRa;
-results.cr1b = CRb;
+pupil = [frameData.pupil];
+cr1 = [frameData.cr1];
+cr2 = [frameData.cr2];
+
+results.pupil(:,1) = pupil(1:5:end);
+results.pupil(:,2) = pupil(2:5:end);
+results.pupil(:,3) = pupil(3:5:end);
+results.pupil(:,4) = pupil(4:5:end);
+results.pupil(:,5) = pupil(5:5:end);
+
+results.cra(:,1) = cr1(1:3:end);
+results.cra(:,2) = cr1(2:3:end);
+results.cra(:,3) = cr1(3:3:end);
+
+results.crb(:,1) = cr2(1:3:end);
+results.crb(:,2) = cr2(2:3:end);
+results.crb(:,3) = cr2(3:3:end);
+
+%% Save Data
+save(['videoresults_cam', trackParams.cam, '.mat'],'results')
+fprintf('\nResults saved\n')
+warning on
 
 %% Plot Summary
 A = figure('units','normalized','outerposition',[0 0 1 1]); clf
@@ -179,15 +207,9 @@ A = figure('units','normalized','outerposition',[0 0 1 1]); clf
 TrackSumFig = tight_subplot(2,1,[.01 .025],[.025 .025],[.03 .01]);
 axes(TrackSumFig(1));
 
-pupil = vec2mat([frameData.pupil],5);
-plot( results.time1(1:end), pupil(:,1),'r-');hold on
-
-cr1 = vec2mat([frameData.cr1],3);
-plot( results.time1(1:end), cr1(:,1),'b-');
-
-cr2 = vec2mat([frameData.cr2],3);
-plot( results.time2(1:end), cr2(:,1),'c-');
-
+plot( results.time1(1:end), pupil(1:5:end),'r-');hold on
+plot( results.time1(1:end), cr1(1:3:end),'b-');
+plot( results.time2(1:end), cr2(1:3:end),'c-');
 xticks([])
 box off
 xlim( [results.time1(1+1) results.time1(end-1)]);
@@ -196,8 +218,8 @@ ylabel( 'Horiz Pos (pix)')
 
 axes(TrackSumFig(2));
 plot( results.time1(1:end),max(pupil(:,3:4),[],2),'r-'); hold on
-plot( results.time1(1:end),cr1(:,3),'b-');
-plot( results.time2(1:end),cr2(:,3),'c-');  
+plot( results.time1(1:end),cr1(3:3:end),'b-');
+plot( results.time2(1:end),cr2(3:3:end),'c-');  
 box off
 legend({'Cam1 - Pupil' 'Cam2 - Pupil', 'Cam1 - Left CR', 'Cam2 - Right CR'})
 xlim( [results.time1(1) results.time1(end)]);
@@ -211,8 +233,5 @@ print(A, fullfile(cd, ['Summary_EyeTracking_Cam' num2str(trackParams.cam), '.pdf
 savefig(['Summary_EyeTracking_Cam' num2str(trackParams.cam), '.fig'])
 
 
-%% Save Data
-save(['videoresults_cam', trackParams.cam, '.mat'],'results')
-fprintf('\nResults saved\n')
-warning on
+
 
