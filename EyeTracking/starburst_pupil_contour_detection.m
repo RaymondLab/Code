@@ -59,9 +59,9 @@ while edge_thresh > min_edge_thresh && loop_count <= 10
 %     if edge_thresh <= min_edge_thresh
 %         break;
 %     end
-    if edge_thresh < 50
-        disp(edge_thresh)
-    end
+%     if edge_thresh < 50
+%         disp(edge_thresh)
+%     end
     angle_normal = atan2(cy-epy, cx-epx);
     
     for i=1:length(epx)

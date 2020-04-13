@@ -59,11 +59,9 @@
 % Copyright (c) 2005
 % All Rights Reserved.
 
-function [trackParams, frameData, plotData] = detectPupilCR_APP( app, side, img, crxPrevious, cryPrevious, trackParams)
+function [trackParams, newFrame, plotData] = detectPupilCR_APP( app, img, referenceFrame, newFrame, trackParams)
 
 %% Process imputs
-gridthresh = trackParams.CRthresh;
-fltr4LM_R = trackParams.CRfilter;
 img = double(img);
 
 %% Preallocate
@@ -73,25 +71,19 @@ plotData.epy = nan;
 plotData.epy2 = nan;
 plotData.points = nan;
 
-frameData.crx = [nan; nan];
-frameData.cry = [nan; nan];
-frameData.cr1 = [nan, nan, nan];
-frameData.cr2 = [nan, nan, nan];
-frameData.pupil = [nan, nan, nan, nan, nan];
-
 %% Find corneal reflections
 
 % only search through portion of image, Corneal reflections shouldn't move
 try 
-    if ~isempty(crxPrevious) && ~any(isnan(crxPrevious))
+    if ~isempty([referenceFrame.cr1_x,referenceFrame.cr2_x]) && ~any(isnan([referenceFrame.cr1_x,referenceFrame.cr2_x]))
 
-        TOP     = max( min(cryPrevious) - max(trackParams.radiiCR)*2, 1 );
-        BOTTOM  = min( max(cryPrevious) + max(trackParams.radiiCR)*2, size(img,1) );
-        LEFT    = max( min(crxPrevious) - max(trackParams.radiiCR)*2, 1 );
-        RIGHT   = min( max(crxPrevious) + max(trackParams.radiiCR)*2, size(img,2) );
+        TOP     = floor(max( min([referenceFrame.cr1_y,referenceFrame.cr2_y]) - max([referenceFrame.cr1_r,referenceFrame.cr2_r])*2, 1 ));
+        BOTTOM  = floor(min( max([referenceFrame.cr1_y,referenceFrame.cr2_y]) + max([referenceFrame.cr1_r,referenceFrame.cr2_r])*2, size(img,1) ));
+        LEFT    = floor(max( min([referenceFrame.cr1_x,referenceFrame.cr2_x]) - max([referenceFrame.cr1_r,referenceFrame.cr2_r])*2, 1 ));
+        RIGHT   = floor(min( max([referenceFrame.cr1_x,referenceFrame.cr2_x]) + max([referenceFrame.cr1_r,referenceFrame.cr2_r])*2, size(img,2) ));
 
         newImg = img(TOP:BOTTOM, LEFT:RIGHT);
-        [~, circen, crr] = CircularHough_Grd(newImg,trackParams.radiiCR ,gridthresh,fltr4LM_R,1);
+        [~, circen, crr] = CircularHough_Grd(newImg,trackParams.radiiCR ,trackParams.CRthresh,trackParams.CRfilter,1);
 
         %DEBUG FIGURES
 %         figure(3); clf; hold on
@@ -103,7 +95,7 @@ try
 %         surf(img)
 %         colormap(jet)
 %         shading interp
-        
+%         
 %         figure(4); clf; hold on
 %         image(newImg)
 %         scatter(circen(:,1), circen(:,2))
@@ -123,10 +115,10 @@ try
             end
         end
     else
-        [A, circen, crr] = CircularHough_Grd(img,trackParams.radiiCR ,gridthresh,fltr4LM_R,1);
+        [A, circen, crr] = CircularHough_Grd(img,trackParams.radiiCR ,trackParams.CRthresh,trackParams.CRfilter,1);
     end
 catch
-    [A, circen, crr] = CircularHough_Grd(img,trackParams.radiiCR ,gridthresh,fltr4LM_R,1);
+    [A, circen, crr] = CircularHough_Grd(img,trackParams.radiiCR ,trackParams.CRthresh,trackParams.CRfilter,1);
 end
 
 maxvals = diag(img(round(circen(:,2)),round(circen(:,1))));
@@ -161,18 +153,6 @@ else
     crx(2) = NaN;
     crr(2) = NaN;
 end
-
-%% For time locking of video to light pulses (optional)
-% output the high y-coordinate, but the exact x of the corresponding lower cr
-if length(crx)==3
-    cry(1:2) = cry(3);
-elseif length(crx)==4
-    cry(1:2) = cry(3:4);
-end
-
-% Put left CR first
-cr1 = [crx(1) cry(1) crr(1)];
-cr2 = [crx(2) cry(2) crr(2)];
 
 %% Remove corneal reflection
 if ~isempty(circen)
@@ -216,37 +196,55 @@ epy2 = epy(inliers);
 
 % Do better fit of resulting points
 ellipseResult = fit_ellipse(epx2,epy2);
-pupil(1) = ellipseResult.X0_in;
-pupil(2) = ellipseResult.Y0_in;
-pupil(3) = ellipseResult.a;
-pupil(4) = ellipseResult.b;
-pupil(5) = -ellipseResult.phi;
+
+if isempty(ellipseResult.X0_in)
+    newFrame.pupil_x = nan;
+    newFrame.pupil_y = nan;
+    newFrame.pupil_r1 = nan;
+    newFrame.pupil_r2 = nan;
+    newFrame.pupil_angle = nan;
+else
+    newFrame.pupil_x = ellipseResult.X0_in;
+    newFrame.pupil_y = ellipseResult.Y0_in;
+    newFrame.pupil_r1 = ellipseResult.a;
+    newFrame.pupil_r2 = ellipseResult.b;
+    newFrame.pupil_angle = -ellipseResult.phi;
+end
+
+newFrame.cr1_x = crx(1);
+newFrame.cr1_y = cry(1);
+newFrame.cr1_r = crr(1);
+newFrame.cr2_x = crx(2);
+newFrame.cr2_y = cry(2);
+newFrame.cr2_r = crr(2);
+
 points = [epx2(:), epy2(:)];
 
 %% Plotting
 if trackParams.plotOn
     
     fig = app.UIAxes2_2;
-    color = 'm';
+    imagesc(fig, img);  colormap(fig, gray);
     
-    imagesc(fig, img);  colormap(fig, gray);%  axis off; axis image
-    xlim(fig, [0, size(img,2)]);
-    ylim(fig, [0, size(img,1)]);
+    aaa = find(nanmean(img,1));
+    bbb = find(nanmean(img, 2));
+    xlim(fig, [min(aaa), max(aaa)]);
+    ylim(fig, [min(bbb), max(bbb)]);
+    
     hold(fig, 'on');
     a = 0:.1:2*pi;
-    plot(fig, cr1(3).*cos(a) + cr1(1), cr1(3).*sin(a)+cr1(2),'b')
-    plot(fig, cr2(3).*cos(a) + cr2(1), cr2(3).*sin(a)+cr2(2),'c')
-    plot(fig, crx(1), cry(1),'+b')
-    plot(fig, crx(2), cry(2),'+c')
-    %plot(fig, rotated_ellipse(1,:),rotated_ellipse(2,:),'w' );
+    plot(fig, newFrame.cr1_r.*cos(a) + newFrame.cr1_x, newFrame.cr1_r.*sin(a)+newFrame.cr1_y,'b')
+    plot(fig, newFrame.cr2_r.*cos(a) + newFrame.cr2_x, newFrame.cr2_r.*sin(a)+newFrame.cr2_y,'c')
+    plot(fig, newFrame.cr1_x, newFrame.cr1_y,'+b')
+    plot(fig, newFrame.cr2_x, newFrame.cr2_y,'+c')
     
     % Plot ellipse
     the=linspace(0,2*pi,100);
-    line(fig, pupil(3)*cos(the)*cos(pupil(5)) - sin(pupil(5))*pupil(4)*sin(the) + pupil(1), ...
-        pupil(3)*cos(the)*sin(pupil(5)) + cos(pupil(5))*pupil(4)*sin(the) + pupil(2),...
-        'Color',color);
+    line(fig, newFrame.pupil_r1*cos(the)*cos(newFrame.pupil_angle) - sin(newFrame.pupil_angle)*newFrame.pupil_r2*sin(the) + newFrame.pupil_x, ...
+        newFrame.pupil_r1*cos(the)*sin(newFrame.pupil_angle) + cos(newFrame.pupil_angle)*newFrame.pupil_r2*sin(the) + newFrame.pupil_y,...
+        'Color','m');
     
-    plot(fig, pupil(1), pupil(2),['+', color],'LineWidth',2, 'MarkerSize',10)
+    plot(fig, newFrame.pupil_x, newFrame.pupil_y,['+', 'm'],'LineWidth',2, 'MarkerSize',10)
     if exist('epx','var')
         plot(fig, epx, epy,'.c')
         plot(fig, epx2, epy2,'.y')
@@ -260,11 +258,5 @@ plotData.epx2 = epx2;
 plotData.epy = epy;
 plotData.epy2 = epy2;
 plotData.points = points;
-
-frameData.crx = crx;
-frameData.cry = cry;
-frameData.cr1 = cr1;
-frameData.cr2 = cr2;
-frameData.pupil = pupil;
 
 

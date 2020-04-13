@@ -6,7 +6,7 @@ function newStack = preprocessImages(stack, pos, enchanceContrast)
     % Gaussian Filter
     newStack = imfilter(newStack, fspecial('gaussian',3,.5));
 
-    % Enhance Image Contrast and 
+    % Enhance Image Contrast
     % (cannot be done to stack, must loop)
     if enchanceContrast
         for i = 1:size(newStack,3)
@@ -22,13 +22,7 @@ function newStack = preprocessImages(stack, pos, enchanceContrast)
         newStack(:,:,i) = tempImage;
     end
     
-    
-    % eliminate all-nan rows and columns
-%     nanLocations = isnan(pos);
-%     allnanRows = ~any(pos, 1);
-%     allnanCols = ~any(pos, 2);
-%     
-%     newStack(allnanCols, :,:) = [];
-%     newStack(:, allnanRows,:) = [];
+    % conver timage to double
+%     newStackdouble = im2double(newStack);
  
 end

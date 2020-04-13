@@ -1,13 +1,19 @@
-function vars = getScaleFactors(app, vars)
+function vars = getScaleFactors_APP(app, vars)
 
-% Frequency that calibration was run at
-freq = app.CalibrationStimFrequencyEditField.Value;
+%%
+try
+    a = vars.mag1;
+catch
+    vid = [];
+    mag1 = [];
+    mag2 = [];
+    head = [];
+end
 
-
+freq = vars.CaliStimFreq;
 %% LOAD MAGNET
-pathname = cd;
-[~, filenameroot]= fileparts(pathname);
-fullfilename = fullfile(pathname,[filenameroot '.smr']);
+[~, filenameroot]= fileparts(cd);
+fullfilename = fullfile(cd,[filenameroot '.smr']);
 
 if app.LeftEyeCheckBox.Value
     % Left Eye (default)
@@ -18,129 +24,132 @@ else
 end
 
 %% LOAD VIDEO
-A = load(fullfile(pathname, 'videoresults_cam1.mat'));
-B = load(fullfile(pathname, 'videoresults_cam2.mat'));
+A = load(fullfile(cd, 'videoresults_cam1.mat'));
+B = load(fullfile(cd, 'videoresults_cam2.mat'));
 
-vars.vidResults_cam1 = A.results;
-vars.vidResults_cam2 = B.results;
+vars.frameData_cam1 = A.frameData;
+vars.frameData_cam2 = B.frameData;
 
-vars.vidResults = A.results;
-vars.vidResults.pupil1 = vars.vidResults_cam1.pupil;
-vars.vidResults.cr1a = vars.vidResults_cam1.cra;
-vars.vidResults.cr1b = vars.vidResults_cam1.crb;
-vars.vidResults.pupil2 = vars.vidResults_cam2.pupil;
-vars.vidResults.cr2a = vars.vidResults_cam2.cra;
-vars.vidResults.cr2b = vars.vidResults_cam2.crb;
+vid.pos_data = calceyeangle_APP(vars.frameData_cam1, vars.frameData_cam2);
 
-[vars.vidH, vars.vidV, ~] = calceyeangle(vars.vidResults);
-
-vars.vidResults.percent_frames_missed = sum(int64(isnan(vars.vidH)))*100/length(vars.vidH);
+vid.percent_frames_missed = sum(int64(isnan(vid.pos_data)))*100/length(vid.pos_data);
 
 if app.Camera2TimestampsCheckBox.Value
     % Camera 2 (default)
-    vars.tvid = vars.vidResults.time2;
+    vid.time = [vars.frameData_cam1.time2];
 else
     % Camera 1
-    vars.tvid = vars.vidResults.time1;
+    vid.time = [vars.frameData_cam1.time1];
 end
-vars.tvid = vars.tvid-vars.tvid(1);
-[vars.tscale, ~] = fminsearchbnd(@(x)vidTimeFcn_APP(app, vars.tvid,vars.vidH,freq,x),1,.7, 1.4);
-vars.tvid = vars.tvid/vars.tscale;%.995;
-vars.samplerate_Video = 1/mean(diff(vars.tvid));
+vid.time = vid.time-vid.time(1);
+[vars.tscale, ~] = fminsearchbnd(@(x)vidTimeFcn_APP(app, vid.time,vid.pos_data',freq,x),1,.7, 1.4);
+vid.time = vid.time/vars.tscale;%.995;
+vid.samplerate = 1/mean(diff(vid.time));
 
 %% Select Proper Segment
 vars.lightpulse = vars.magnetData(end).data;
 vars.seg(1) = vars.lightpulse(1);
-vars.seg(2) = vars.seg(1)+vars.tvid(end);
+vars.seg(2) = vars.seg(1)+vid.time(end);
 
 vars.magnetSeg = resettime(datseg(vars.magnetData,vars.seg));
-vars.samplerate_Magnet = vars.magnetSeg(1).samplerate;
-vars.magnetSeg(1).data = smooth([diff(smooth(vars.magnetSeg(1).data,25)); 0]*vars.samplerate_Magnet,25); % Convert to velocity
+mag1.samplerate = vars.magnetSeg(1).samplerate;
+mag2.samplerate = vars.magnetSeg(2).samplerate;
+vars.magnetSeg(1).data = smooth([diff(smooth(vars.magnetSeg(1).data,25)); 0]*mag1.samplerate ,25); % Convert to velocity
 vars.magnetSeg(1).units = 'deg/s'; vars.magnetSeg(1).chanlabel = 'hhvel';
 
 vars.mag1 = vars.magnetSeg(2);
 vars.mag1.data = double(vars.mag1.data);
 vars.mag2 = vars.magnetSeg(3);
 vars.mag2.data = double(vars.mag2.data);
-vars.tmag = dattime(vars.mag1);
+
+mag1.pos_data = vars.mag1.data;
+mag2.pos_data = vars.mag2.data;
+mag1.time = dattime(vars.mag1);
+mag2.time = dattime(vars.mag2);
 
 %% Upsample Video Traces
-vars.vidH_upsample = interp1(vars.tvid,vars.vidH,vars.tmag(:),'spline');
-vars.vidH_upsample = inpaint_nans(vars.vidH_upsample);
-vars.vidV_upsample = interp1(vars.tvid,vars.vidV,vars.tmag(:),'spline');
-vars.vidV_upsample = inpaint_nans(vars.vidV_upsample);
+vid.pos_data_upsampled = interp1(vid.time,vid.pos_data,mag1.time(:),'spline');
+vid.pos_data_upsampled = inpaint_nans(vid.pos_data_upsampled);
+vid.time_upsampled = mag1.time;
 
 %% Desaccade
 windowPre = app.SaccadeWindowmsEditField.Value;
 windowPost = app.SaccadeWindowEditField_2.Value;
 minDataLength = app.MinimumGoodDataLengthEditField.Value;
+mag1.saccadeThresh = app.SaccadeThresholdMagnetChan1EditField.Value;
+mag2.saccadeThresh = app.SaccadeThresholdMagnetChan2EditField.Value;
+vid.saccadeThresh = app.SaccadeThresholdVideoEditField.Value;
 
-threshMagChan1 = app.SaccadeThresholdMagnetChan1EditField.Value;
-threshMagChan2 = app.SaccadeThresholdMagnetChan2EditField.Value;
-
-threshVid = app.SaccadeThresholdVideoEditField.Value;
-
-[vars.sacLoc_mag1, ~, vars.mag1Vel] = desaccadeVel_A(vars.mag1.data, vars.samplerate_Magnet, 1, windowPre, windowPost, threshMagChan1, minDataLength);
+[mag1.saccades, ~, mag1.vel_data] = desaccadeVel_A(mag1.pos_data, mag1.samplerate, 1, windowPre, windowPost, mag1.saccadeThresh, minDataLength);
 title('Magnet Channel 1 (Unscaled!)')
-[vars.sacLoc_mag2, ~, vars.mag2Vel] = desaccadeVel_A(vars.mag2.data, vars.samplerate_Magnet, 1, windowPre, windowPost, threshMagChan2, minDataLength);
+[mag2.saccades, ~, mag2.vel_data] = desaccadeVel_A(mag2.pos_data, mag2.samplerate, 1, windowPre, windowPost, mag2.saccadeThresh, minDataLength);
 title('Magnet Channel 2 (Unscaled!)')
-[vars.sacLoc_vid , ~, vars.vidVel]  = desaccadeVel_A(vars.vidH_upsample,vars.samplerate_Magnet, 1, windowPre, windowPost, threshVid, minDataLength);
+[vid.saccades_upsampled , ~, vid.vel_data_upsampled]  = desaccadeVel_A(vid.pos_data_upsampled, mag1.samplerate, 1, windowPre, windowPost, vid.saccadeThresh, minDataLength);
 title('Video')
 
+mag1.saccades_all = mag1.saccades | mag2.saccades | vid.saccades_upsampled;
+mag2.saccades_all = mag1.saccades | mag2.saccades | vid.saccades_upsampled;
+vid.saccades_all = mag1.saccades | mag2.saccades | vid.saccades_upsampled;
+
 %% SINE FIT FOR MAGET AND VIDEO
-y1 = sin(2*pi*freq*vars.tmag(:));
-y2 = cos(2*pi*freq*vars.tmag(:));
-const = ones(size(y1));
-vars.vars = [y1 y2 const];
 
-% ------------ Chair -------------
-[vars.bHead,~,~,~,~] = regress(vars.magnetSeg(1).data, vars.vars);
-headAmp = sqrt(vars.bHead(1)^2+vars.bHead(2)^2);
-vars.headAmp = headAmp;
-headPhase = rad2deg(atan2(vars.bHead(2),vars.bHead(1)));
+% Chair
+[head.vel_Amp, head.vel_phase, ~, head.vel_fit,  head.vel_fitr2] = fit_sineWave(vars.magnetSeg(1).data, mag1.samplerate, freq);
 
-% ------------ MAGNET 1------------
-[vars.bMag1,~,~,~,stat] = regress(vars.mag1Vel(~vars.sacLoc_mag1), vars.vars(~vars.sacLoc_mag1,:));
-mag1Amp = sqrt(vars.bMag1(1)^2+vars.bMag1(2)^2);
-vars.mag1Amp = mag1Amp;
-mag1Phase = mod((rad2deg(atan2(vars.bMag1(2),vars.bMag1(1))) - headPhase),360)-180;
-r2mag1 = stat(1);
-vars.r2mag1 = r2mag1;
+% MAGNET 1
+mag1Vel = mag1.vel_data;
+mag1Vel(mag1.saccades) = nan;
+[mag1.vel_amp, mag1.vel_phase, ~, mag1.vel_fit, mag1.vel_fitr2] = fit_sineWave(mag1Vel, mag1.samplerate, freq);
 
-% ------------ MAGNET 2------------
-[vars.bMag2,~,~,~,stat] = regress(vars.mag2Vel(~vars.sacLoc_mag2), vars.vars(~vars.sacLoc_mag2,:));
-mag2Amp = sqrt(vars.bMag2(1)^2+vars.bMag2(2)^2);
-vars.mag2Amp = mag2Amp;
-mag2Phase = mod((rad2deg(atan2(vars.bMag2(2),vars.bMag2(1))) - headPhase),360)-180;
-r2mag2 = stat(1);
-vars.r2mag2 = r2mag2;
+% MAGNET 2
+mag2Vel = mag2.vel_data;
+mag2Vel(mag2.saccades) = nan;
+[mag2.vel_amp, mag2.vel_phase, ~, mag2.vel_fit, mag2.vel_fitr2] = fit_sineWave(mag2Vel, mag2.samplerate, freq);
 
-% ------------ VIDEO ------------
-[vars.bVid,~,~,~,stat] = regress(vars.vidVel(~vars.sacLoc_vid), vars.vars(~vars.sacLoc_vid,:));
-vidAmp = sqrt(vars.bVid(1)^2+vars.bVid(2)^2);
-vars.vidAmp = vidAmp;
-vidPhase = rad2deg(atan2(vars.bVid(2), vars.bVid(1)));
-r2vid = stat(1);
-vars.r2vid = r2vid;
+% VIDEO
+vidVel = vid.vel_data_upsampled;
+vidVel(vid.saccades_upsampled) = nan;
+[vid.vel_amp,  vid.vel_phase,  ~, vid.vel_fit, vid.vel_fitr2] = fit_sineWave(vidVel, mag1.samplerate, freq);
 
-%% SAVE SCALE FACTOR
-scaleCh1 = vidAmp/mag1Amp * (2*(abs(mag1Phase)<90)-1);
+%% CALCULATE SCALE FACTOR
+scaleCh1 = vid.vel_amp/mag1.vel_amp * (2*(abs(mag1.vel_phase)<90)-1);
+mag1.vel_scale = scaleCh1;
 vars.scaleCh1 = scaleCh1;
-scaleCh2 = vidAmp/mag2Amp * (2*(abs(mag2Phase)<90)-1);
+
+fprintf('Chan 1: Scale = %.2f\n',mag1.vel_scale)
+fprintf('Chan 1: Fit Amp = %.2f\n',mag1.vel_amp)
+fprintf('Chan 1: Fit r^2 = %.2f\n',mag1.vel_fitr2)
+fprintf('Chan 1: Saccade = %.2f\n\n',mean(mag1.saccades))
+
+scaleCh2 = vid.vel_amp/mag2.vel_amp * (2*(abs(mag2.vel_phase)<90)-1);
+mag2.vel_scale = scaleCh2;
 vars.scaleCh2 = scaleCh2;
 
-fprintf('Chan 1: Scale = %.2f\n',vars.scaleCh1)
-fprintf('Chan 1: Fit Amp = %.2f\n',vars.mag1Amp)
-fprintf('Chan 1: Fit r^2 = %.2f\n',r2mag1)
-fprintf('Chan 1: Saccade = %.2f\n\n',mean(vars.sacLoc_mag1))
+fprintf('Chan 2: Scale = %.2f\n',mag2.vel_scale)
+fprintf('Chan 2: Fit Amp = %.2f\n',mag2.vel_amp)
+fprintf('Chan 2: Fit r^2 = %.2f\n',mag2.vel_fitr2)
+fprintf('Chan 2: Saccade = %.2f\n\n',mean(mag2.saccades))
 
-fprintf('Chan 2: Scale = %.2f\n',vars.scaleCh2)
-fprintf('Chan 2: Fit Amp = %.2f\n',vars.mag2Amp)
-fprintf('Chan 2: Fit r^2 = %.2f\n',r2mag2)
-fprintf('Chan 2: Saccade = %.2f\n\n',mean(vars.sacLoc_mag2))
+%% SAVE DATA
+vidAmp = vid.vel_amp;
+
+r2vid = vid.vel_fitr2;
+threshVid = vid.saccadeThresh;
+
+mag1Amp = mag1.vel_amp;
+mag1Phase = mag1.vel_phase;
+r2mag1 = mag1.vel_fitr2;
+threshMagChan1 = mag1.saccadeThresh;
+
+mag2Amp = mag2.vel_amp;
+mag2Phase = mag2.vel_phase;
+r2mag2 = mag2.vel_fitr2;
+threshMagChan2 = mag2.saccadeThresh;
 
 save(fullfile(cd, [filenameroot '.mat']),'scaleCh1', 'scaleCh2',...
     'vidAmp','mag1Amp','mag1Phase','mag2Amp','mag2Phase',...
     'r2mag1','r2mag2','r2vid','threshVid','threshMagChan1','threshMagChan2', 'freq');
+
+saveAnalysisInfo_APP;
 
 end
