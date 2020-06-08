@@ -18,7 +18,7 @@ function newStack = preprocessImages(stack, pos, enchanceContrast)
     % (cannot be done to stack, must loop)
     for i = 1:size(newStack,3)
         tempImage = newStack(:,:,i);
-        tempImage(~pos) = nan;
+            tempImage(~pos) = nan;
         newStack(:,:,i) = tempImage;
     end
     

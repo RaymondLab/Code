@@ -6,6 +6,7 @@ www = tight_subplot(2,2,[.055 .025],[.04 .025],[.03 .03]);
 %%
 axes(www(1))
 scatter(vid_aligned(keep), mag_aligned(keep), 4, c(keep), '.'); hold on
+colormap hsv
 plot(mag_all.yfit', mag_all.range', 'r', 'lineWidth', 1);
 
 for i = 1:length(mag_chunks)

@@ -1,4 +1,8 @@
-function d = measureLinearity(vec1, vec2)
+function d = measureLinearity(vec1, vec2, keep)
+
+if ~exist('keep', 'var')
+    keep = ones(length(vec1),1);
+end
 
 d.fit = polyfit(vec1,vec2,1);
 

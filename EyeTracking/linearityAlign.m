@@ -1,5 +1,13 @@
 function [r2, maxr2, maxr2_location] = linearityAlign(x, y)
 
+
+% If input vectors are not the same length, shorten the longer one
+if length(x) < length(y)
+    y = y(1:length(x));
+elseif length(x) > length(y)
+    x = x(1:length(y));    
+end
+
 r2 = nan(3901,1);
 
 for i = -4000:-100              

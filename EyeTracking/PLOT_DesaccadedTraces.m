@@ -48,7 +48,8 @@ xlabel('s')
 linkaxes(desacPLot, 'x')
 xticks(0:5:max(xticks))
 xticklabels(0:5:max(xticks))
-xlim([0, max(mag1.time)])
+xlim([0, max(mag1.time)]) % NEW METHOD
+%xlim([0, max([mag1.time(end), vid.time_upsampled(end)])]) NEW METHOD
 box off
 
 %% Save Figures

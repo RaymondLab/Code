@@ -55,7 +55,7 @@ while edge_thresh > min_edge_thresh && loop_count <= 10
             edge_thresh = edge_thresh - 1;
             
         end
-    end
+        end
 %     if edge_thresh <= min_edge_thresh
 %         break;
 %     end

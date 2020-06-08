@@ -36,6 +36,24 @@ else
     vid.saccades_upsampled_aligned = vid.saccades_upsampled((lag)+1:end);
 end
 
+%% If input vectors are not the same length, shorted the longer one
+if length(mag1.pos_data_aligned) < length(vid.pos_data_upsampled_aligned)
+    vid.pos_data_upsampled_aligned = vid.pos_data_upsampled_aligned(1:length(mag1.pos_data_aligned));
+    vid.vel_data_upsampled_aligned = vid.vel_data_upsampled_aligned(1:length(mag1.pos_data_aligned));
+    vid.saccades_upsampled_aligned = vid.saccades_upsampled_aligned(1:length(mag1.pos_data_aligned));
+    
+elseif length(mag1.pos_data_aligned) > length(vid.pos_data_upsampled_aligned)
+    % magnet channel 1
+    mag1.pos_data_aligned = mag1.pos_data_aligned(1:length(vid.pos_data_upsampled_aligned));
+    mag1.saccades_aligned = mag1.saccades_aligned(1:length(vid.pos_data_upsampled_aligned));
+    mag1.vel_data_aligned = mag1.vel_data_aligned(1:length(vid.pos_data_upsampled_aligned));
+    
+    % magnet channel 2
+    mag2.pos_data_aligned = mag2.pos_data_aligned(1:length(vid.pos_data_upsampled_aligned));
+    mag2.saccades_aligned = mag2.saccades_aligned(1:length(vid.pos_data_upsampled_aligned));
+    mag2.vel_data_aligned = mag2.vel_data_aligned(1:length(vid.pos_data_upsampled_aligned));
+end
+
 mag1.saccades_all = mag1.saccades_aligned | mag2.saccades_aligned | vid.saccades_upsampled_aligned;
 mag2.saccades_all = mag1.saccades_all;
 vid.saccades_all = mag1.saccades_all;

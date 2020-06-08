@@ -19,7 +19,7 @@ for i = 1:figCount
     for j = 1:numSubs
         % First plot the background for each subplot
         axes(plote(j));
-        scatter(mag_aligned(keep), vid_aligned(keep), '.', 'LineWidth', 4, 'MarkerEdgeColor', [.5 .5 .5] ); hold on
+        scatter(vid_aligned(keep), mag_aligned(keep), '.', 'LineWidth', 4, 'MarkerEdgeColor', [.5 .5 .5] ); hold on
         
         x = mag_aligned(keep);
         y = vid_aligned(keep);
@@ -33,14 +33,14 @@ for i = 1:figCount
         
         % Plot k amount of interSacccadeGroups in each subplot
         for k = 1:numOnEach
-            scatter(mag_aligned(sacStarts(q):sacStops(q)), vid_aligned(sacStarts(q):sacStops(q)), colors{k}, '.', 'LineWidth', 3)
+            scatter(vid_aligned(sacStarts(q):sacStops(q)), mag_aligned(sacStarts(q):sacStops(q)), colors{k}, '.', 'LineWidth', 3)
 
             x = mag_aligned(sacStarts(q):sacStops(q));
             y = vid_aligned(sacStarts(q):sacStops(q));
             coefficients = polyfit(x, y, 1);
             xFit = linspace(min(xlim), max(xlim), 1000);
             yFit = polyval(coefficients , xFit);
-            plot(xFit, yFit, colors{k}, 'LineWidth', 2);
+            plot(yFit, xFit, colors{k}, 'LineWidth', 2);
             
             yticks([])
             xticks([])

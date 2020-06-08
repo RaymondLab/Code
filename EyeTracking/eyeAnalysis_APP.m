@@ -126,7 +126,7 @@ end
 toc
 
 %% Save Data
-save(['videoresults_cam', trackParams.cam, '.mat'],'frameData')
+save(['videoresults_cam', num2str(trackParams.cam), '.mat'],'frameData')
 fprintf('\nResults saved\n')
 warning on
 
