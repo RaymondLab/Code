@@ -1,62 +1,35 @@
-function setupEyeTracking_APP(app, cam, radiiPupil, varargin)
-
-manual = 1;
-p = inputParser;
-addOptional(p,'RadiiCR',[10 16])
-addOptional(p,'MinFeatures',.7)
-addParamValue(p,'Manual',0)
-addParamValue(p,'ImAdjust',0)
-addParamValue(p,'Frame',1) % Frame of image to use
-addParamValue(p,'CRthresh1',10)
-addParamValue(p,'CRthresh2',10)
-addParamValue(p,'CRfilter1',6)
-addParamValue(p,'CRfilter2',6)
-
-parse(p,varargin{:})
-radiiCR = p.Results.RadiiCR;
-CRthresh = p.Results.CRthresh1;
-CRthresh2 = p.Results.CRthresh2;
-CRfilter = p.Results.CRfilter1;
-CRfilter2 = p.Results.CRfilter2;
-minfeatures = p.Results.MinFeatures;
-imAdjust = p.Results.ImAdjust;
-
-edgeThresh1 = app.edgeThreshEditField.Value; % Initial gradient threshold of pupil edge detection for cam 1
-plotall= 1;
-debugOn = 0;
-ok = 0;
+function trackParams = setupEyeTracking_APP(app, trackParams)
 
 %% Load image to test
 frame = 1;
-[imgLarge] = readImg_APP(imAdjust, cam, frame);
+[imgLarge] = readImg_APP(trackParams.imAdjust, trackParams.cam, frame);
 
 %% User finds pupil center and analysis ROI
 [pupilStartLarge] = testradiipupilmanual_APP(app, imgLarge);
-pupilStart = [round(pupilStartLarge(1)), round(pupilStartLarge(2))];
+trackParams.pupilStart = [round(pupilStartLarge(1)), round(pupilStartLarge(2))];
 
 disp('Draw an elipse around analysis ROI.')
 disp('When finished, press any key.');
 
 roi = drawellipse;
-pos = double(roi.createMask());
 
 pause
+trackParams.pos = createMask(roi);
+roi.SemiAxes = roi.SemiAxes -3;
+trackParams.pos2 = createMask(roi);
 close all;
 
+%% Detect Pupil
+ok = 0;
 while ~ok && frame<10
     
-    %% Select ROI
-    [img] = readImg_APP(imAdjust, cam, frame, pos);
+    % Select ROI
+    [img] = readImg_APP(trackParams.imAdjust, trackParams.cam, frame, trackParams.pos);
     
-    %% CAMERA 1
+    % Detect Pupil
     try
-        [pupil, CRa, CRb] = detectPupilCR_APP(...
-            app,1, img, 1, [], [], ...
-            'radiiPupil',radiiPupil,    'radiiCR',radiiCR,...
-            'EdgeThresh',edgeThresh1+3, 'pupilStart',pupilStart,...
-            'CRthresh',CRthresh,       'CRfilter',CRfilter, ...
-            'PlotOn',plotall,           'MinFeatures',minfeatures,...
-            'debugOn',debugOn);
+        [trackParams, frameData] = detectPupilCR_APP(app, img, [], [], trackParams);        
+
         ok = 1;
     catch msgid
         warning(msgid.message)
@@ -71,13 +44,9 @@ end
 disp(' ')
 disp(' ')
 disp('Radii: ')
-disp(['Pupil: ', num2str(max(pupil(3:4)))]);
-disp(['CR a : ', num2str(CRa(3))]);
-disp(['CR b : ', num2str(CRb(3))]);
-
-%% Save settings
-save('settings','pos','radiiPupil','minfeatures',...
-    'radiiCR','CRthresh','CRfilter','CRthresh2','CRfilter2',...
-    'imAdjust','pupilStart','manual')
+disp(['Pupil: ', num2str(max([frameData.pupil_r1, frameData.pupil_r2]))]);
+disp(['CR a : ', num2str(frameData.cr1_r)]);
+disp(['CR b : ', num2str(frameData.cr2_r)]);
+disp(' ')
 
 end

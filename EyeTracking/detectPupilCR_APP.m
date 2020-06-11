@@ -59,51 +59,31 @@
 % Copyright (c) 2005
 % All Rights Reserved.
 
-function [pupil, cr1, cr2, points, edgeThresh, crx, cry, epx, epy, epx2, epy2] = detectPupilCR_APP( app, side, img, plotOn, crxPrevious, cryPrevious, varargin)
-
+function [trackParams, newFrame, plotData] = detectPupilCR_APP( app, img, referenceFrame, newFrame, trackParams)
 
 %% Process imputs
-p = inputParser;
-addOptional(p,'pupilStart',[]);
-addParamValue(p,'radiiPupil',60);
-addParamValue(p,'edgeThresh',30);
-addParamValue(p,'MinFeatures',.6,@(x)x<1||x>0)
-addParamValue(p,'radiiCR',[2 8]);
-addParamValue(p,'CRthresh',3);
-addParamValue(p,'CRfilter',3);
-addParamValue(p,'PlotOn',0);
-addParamValue(p,'DebugOn',0);
-
-parse(p,varargin{:})
-
-pupilStart = p.Results.pupilStart;
-radiiPupil = [app.RadiusPupilEditField.Value app.RadiusPupilEditField_2.Value];
-
-edgeThresh = p.Results.edgeThresh;
-minfeatures = app.MinimumFeaturesEditField.Value;;
-
-radiiCR = [app.RadiusCornealReflectionEditField.Value app.radiiCR1EditField_2.Value];
-gridthresh = p.Results.CRthresh;
-fltr4LM_R = p.Results.CRfilter;
-
-%plotOn = p.Results.PlotOn;
-debugOn = p.Results.DebugOn;
-
 img = double(img);
+
+%% Preallocate
+plotData.epx = nan;
+plotData.epx2 = nan;
+plotData.epy = nan;
+plotData.epy2 = nan;
+plotData.points = nan;
 
 %% Find corneal reflections
 
 % only search through portion of image, Corneal reflections shouldn't move
 try 
-    if ~isempty(crxPrevious) && ~any(isnan(crxPrevious))
+    if ~isempty([referenceFrame.cr1_x,referenceFrame.cr2_x]) && ~any(isnan([referenceFrame.cr1_x,referenceFrame.cr2_x]))
 
-        TOP     = max( min(cryPrevious) - max(radiiCR)*2, 1 );
-        BOTTOM  = min( max(cryPrevious) + max(radiiCR)*2, size(img,1) );
-        LEFT    = max( min(crxPrevious) - max(radiiCR)*2, 1 );
-        RIGHT   = min( max(crxPrevious) + max(radiiCR)*2, size(img,2) );
+        TOP     = floor(max( min([referenceFrame.cr1_y,referenceFrame.cr2_y]) - max([referenceFrame.cr1_r,referenceFrame.cr2_r])*2, 1 ));
+        BOTTOM  = floor(min( max([referenceFrame.cr1_y,referenceFrame.cr2_y]) + max([referenceFrame.cr1_r,referenceFrame.cr2_r])*2, size(img,1) ));
+        LEFT    = floor(max( min([referenceFrame.cr1_x,referenceFrame.cr2_x]) - max([referenceFrame.cr1_r,referenceFrame.cr2_r])*2, 1 ));
+        RIGHT   = floor(min( max([referenceFrame.cr1_x,referenceFrame.cr2_x]) + max([referenceFrame.cr1_r,referenceFrame.cr2_r])*2, size(img,2) ));
 
         newImg = img(TOP:BOTTOM, LEFT:RIGHT);
-        [~, circen, crr] = CircularHough_Grd(newImg,radiiCR ,gridthresh,fltr4LM_R,1);
+        [~, circen, crr] = CircularHough_Grd(newImg,trackParams.radiiCR ,trackParams.CRthresh,trackParams.CRfilter,1);
 
         %DEBUG FIGURES
 %         figure(3); clf; hold on
@@ -115,7 +95,7 @@ try
 %         surf(img)
 %         colormap(jet)
 %         shading interp
-        
+%         
 %         figure(4); clf; hold on
 %         image(newImg)
 %         scatter(circen(:,1), circen(:,2))
@@ -135,10 +115,10 @@ try
             end
         end
     else
-        [A, circen, crr] = CircularHough_Grd(img,radiiCR ,gridthresh,fltr4LM_R,1);
+        [A, circen, crr] = CircularHough_Grd(img,trackParams.radiiCR ,trackParams.CRthresh,trackParams.CRfilter,1);
     end
 catch
-    [A, circen, crr] = CircularHough_Grd(img,radiiCR ,gridthresh,fltr4LM_R,1);
+    [A, circen, crr] = CircularHough_Grd(img,trackParams.radiiCR ,trackParams.CRthresh,trackParams.CRfilter,1);
 end
 
 maxvals = diag(img(round(circen(:,2)),round(circen(:,1))));
@@ -174,18 +154,6 @@ else
     crr(2) = NaN;
 end
 
-%% For time locking of video to light pulses (optional)
-% output the high y-coordinate, but the exact x of the corresponding lower cr
-if length(crx)==3
-    cry(1:2) = cry(3);
-elseif length(crx)==4
-    cry(1:2) = cry(3:4);
-end
-
-% Put left CR first
-cr1 = [crx(1) cry(1) crr(1)];
-cr2 = [crx(2) cry(2) crr(2)];
-
 %% Remove corneal reflection
 if ~isempty(circen)
     
@@ -209,57 +177,86 @@ else
 end
 
 %% Find guess for pupil center using radial symmetry transform
-if isempty(pupilStart) || any(isnan(pupilStart)) || pupilStart(1)==0
+if isempty(trackParams.pupilStart) || any(isnan(trackParams.pupilStart)) || trackParams.pupilStart(1)==0
     alphaFRST = 0.5;           % Sensitivity to radial symmetry
-    imgRadialPupil = Radial_Sym_Transform(img, radiiPupil, alphaFRST);
+    imgRadialPupil = Radial_Sym_Transform(img, trackParams.radiiPupil, alphaFRST);
     [pupilY, pupilX] = find(min(imgRadialPupil(:))==imgRadialPupil);
-    pupilStart = [pupilX pupilY];
+    trackParams.pupilStart = [pupilX pupilY];
 end
 
 %% Detect pupil borders using starburst algorithm
-[epx, epy, edgeThresh] = starburst_pupil_contour_detection(InoCR, pupilStart(1),...
-    pupilStart(2), edgeThresh,round(radiiPupil),minfeatures);
-[~, inliers] = fit_ellipse_ransac(epx(:), epy(:), radiiPupil + [-15 15]);
+[epx, epy, ~] = starburst_pupil_contour_detection(InoCR, trackParams.pupilStart(1),...
+    trackParams.pupilStart(2), trackParams.edgeThresh,round(trackParams.radiiPupil),trackParams.minfeatures);
+
+[~, inliers] = fit_ellipse_ransac(epx(:), epy(:), trackParams.radiiPupil + [-15 15]);
+%[r, rotated_ellipse] = fit_ellipse_altMethod( epx(:),epy(:),app.UIAxes2_2 );
+
 epx2 = epx(inliers);
 epy2 = epy(inliers);
 
 % Do better fit of resulting points
 ellipseResult = fit_ellipse(epx2,epy2);
-pupil(1) = ellipseResult.X0_in;
-pupil(2) = ellipseResult.Y0_in;
-pupil(3) = ellipseResult.a;
-pupil(4) = ellipseResult.b;
-pupil(5) = -ellipseResult.phi;
+
+if isempty(ellipseResult.X0_in)
+    newFrame.pupil_x = nan;
+    newFrame.pupil_y = nan;
+    newFrame.pupil_r1 = nan;
+    newFrame.pupil_r2 = nan;
+    newFrame.pupil_angle = nan;
+else
+    newFrame.pupil_x = ellipseResult.X0_in;
+    newFrame.pupil_y = ellipseResult.Y0_in;
+    newFrame.pupil_r1 = ellipseResult.a;
+    newFrame.pupil_r2 = ellipseResult.b;
+    newFrame.pupil_angle = -ellipseResult.phi;
+end
+
+newFrame.cr1_x = crx(1);
+newFrame.cr1_y = cry(1);
+newFrame.cr1_r = crr(1);
+newFrame.cr2_x = crx(2);
+newFrame.cr2_y = cry(2);
+newFrame.cr2_r = crr(2);
+
 points = [epx2(:), epy2(:)];
 
 %% Plotting
-if plotOn
+if trackParams.plotOn
     
     fig = app.UIAxes2_2;
-    color = 'm';
+    imagesc(fig, img);  colormap(fig, gray);
     
-    imagesc(fig, img);  colormap(fig, gray);%  axis off; axis image
-    xlim(fig, [0, size(img,2)]);
-    ylim(fig, [0, size(img,1)]);
+    aaa = find(nanmean(img,1));
+    bbb = find(nanmean(img, 2));
+    xlim(fig, [min(aaa), max(aaa)]);
+    ylim(fig, [min(bbb), max(bbb)]);
+    
     hold(fig, 'on');
     a = 0:.1:2*pi;
-    plot(fig, cr1(3).*cos(a) + cr1(1), cr1(3).*sin(a)+cr1(2),'b')
-    plot(fig, cr2(3).*cos(a) + cr2(1), cr2(3).*sin(a)+cr2(2),'c')
-    plot(fig, crx(1), cry(1),'+b')
-    plot(fig, crx(2), cry(2),'+c')
+    plot(fig, newFrame.cr1_r.*cos(a) + newFrame.cr1_x, newFrame.cr1_r.*sin(a)+newFrame.cr1_y,'b')
+    plot(fig, newFrame.cr2_r.*cos(a) + newFrame.cr2_x, newFrame.cr2_r.*sin(a)+newFrame.cr2_y,'c')
+    plot(fig, newFrame.cr1_x, newFrame.cr1_y,'+b')
+    plot(fig, newFrame.cr2_x, newFrame.cr2_y,'+c')
     
     % Plot ellipse
     the=linspace(0,2*pi,100);
-    line(fig, pupil(3)*cos(the)*cos(pupil(5)) - sin(pupil(5))*pupil(4)*sin(the) + pupil(1), ...
-        pupil(3)*cos(the)*sin(pupil(5)) + cos(pupil(5))*pupil(4)*sin(the) + pupil(2),...
-        'Color',color);
+    line(fig, newFrame.pupil_r1*cos(the)*cos(newFrame.pupil_angle) - sin(newFrame.pupil_angle)*newFrame.pupil_r2*sin(the) + newFrame.pupil_x, ...
+        newFrame.pupil_r1*cos(the)*sin(newFrame.pupil_angle) + cos(newFrame.pupil_angle)*newFrame.pupil_r2*sin(the) + newFrame.pupil_y,...
+        'Color','m');
     
-    plot(fig, pupil(1), pupil(2),['+', color],'LineWidth',2, 'MarkerSize',10)
+    plot(fig, newFrame.pupil_x, newFrame.pupil_y,['+', 'm'],'LineWidth',2, 'MarkerSize',10)
     if exist('epx','var')
         plot(fig, epx, epy,'.c')
         plot(fig, epx2, epy2,'.y')
     end
     hold(fig, 'off');
 end
+
+%% Add data to frameData object
+plotData.epx = epx;
+plotData.epx2 = epx2;
+plotData.epy = epy;
+plotData.epy2 = epy2;
+plotData.points = points;
 
 

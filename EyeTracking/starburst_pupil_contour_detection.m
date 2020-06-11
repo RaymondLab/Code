@@ -37,7 +37,7 @@ function [epx, epy, edge_thresh] = starburst_pupil_contour_detection(I, cx, cy, 
 
 % edge_thresh = 10;               % edge_threshold = best guess for the pupil contour threshold (30)
 min_edge_thresh = 2;
-N = 100;                         % number of rays to use to detect feature points
+N = 50;                         % number of rays to use to detect feature points
 minimum_candidate_features=N*minfeatures;  % minimum number of pupil feature candidates ***6/10
 dis = radiiPupil(1)*.75; % Distance from pupil center guess to start searching for edge
 angle_spread = 100*pi/180;
@@ -53,14 +53,17 @@ while edge_thresh > min_edge_thresh && loop_count <= 10
         [epx, epy, epd] = locate_edge_points(I, cx, cy, dis, angle_step, 0, 2*pi, edge_thresh);
         if length(epx) < minimum_candidate_features
             edge_thresh = edge_thresh - 1;
+            
         end
-    end
+        end
 %     if edge_thresh <= min_edge_thresh
 %         break;
 %     end
-
+%     if edge_thresh < 50
+%         disp(edge_thresh)
+%     end
     angle_normal = atan2(cy-epy, cx-epx);
-
+    
     for i=1:length(epx)
         [tepx, tepy, ~] = locate_edge_points(I, epx(i), epy(i), dis, angle_step*(edge_thresh/epd(i)), angle_normal(i), angle_spread, edge_thresh);
         epx = [epx tepx];

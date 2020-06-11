@@ -12,54 +12,46 @@ var actualDrumPh;
 var sineOn% := 0;
 var sinAmpChair := 10;
 var sinAmpDrum := 10;
+var halfPhaseDelay := (sinHzDrum * 1000) / 2;
 
 '--------------------------------------------------------------------------------
 ' STEP PARAMETERS
 '--------------------------------------------------------------------------------
-var stepPeriod := 1000;
-var stepLength := 250;
+var step_period := 1000;
+var step_length := 250;
 var stepStim := 0;
-var stepAmpChair := 10;
-var stepAmpDrum := 10;
-var sRest2;
+var step_AmpChair := 10;
+var step_AmpDrum := 10;
+var step_rest2;
 var sStart;
-var sLength;
-var sLength1;
-var sRest1;
-var sAmpChair;
-var sAmpDrum;
-var sAmpChairN;
-var sAmpDrumN;
-var stepLen1 := 0;
-var stepLen2 := 0;
-var stepLen3 := 0;
+var step_length_corrected;
+var step_length_corrected1;
+var step_rest1;
+var step_length_a := 0;
+var step_length_b := 0;
+var step_length_c := 0;
 'For video alignment pulse - duration
-var pulseDurationV := 33;
+var pulse_durationV := 33;
 'For video alignment pulse - time between pulses
-var pulseWaitV := 1000 - pulseDurationV - 5;
-var pulsePeriod := 1000;
+var pulseWaitV := 1000 - pulse_durationV - 5;
+var cycleLength := 1000;
 var checkConfig := 1;
 var QueTime := 0;
-
-
+var step_interStepInterval := 0;
 
 '--------------------------------------------------------------------------------
 ' PULSE PARAMETERS
 '--------------------------------------------------------------------------------
-var pWait := 0;
-var pNumber := 1;
-var pDuration;
-var pInterval;
-var pStart;
-var pulseDuration := 500;
-var pulseInterval := 0;
-var pWait2 := 0;
-var pulsePhase := 0 ;
+var pulse_wait := 0;
+var pulse_number := 1;
+var pulse_start := 0;
+var pulse_duration := 500;
+var pulse_interPulseInterval := 0;
 var stepLight := 0;
 var lightDur := 500;
 var lightStart := 0;
 var everyNCycles := 1;
-
+var fullPulse := 0;
 
 '--------------------------------------------------------------------------------
 ' EXPERIMENT PARAMETERS
@@ -96,13 +88,11 @@ var SampleWindow%;
 var comment$;
 var vidOn := 0;
 var stepOn% := 0;
-var fullPulse := 0;
 'Voltage Range: check in Edit -> Edit Parameters
 var MaxVoltage := 10;
 var driftFix := 1;
 var centerLineChair := 0;
 var centerLineDrum := 0;
-var testStim := 0;
 var rotationVelocity := 0.02;
 var radianConversion := 57.295779513; 'divide a value in degrees by this number to convert to radians - from Spike2 manual'
 var measuredZeroChair := 0;
@@ -111,21 +101,21 @@ var measuredZeroDrum := 0;
 '--------------------------------------------------------------------------------
 ' TOOLBAR PARAMETERS
 '--------------------------------------------------------------------------------
-const NewFilePos        := 2;
+const NewFilePos        := 3;
 const InitPos           := NewFilePos+1;
 const CommentPos        := InitPos+1;
-const LightPos          := CommentPos+1;
+const LightPos          := CommentPos+2;
 const LaserPos          := LightPos+1;
-const SinePos           := LaserPos+1;
+const SinePos           := LaserPos+2;
 const SineConfigPos     := SinePos+1;
-const PulsePos          := SineConfigPos+1;
+const PulsePos          := SineConfigPos+2;
 const PulseConfigPos    := PulsePos+1;
-const VidPos            := PulseConfigPos+1;
-const StepPos           := VidPos+1;
+const VidPos            := PulseConfigPos+2;
+const StepPos           := VidPos+2;
 const StepConfigPos     := StepPos+1;
-const ExpmtPos          := StepConfigPos+1;
+const ExpmtPos          := StepConfigPos+2;
 const ExpmtConfigPos    := ExpmtPos+1;
-const devPos            := ExpmtConfigPos+1;
+const devPos            := ExpmtConfigPos+2;
 
 const HTVELChCom% := 1;
 const HHVELChCom% := 2;
@@ -158,14 +148,19 @@ Func ToolbarSineStop%()
 End
 
 Func ToolbarSineConfig%()
-  DlgCreate("Sine settings");  'Start new dialog
+  DlgCreate("SINE SETTINGS");  'Start new dialog
   DlgReal(1,"Chair Freq (Hz)",0,50);
   DlgReal(2,"Chair Peak Velocity (deg/sec)",0,100);    'set to 0 if not using Chair
   DlgReal(3,"Chair Phase (degree)",-180,180);
   DlgReal(4,"Drum Freq (Hz)",0,50);
   DlgReal(5,"Drum Peak Velocity (deg/sec)",0,100);   'set to 0 if not using Drum
   DlgReal(6,"Drum Phase (degree)",-180,180);
-  DlgShow(sinHzChair,sinAmpChair, sinPhChair, sinHzDrum, sinAmpDrum,  sinPhDrum);
+  DlgCheck(7,"Opto");
+  DlgCheck(8,"Light");
+
+  DlgShow(sinHzChair,sinAmpChair, sinPhChair, sinHzDrum, sinAmpDrum,  sinPhDrum, stepStim, stepLight);
+
+  halfPhaseDelay := (sinHzDrum * 1000) / 2;
 
   SetPulseSettings%();
 
@@ -218,8 +213,8 @@ End
 Func ToolbarVidOn%()
   vidOn := 1;
   Yield();
-  pulseDurationV := 33; 'For video alignment pulse
-  pulseWaitV := 1000*1/sinHzChair - pulseDurationV - 5;    'For video alignment
+  pulse_durationV := 33; 'For video alignment pulse
+  pulseWaitV := 1000*1/sinHzChair - pulse_durationV - 5;    'For video alignment
   SetSequencerValues();
   SampleKey( "V" );
   Toolbarset(VidPos,"Video Off", ToolbarVidOff%);
@@ -239,35 +234,30 @@ End
 '--------------------------------------------------------------------------------
 Func ToolbarPulseConfig%()
   DlgCreate("Pulse settings");  'Start new dialog
-  'DlgReal(1,"Period (ms)",0,300000);
   DlgReal(1,"Number of Pulses",0,1000);
   DlgReal(2,"Pulse duration (ms)",0,5000);
-  DlgReal(3,"Interpulse interval (ms)",0,5000);
-  DlgReal(4,"Pulse phase (deg)",0,360);
-  DlgReal(5, "Pulses Occur Every X Cycles?", 1, 10000);
-  DlgShow(pNumber, pulseDuration, pulseInterval,pulsePhase, everyNCycles);
+  DlgReal(3,"Inter-pulse interval (ms)",0,5000);
+  DlgReal(4,"Pulse start rel. to cycle (ms)",0,10000);
+  DlgReal(5,"Pulses Occur Every X Cycles?", 1, 10000);
+
+  DlgShow(pulse_number, pulse_duration, pulse_interPulseInterval, pulse_start, everyNCycles);
+
+  ' SetPulseSettings%(); is to correct for delays that occur when sending commands out from the sequencer.'
   SetPulseSettings%();
   Return( 1 );
 End
 
 Func SetPulseSettings%()
-  pulsePeriod := 1/sinHzChair * 1000;
+  ' This function is to correct for delays that occur when sending commands out from the sequencer.'
+  cycleLength := 1/sinHzChair * 1000;
+  pulse_wait := (cycleLength/2) - (pulse_number * (pulse_duration + pulse_interPulseInterval));
+
+  ' If the pulse_wait time is <= 0, then there is no gap between pulses
   fullPulse := 0;
-  pWait := (pulsePeriod/2) - 4 - (pNumber *(pulseDuration + pulseInterval+1));
-
-  if pWait < 0 then
-      pWait := 0 ;
-      fullPulse := 1; 'Immediate switching between states
+  if pulse_wait < 0 then
+      pulse_wait := 0 ;
+      fullPulse := 1;
   endif;
-  pDuration := pulseDuration -2;
-  pWait2 := pWait-2;
-  pInterval := pulseInterval;
-
-
-  if pInterval > 1 then
-      pInterval := pulseInterval -3;
-  endif;
-
 
   SetSequencerValues();
 
@@ -278,50 +268,67 @@ End
 ' STEP FUNCTIONS
 '--------------------------------------------------------------------------------
 Func ToolbarStepOn%()
+
   stepOn% := 1;
-  if (stepStim = 0) and (stepLight = 0) then
-    if (stepPeriod - (2*stepLength)) > 0 then
-  	SampleKey ( "T" );
-  	ToolbarSet(StepPos, "Step Stop", ToolbarStepOff%);
-    else
-      if QueTime > 0 then
-      SampleKey("K");
-      ToolbarSet(stepPos, "Step Stop", ToolbarStepOff%);
+  ToolbarSet(StepPos, "Step Stop", ToolbarStepOff%);
+
+  docase
+    ' NO OPTO, NO LIGHT
+    case (stepStim = 0) and (stepLight = 0) then
+      if (step_period - (2*step_length)) > 0 then
+        SampleKey ( "J" );
       else
-        SampleKey("k");
-        ToolbarSet(stepPos, "Step Stop", ToolbarStepOff%);
+        if QueTime > 0 then
+          SampleKey("K");
+        else
+          SampleKey("k");
+        endif
       endif
-    endif
-  else
-      if stepLight = 1 and stepStim = 0 then
-        stepOn% := 1; Yield();
-        prevTime := MaxTime();
-        measuredZeroChair := ChanMeasure(hhposCh%, 2, prevTime-2, prevTime);
-        measuredZeroDrum := ChanMeasure(htposCh%, 2, prevTime-2, prevTime);
+
+    ' OPTO, NO LIGHT'
+    case (stepStim = 1) and (stepLight = 0) then
+      prevTime := MaxTime();
+      measuredZeroChair := ChanMeasure(hhposCh%, 2, prevTime-2, prevTime);
+      measuredZeroDrum := ChanMeasure(htposCh%, 2, prevTime-2, prevTime);
+
       docase
-          case lightDur = stepLength and lightStart = 0 then
-              SampleKey ("t");   ' Entire step
+        ' Aligned to entire step
+        case lightDur = step_length and lightStart = 0 then
+          SampleKey("t");
+        ' Aligned to beginning of step
+        case step_length_a = 0 then
+          SampleKey("b");
+        ' Aligned to end of step
+        case step_length_c = 0 then
+          SampleKey("e");
+        ' Aligned to somewhere in the middle of step
+        else
+          SampleKey("d");
+      endcase;
 
-          case stepLen1 = 0 then
-              ' Aligned to beginning of step
-              SampleKey("b");
+    ' NO OPTO, Light'
+    case (stepStim = 0) and (stepLight = 1) then
+      ' Nothing here yet
 
-          case stepLen3 = 0 then
-              'Aligned to end of step
-              SampleKey("e");
+    ' OPTO, LIGHT'
+    case (stepStim = 1) and (stepLight = 1) then
+      docase
+        ' Aligned to entire step
+        case lightDur = step_length and lightStart = 0 then
+          SampleKey("T");
+        ' Aligned to beginning of step
+        case step_length_a = 0 then
+          SampleKey("B");
+        ' Aligned to end of step
+        case step_length_c = 0 then
+          SampleKey("E");
+        ' Aligned to somewhere in the middle of step
+        else
+          SampleKey("D");
+      endcase;
 
-          else
-              ' Somewhere in the middle of step
-              SampleKey ("d");   ' Delayed/partial
+  endcase;
 
-          endcase;
-          ToolbarSet(StepPos, "Step Stop", ToolbarStepOff%);
-      endif;
-      if stepStim = 1 and stepLight = 1 then
-          SampleKey ( "u");      '***Currently non functional 8/2/12?
-          ToolbarSet(StepPos, "Step Stop", ToolbarStepOff%);
-      endif;
-  endif;
   Return (1);
 End
 
@@ -333,77 +340,37 @@ Func ToolbarStepOff%()
 End
 
 Func ToolbarStepConfig%()
-  ' User dialog
-  'StepConfigWindow();
 
+  cycleLength := 1/step_period * 1000;
 
-  ' Convert to exact numbers, accounting for software delays
-  'Max 11-2019: If you input a 1000ms stepPeriod it will not end up being 1000ms. idk why, sorry. Spike2 issue
-
-  sRest1 := (stepPeriod  - stepLength - stepLength)/2 - 3;
-  if sRest1 < 0 then
-    sRest1 := 0;
-  endif
-
-  sLength := stepLength - 3;
-  if sLength < 0 then
-    sLength := 0;
-  endif
-
-  sRest2 := sRest1 - 1;
-  if sRest2 < 0 then
-    sRest2 := 0;
-  endif
-
-  ' Chair and drum velocity
-  sAmpChair := ChairVel2Int32%( stepAmpChair );   ' Amp chair
-  sAmpChairN := 0-sAmpChair;                      ' Amp chair (opposite direction)
-  sAmpDrum := DrumVel2Int32%( stepAmpDrum );      ' Amp drum
-  sAmpDrumN := 0-sAmpDrum;                        ' Amp drum (opposite direction)
-''  if chairDegreesPerSecondOffset > 0 then
-''    'SampleKey("1");
-''    sAmpChair := ChairVel2Int32%( stepAmpChair + chairDegreesPerSecondOffset/50);   ' Amp chair
-''    sAmpChairN := 0-ChairVel2Int32%( stepAmpChair - chairDegreesPerSecondOffset);
-''  else
-''    'SampleKey("2");
-''    var chairDegreesPerSecondOffsetNEG := chairDegreesPerSecondOffset * -1;
-''    sAmpChair := ChairVel2Int32%( stepAmpChair + chairDegreesPerSecondOffsetNEG);   ' Amp chair
-''    sAmpChairN := 0-ChairVel2Int32%( stepAmpChair + chairDegreesPerSecondOffsetNEG + chairDegreesPerSecondOffsetNEG/50);
-''  endif
-
-
-''  if DrumDegreesPerSecondOffset > 0 then
-''    SampleKey("1");
-''    sAmpDrum := DrumVel2Int32%( stepAmpDrum + DrumDegreesPerSecondOffset);   ' Amp chair
-''    sAmpDrumN := 0-DrumVel2Int32%( stepAmpDrum - DrumDegreesPerSecondOffset*1.02);
-''  else
-''    SampleKey("2");
-''    var DrumDegreesPerSecondOffsetNEG := DrumDegreesPerSecondOffset * -1;
-''    sAmpDrum := DrumVel2Int32%( stepAmpDrum + DrumDegreesPerSecondOffsetNEG*.02);   ' Amp chair
-''    sAmpDrumN := 0-DrumVel2Int32%( stepAmpDrum + DrumDegreesPerSecondOffsetNEG);
-''  endif
+  step_interStepInterval := max( (cycleLength/2)  - step_length , 0);
 
   ' Light pulse
   if stepLight = 1 then
 
       ' If light pulse is not exactly the same as step pulse, break into 3 segments
-      if lightDur <> stepLength or lightStart <> 0 then
-          stepLen1 := max(lightStart - 3, 0);                         ' Chair alone
-          stepLen2 := lightDur - 2;                                   ' Chair+light
-          stepLen3 := max(stepLength - lightDur - max(lightStart,2) - 2,0);  ' Chair alone
-
-          if stepLen3 = 0 then   'Small adjustment to account for delay if light aligned to end of step
-              stepLen2 := stepLen2-1;
-  endif;
+      if lightDur <> step_length or lightStart <> 0 then
+          step_length_a := lightStart;
+          step_length_b := lightDur;
+          step_length_c := max(step_length - (lightDur + lightStart),0);
       endif;
-
   endif;
+
+  '........|aaaa|bbbbbbbbb|cccccc|............................................
+  '.............__________....................................................
+  '____________|.........|______________light_________________________________
+  '...........................................................................
+  '........______________________..................______________________.....
+  '.......|.....................|.................|.....................|.....
+  '.......|.....................|.................|.....................|.....
+  '.......|.....................|.................|.....................|.....
+  '_______|.....................|____drum/chair___|.....................|_____
 
   if stepStim = 1 then
-  	pNumber := trunc((stepLength-4)/(pulseDuration + pulseInterval));
-  	pDuration := pulseDuration -2;
-  	pInterval := pulseInterval -3;
-  	sLength1 := stepLength - ((pulseDuration + pulseInterval)*pNumber)-4;
+  	pulse_number := trunc((step_length-4)/(pulse_duration + pulse_interPulseInterval));
+  	var pulse_duration_corrected := pulse_duration -2;
+  	var pulse_interPulseInterval_corrected := pulse_interPulseInterval -3;
+  	step_length_corrected1 := step_length - ((pulse_duration + pulse_interPulseInterval)*pulse_number)-4;
   endif;
 
   'testing
@@ -414,7 +381,7 @@ Func ToolbarStepConfig%()
 End
 
 Func StepConfigWindow%()
-  DlgCreate("Step settings"); 'Start new dialog for entering step commands
+  DlgCreate("STEP SETTINGS"); 'Start new dialog for entering step commands
   DlgReal(1,"Total Period (ms)", 0, 21000);
   DlgReal(2,"Step length (ms)", 0, 15000);
   DlgReal(3,"Chair Velocity (deg/sec)", -100, 100);
@@ -425,7 +392,7 @@ Func StepConfigWindow%()
   DlgCheck(8, "Light");
   DlgReal(9, "Light duration (ms)", 0, 5000);
   DlgReal(10, "Start time rel. step", 0, 5000);
-  DlgShow(stepPeriod, stepLength, stepAmpChair, stepAmpDrum, stepStim, pulseDuration, pulseInterval, stepLight, lightDur, lightStart);
+  DlgShow(step_period, step_length, step_AmpChair, step_AmpDrum, stepStim, pulse_duration, pulse_interPulseInterval, stepLight, lightDur, lightStart);
 
   ToolbarStepConfig%();
   Return (1);
@@ -447,10 +414,8 @@ Func ToolbarStimOn%()
 End
 
 Func ToolbarStimOff%()
-  SampleKey( "p" );
-  Yield();
-  SampleKey( "I" );
-  Yield();
+  SampleKey( "p" ); Yield();
+  SampleKey( "I" ); Yield();
   sineOn% := 0;
 
   Toolbarset(PulsePos,"Pulse On", ToolbarStimOn%);
@@ -479,7 +444,7 @@ Proc ToolbarConfig()
   ToolbarSet(ExpmtConfigPos, "Expmt Config", ToolbarConfigExpmt%);
   ToolbarSet(CommentPos, "Comment", ToolbarComment%);
   ToolbarSet(NewFilePos, "New File", ToolbarNew%);
-  ToolbarSet(devPos, "Dev", DevParams%);
+  ToolbarSet(devPos+1, "Dev", DevParams%);
   Toolbar("", 231);
 End
 
@@ -683,9 +648,9 @@ End
 
 Func ToolbarRunExpmt%()
   runExpmt% := 1;
-  rep% := 0;                   'Rep (5min run, 40 sec test)
-  test% := 0;                  'test: 0=run testLength, 1=test testLength, 2=init&wait 20 sec, 3=init&wait 10 sec,  4=init&wait runLength
-  testrep% := 0;                ' Changed from 0 to 1 5/2/14 so that VORD is only tested once at the beginning
+  rep% := 0;
+  test% := 0;
+  testrep% := 0;
   goalTime := MaxTime();
   SampleKey("H");
   ToolbarSet(ExpmtPos, "Quit Expmt",ToolbarQuitExpmt%);
@@ -705,6 +670,7 @@ Func ToolbarInit%()
   ToolbarStepOff%(); Yield();
   ToolbarSineStop%(); Yield(.01);
   ToolbarStimoff%(); Yield();
+  ToolbarLasersOff%(); Yield();
   prevTime := 0;  ' Reset prev time so sine offset code continues running in a new file
   SampleKey( "I" );
   Return( 1 );
@@ -727,8 +693,8 @@ end
 
 ' Send values to the sequencer
 Proc SetSequencerValues()
-  actualChairPh := ((sinPhChair + pulsePhase + 180) mod 360) - 180;
-  actualDrumPh  := ((sinPhDrum  + pulsePhase + 180) mod 360) - 180;
+  actualChairPh := ((sinPhChair + 180) mod 360) - 180;
+  actualDrumPh  := ((sinPhDrum + 180) mod 360) - 180;
 
   'Chair parameters
   SampleSeqVar( 23, ChairAmp2Int32%( ChairDegreesPerSecondOffset ) );
@@ -745,33 +711,33 @@ Proc SetSequencerValues()
   SampleSeqVar( 65, DrumResetDirection); 'default drum direction
 
   'Pulse parameters
-  SampleSeqVar( 33, pWait );
-  SampleSeqVar( 34, pNumber );
-  SampleSeqVar( 35, pDuration);
-  SampleSeqVar( 36, pInterval);
-  SampleSeqVar( 37, pStart);
+  SampleSeqVar( 33, pulse_wait );
+  SampleSeqVar( 34, pulse_number );
+  SampleSeqVar( 35, pulse_duration);
+  SampleSeqVar( 36, pulse_interPulseInterval);
+  SampleSeqVar( 37, pulse_start);
 
   'Step parameters
-  SampleSeqVar( 38, sRest2);
+  SampleSeqVar( 38, step_rest2);
   SampleSeqVar( 39, sStart);
-  SampleSeqVar( 40, sLength);
-  SampleSeqVar( 41, sLength1);
-  SampleSeqVar( 42, sRest1);
-  SampleSeqVar( 43, sAmpChair);
-  SampleSeqVar( 44, sAmpDrum);
-  SampleSeqVar( 45, sAmpChairN);
-  SampleSeqVar( 46, sAmpDrumN);
-  SampleSeqVar( 47, stepLen1); ' For delayed light pulse with step
-  SampleSeqVar( 48, stepLen2);
-  SampleSeqVar( 49, stepLen3);
-  SampleSeqVar( 50, pulseDurationV);
+  SampleSeqVar( 40, step_length_corrected);
+  SampleSeqVar( 41, step_length_corrected1);
+  SampleSeqVar( 42, step_rest1);
+  SampleSeqVar( 43, ChairVel2Int32%( step_AmpChair ));
+  SampleSeqVar( 44, DrumVel2Int32%(  step_AmpDrum ));
+  SampleSeqVar( 45, (0 - ChairVel2Int32%( step_AmpChair )) );
+  SampleSeqVar( 46, (0 - DrumVel2Int32%(  step_AmpDrum )) );
+  SampleSeqVar( 47, step_length_a); ' For delayed light pulse with step
+  SampleSeqVar( 48, step_length_b);
+  SampleSeqVar( 49, step_length_c);
+  SampleSeqVar( 50, pulse_durationV);
   SampleSeqVar( 51, pulseWaitV);
-  SampleSeqVar( 52, pulsePeriod);
+  SampleSeqVar( 52, cycleLength);
   SampleSeqVar( 54, everyNCycles);
   SampleSeqVar( 55, QueTime );
   SampleSeqVar( 56, DrumAmp2Int32%( DrumDegreesPerSecondOffsetDefault ) );
   SampleSeqVar( 57, ChairAmp2Int32%( ChairDegreesPerSecondOffsetDefault ) );
-
+  SampleSeqVar( 58, halfPhaseDelay);
 
   'Rotation Parameters
   SampleSeqVar( 66, rotationVelocity); 'This is a relative value
@@ -782,28 +748,28 @@ Func driftFix%()
   docase
   case stepOn% = 1 then
     'SampleKey("7");
-    if stepAmpChair > 0 then
+    if step_AmpChair > 0 then
       'SampleKey("8");
-      centerLineChair := (stepLength/1000) * stepAmpChair * W;
+      centerLineChair := (step_length/1000) * step_AmpChair * W;
     endif
-    if stepAmpChair < 0 then
+    if step_AmpChair < 0 then
       'SampleKey("9");
-      centerLineChair := (stepLength/1000) * stepAmpChair * X;
+      centerLineChair := (step_length/1000) * step_AmpChair * X;
     endif
-    if stepAmpChair = 0 then
+    if step_AmpChair = 0 then
       'SampleKey("0");
       centerLineChair := 0;
     endif
 
-    if stepAmpDrum > 0 then
+    if step_AmpDrum > 0 then
       'SampleKey("7");
-      centerLineDrum := (stepLength/1000) * stepAmpDrum * Y;
+      centerLineDrum := (step_length/1000) * step_AmpDrum * Y;
     endif
-    if stepAmpDrum < 0 then
+    if step_AmpDrum < 0 then
       'SampleKey("6");
-      centerLineDrum := (stepLength/1000) * stepAmpDrum * Z;
+      centerLineDrum := (step_length/1000) * step_AmpDrum * Z;
     endif
-    if stepAmpDrum = 0 then
+    if step_AmpDrum = 0 then
       centerLineDrum := 0;
     endif
 

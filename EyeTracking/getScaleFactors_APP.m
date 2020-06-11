@@ -1,149 +1,292 @@
-function vars = getScaleFactors(app, vars)
+function vars = getScaleFactors_APP(app, vars)
 
-% Frequency that calibration was run at
-freq = app.CalibrationStimFrequencyEditField.Value;
+%% SETUP
+try
+    a = vars.mag1;
+catch
+    vid = [];
+    mag1 = [];
+    mag2 = [];
+end
 
+freq = vars.CaliStimFreq;
 
-%% LOAD MAGNET
-pathname = cd;
-[~, filenameroot]= fileparts(pathname);
-fullfilename = fullfile(pathname,[filenameroot '.smr']);
+%% LOAD VIDEOS
 
-if app.LeftEyeCheckBox.Value
+% Camera 1
+try
+    A = load(fullfile(cd, 'videoresults_cam1.mat'));
+catch
+    error('Camera 1 Results Not Found: videoresults_cam1.mat')
+end
+rawFrameData_cam1 = A.frameData;
+
+% Camera 2
+try
+    B = load(fullfile(cd, 'videoresults_cam2.mat'));
+catch
+    error('Camera 2 Results Not Found: videoresults_cam2.mat')
+end
+rawFrameData_cam2 = B.frameData;
+
+vid.pos_data = calceyeangle_APP(rawFrameData_cam1, rawFrameData_cam2); % old
+vid.percent_frames_missed = sum(int64(isnan(vid.pos_data)))*100/length(vid.pos_data); % old
+
+%% sort out time stamps
+
+if app.Camera2Button.Value
+    % Camera 2 (default)
+    vid.time = [rawFrameData_cam1.time2];
+elseif app.Camera1Button.Value
+     % Camera 1
+    vid.time = [rawFrameData_cam1.time1];
+else
+    % Median Times between frames
+    vid.time = median([rawFrameData_cam1.time1; rawFrameData_cam1.time2]);
+end
+vid.time = vid.time-vid.time(1);
+
+[tscale, ~] = fminsearchbnd(@(x)vidTimeFcn_APP(app, vid.time,vid.pos_data',freq,x),1,.7, 1.4); % old
+vid.time = vid.time/tscale;%.995;% old
+vid.samplerate = 1/mean(diff(vid.time)); % old
+
+% minTimeStart = min([rawFrameData_cam1(1).time1, rawFrameData_cam1(1).time2]);
+% 
+% for i = 1:length([rawFrameData_cam1.time1])
+%     rawFrameData_cam1(i).time1 = rawFrameData_cam1(i).time1 - minTimeStart;
+%     rawFrameData_cam1(i).time2 = rawFrameData_cam1(i).time2 - minTimeStart;
+%     rawFrameData_cam2(i).time1 = rawFrameData_cam2(i).time1 - minTimeStart;
+%     rawFrameData_cam2(i).time2 = rawFrameData_cam2(i).time2 - minTimeStart;
+% end
+
+% %% upsample video - clunky writing
+% maxTime = ceil(max([rawFrameData_cam1(end).time1*1000, rawFrameData_cam2(end).time2*1000]));
+% 
+% % preallocate
+% nanVec = nan(maxTime,1);
+% rawFrameData_cam1_us.cr1_x = nanVec;
+% rawFrameData_cam1_us.cr1_y = nanVec;
+% rawFrameData_cam1_us.cr1_r = nanVec;
+% rawFrameData_cam1_us.cr2_x = nanVec;
+% rawFrameData_cam1_us.cr2_y = nanVec;
+% rawFrameData_cam1_us.cr2_r = nanVec;
+% rawFrameData_cam1_us.pupil_x = nanVec;
+% rawFrameData_cam1_us.pupil_y = nanVec;
+% rawFrameData_cam1_us.pupil_r1 = nanVec;
+% rawFrameData_cam1_us.pupil_r2 = nanVec;
+% rawFrameData_cam1_us.pupil_angle = nanVec;
+% 
+% nanVec = nan(maxTime,1);
+% rawFrameData_cam2_us.cr1_x = nanVec;
+% rawFrameData_cam2_us.cr1_y = nanVec;
+% rawFrameData_cam2_us.cr1_r = nanVec;
+% rawFrameData_cam2_us.cr2_x = nanVec;
+% rawFrameData_cam2_us.cr2_y = nanVec;
+% rawFrameData_cam2_us.cr2_r = nanVec;
+% rawFrameData_cam2_us.pupil_x = nanVec;
+% rawFrameData_cam2_us.pupil_y = nanVec;
+% rawFrameData_cam2_us.pupil_r1 = nanVec;
+% rawFrameData_cam2_us.pupil_r2 = nanVec;
+% rawFrameData_cam2_us.pupil_angle = nanVec;
+% 
+% % fill in values
+% for i = 1:length([rawFrameData_cam1.time1])
+%     
+%     indx = (floor(rawFrameData_cam1(i).time1*1000)+1);
+%     
+%     rawFrameData_cam1_us.cr1_x(indx)  = rawFrameData_cam1(i).cr1_x;
+%     rawFrameData_cam1_us.cr1_y(indx)  = rawFrameData_cam1(i).cr1_y;
+%     rawFrameData_cam1_us.cr1_r(indx)  = rawFrameData_cam1(i).cr1_r;
+%     rawFrameData_cam1_us.cr2_x(indx)  = rawFrameData_cam1(i).cr2_x;
+%     rawFrameData_cam1_us.cr2_y(indx)  = rawFrameData_cam1(i).cr2_y;
+%     rawFrameData_cam1_us.cr2_r(indx)  = rawFrameData_cam1(i).cr2_r;
+%     rawFrameData_cam1_us.pupil_x(indx)  = rawFrameData_cam1(i).pupil_x;
+%     rawFrameData_cam1_us.pupil_y(indx)  = rawFrameData_cam1(i).pupil_y;
+%     rawFrameData_cam1_us.pupil_r1(indx)  = rawFrameData_cam1(i).pupil_r1;
+%     rawFrameData_cam1_us.pupil_r2(indx)  = rawFrameData_cam1(i).pupil_r2;
+%     rawFrameData_cam1_us.pupil_angle(indx)  = rawFrameData_cam1(i).pupil_angle;
+% end
+% 
+% for i = 1:length([rawFrameData_cam2.time2]) 
+%     
+%     indx = (floor(rawFrameData_cam2(i).time2*1000)+1);
+% 
+%     rawFrameData_cam2_us.cr1_x(indx)  = rawFrameData_cam2(i).cr1_x;
+%     rawFrameData_cam2_us.cr1_y(indx)  = rawFrameData_cam2(i).cr1_y;
+%     rawFrameData_cam2_us.cr1_r(indx)  = rawFrameData_cam2(i).cr1_r;
+%     rawFrameData_cam2_us.cr2_x(indx)  = rawFrameData_cam2(i).cr2_y;
+%     rawFrameData_cam2_us.cr2_y(indx)  = rawFrameData_cam2(i).cr2_y;
+%     rawFrameData_cam2_us.cr2_r(indx)  = rawFrameData_cam2(i).cr2_r;
+%     rawFrameData_cam2_us.pupil_x(indx)  = rawFrameData_cam2(i).pupil_x;
+%     rawFrameData_cam2_us.pupil_y(indx)  = rawFrameData_cam2(i).pupil_y;
+%     rawFrameData_cam2_us.pupil_r1(indx)  = rawFrameData_cam2(i).pupil_r1;
+%     rawFrameData_cam2_us.pupil_r2(indx)  = rawFrameData_cam2(i).pupil_r2;
+%     rawFrameData_cam2_us.pupil_angle(indx)  = rawFrameData_cam2(i).pupil_angle;
+% end
+% 
+% % fill missing values
+% rawFrameData_cam1_us.cr1_x = fillmissing(rawFrameData_cam1_us.cr1_x,'spline');
+% rawFrameData_cam1_us.cr1_y = fillmissing(rawFrameData_cam1_us.cr1_y,'spline');
+% rawFrameData_cam1_us.cr1_r = fillmissing(rawFrameData_cam1_us.cr1_r,'spline');
+% rawFrameData_cam1_us.cr2_x = fillmissing(rawFrameData_cam1_us.cr2_x,'spline');
+% rawFrameData_cam1_us.cr2_y = fillmissing(rawFrameData_cam1_us.cr2_y,'spline');
+% rawFrameData_cam1_us.cr2_r = fillmissing(rawFrameData_cam1_us.cr2_r,'spline');
+% rawFrameData_cam1_us.pupil_x = fillmissing(rawFrameData_cam1_us.pupil_x,'spline');
+% rawFrameData_cam1_us.pupil_y = fillmissing(rawFrameData_cam1_us.pupil_y,'spline');
+% rawFrameData_cam1_us.pupil_r1 = fillmissing(rawFrameData_cam1_us.pupil_r1,'spline');
+% rawFrameData_cam1_us.pupil_r2 = fillmissing(rawFrameData_cam1_us.pupil_r2,'spline');
+% rawFrameData_cam1_us.pupil_angle = fillmissing(rawFrameData_cam1_us.pupil_angle,'spline');
+% 
+% rawFrameData_cam2_us.cr1_x = fillmissing(rawFrameData_cam2_us.cr1_x,'spline');
+% rawFrameData_cam2_us.cr1_y = fillmissing(rawFrameData_cam2_us.cr1_y,'spline');
+% rawFrameData_cam2_us.cr1_r = fillmissing(rawFrameData_cam2_us.cr1_r,'spline');
+% rawFrameData_cam2_us.cr2_x = fillmissing(rawFrameData_cam2_us.cr2_x,'spline');
+% rawFrameData_cam2_us.cr2_y = fillmissing(rawFrameData_cam2_us.cr2_y,'spline');
+% rawFrameData_cam2_us.cr2_r = fillmissing(rawFrameData_cam2_us.cr2_r,'spline');
+% rawFrameData_cam2_us.pupil_x = fillmissing(rawFrameData_cam2_us.pupil_x,'spline');
+% rawFrameData_cam2_us.pupil_y = fillmissing(rawFrameData_cam2_us.pupil_y,'spline');
+% rawFrameData_cam2_us.pupil_r1 = fillmissing(rawFrameData_cam2_us.pupil_r1,'spline');
+% rawFrameData_cam2_us.pupil_r2 = fillmissing(rawFrameData_cam2_us.pupil_r2,'spline');
+% rawFrameData_cam2_us.pupil_angle = fillmissing(rawFrameData_cam2_us.pupil_angle,'spline');
+% rawFrameData_cam2_us.time = rawFrameData_cam1_us.time;
+% 
+% % make time vectors
+% rawFrameData_cam1_us.time = 0:(1/1000):(length(rawFrameData_cam1_us.cr1_x)-1)/1000;
+% 
+% % calculate position
+% vid.pos_data_upsampled = calceyeangle_APP(rawFrameData_cam1_us, rawFrameData_cam2_us);
+% 
+% % TODo
+% % vid.percent_frames_missed = sum(int64(isnan(vid.pos_data)))*100/length(vid.pos_data);
+% vid.percent_frames_missed = 0;
+% 
+% vid.time_upsampled = rawFrameData_cam1_us.time;
+
+%% SETUP MAGNET
+
+% Load Magnet Data
+[~, filenameroot]= fileparts(cd);
+fullfilename = fullfile(cd,[filenameroot '.smr']);
+
+if app.LeftButton.Value
     % Left Eye (default)
-    vars.magnetData = importSpike(fullfilename,[4 5 6 10]);
+    rawMagnetData = importSpike(fullfilename,[4 5 6 10]);
 else
     % Right Eye
-    vars.magnetData = importSpike(fullfilename,[4 7 8 10]);
+    rawMagnetData = importSpike(fullfilename,[4 7 8 10]);
 end
 
-%% LOAD VIDEO
-A = load(fullfile(pathname, 'videoresults_cam1.mat'));
-B = load(fullfile(pathname, 'videoresults_cam2.mat'));
+% Select Proper Magnet window/segment
+lightpulses = rawMagnetData(end).data;
+segmentStart = lightpulses(1);
+segmentEnd = segmentStart+vid.time(end);
 
-vars.vidResults_cam1 = A.results;
-vars.vidResults_cam2 = B.results;
+rawMagnetData = resettime(datseg(rawMagnetData,[segmentStart segmentEnd]));
 
-vars.vidResults = A.results;
-vars.vidResults.pupil1 = vars.vidResults_cam1.pupil;
-vars.vidResults.cr1a = vars.vidResults_cam1.cra;
-vars.vidResults.cr1b = vars.vidResults_cam1.crb;
-vars.vidResults.pupil2 = vars.vidResults_cam2.pupil;
-vars.vidResults.cr2a = vars.vidResults_cam2.cra;
-vars.vidResults.cr2b = vars.vidResults_cam2.crb;
+mag1.pos_data = double(rawMagnetData(2).data);
+mag1.samplerate = rawMagnetData(1).samplerate;
+mag1.time = dattime(rawMagnetData(2));
 
+mag2.pos_data = double(rawMagnetData(3).data);
+mag2.samplerate = rawMagnetData(2).samplerate;
+mag2.time = dattime(rawMagnetData(3));
 
-[vars.vidH, vars.vidV, ~] = calceyeangle(vars.vidResults);
-vars.percent_frames_missed = sum(int64(isnan(vars.vidH)))*100/length(vars.vidH);
-if app.Camera2TimestampsCheckBox.Value
-    % Camera 2 (default)
-    vars.tvid = vars.vidResults.time2;
-else
-    % Camera 1
-    vars.tvid = vars.vidResults.time1;
-end
-vars.tvid = vars.tvid-vars.tvid(1);
-[vars.tscale, ~] = fminsearchbnd(@(x)vidTimeFcn_APP(app, vars.tvid,vars.vidH,freq,x),1,.7, 1.4);
-vars.tvid = vars.tvid/vars.tscale;%.995;
-vars.samplerate_Video = 1/mean(diff(vars.tvid));
+%% Upsample Video Traces OLD METHOD
+vid.pos_data_upsampled = interp1(vid.time,vid.pos_data,mag1.time(:),'linear');
+vid.pos_data_upsampled = inpaint_nans(vid.pos_data_upsampled);
+vid.time_upsampled = mag1.time;
 
-
-%% Select Proper Segment
-vars.lightpulse = vars.magnetData(end).data;
-vars.seg(1) = vars.lightpulse(1);
-vars.seg(2) = vars.seg(1)+vars.tvid(end);
-
-vars.magnetSeg = resettime(datseg(vars.magnetData,vars.seg));
-vars.samplerate_Magnet = vars.magnetSeg(1).samplerate;
-vars.magnetSeg(1).data = smooth([diff(smooth(vars.magnetSeg(1).data,25)); 0]*vars.samplerate_Magnet,25); % Convert to velocity
-vars.magnetSeg(1).units = 'deg/s'; vars.magnetSeg(1).chanlabel = 'hhvel';
-
-vars.mag1 = vars.magnetSeg(2);
-vars.mag1.data = double(vars.mag1.data);
-vars.mag2 = vars.magnetSeg(3);
-vars.mag2.data = double(vars.mag2.data);
-vars.tmag = dattime(vars.mag1);
-
-%% Upsample Video Traces
-vars.vidH_upsample = interp1(vars.tvid,vars.vidH,vars.tmag(:),'linear');
-vars.vidH_upsample = inpaint_nans(vars.vidH_upsample);
-vars.vidV_upsample = interp1(vars.tvid,vars.vidV,vars.tmag(:),'linear');
-vars.vidV_upsample = inpaint_nans(vars.vidV_upsample);
-
-%% Desaccade
+%% DESACCADE 
 windowPre = app.SaccadeWindowmsEditField.Value;
 windowPost = app.SaccadeWindowEditField_2.Value;
 minDataLength = app.MinimumGoodDataLengthEditField.Value;
 
-threshMagChan1 = app.SaccadeThresholdMagnetChan1EditField.Value;
-threshMagChan2 = app.SaccadeThresholdMagnetChan2EditField.Value;
-
-threshVid = app.SaccadeThresholdVideoEditField.Value;
-
-[vars.sacLoc_mag1, ~, vars.mag1Vel] = desaccadeVel_A(vars.mag1.data, vars.samplerate_Magnet, 1, windowPre, windowPost, threshMagChan1, minDataLength);
+% Magnet Channel 1
+mag1.saccadeThresh = app.SaccadeThresholdMagnetChan1EditField.Value;
+[mag1.saccades, ~, mag1.vel_data] = desaccadeVel_A(mag1.pos_data, mag1.samplerate, 1, windowPre, windowPost, mag1.saccadeThresh, minDataLength);
 title('Magnet Channel 1 (Unscaled!)')
-[vars.sacLoc_mag2, ~, vars.mag2Vel] = desaccadeVel_A(vars.mag2.data, vars.samplerate_Magnet, 1, windowPre, windowPost, threshMagChan2, minDataLength);
+
+% Manget Channel 2
+mag2.saccadeThresh = app.SaccadeThresholdMagnetChan2EditField.Value;
+[mag2.saccades, ~, mag2.vel_data] = desaccadeVel_A(mag2.pos_data, mag2.samplerate, 1, windowPre, windowPost, mag2.saccadeThresh, minDataLength);
 title('Magnet Channel 2 (Unscaled!)')
-[vars.sacLoc_vid , ~, vars.vidVel]  = desaccadeVel_A(vars.vidH_upsample,vars.samplerate_Magnet, 1, windowPre, windowPost, threshVid, minDataLength);
+
+% Video
+vid.saccadeThresh = app.SaccadeThresholdVideoEditField.Value;
+[vid.saccades_upsampled , ~, vid.vel_data_upsampled]  = desaccadeVel_A(vid.pos_data_upsampled, mag1.samplerate, 1, windowPre, windowPost, vid.saccadeThresh, minDataLength);
 title('Video')
 
+%% SINE FIT
 
-%% SINE FIT FOR MAGET AND VIDEO
-y1 = sin(2*pi*freq*vars.tmag(:));
-y2 = cos(2*pi*freq*vars.tmag(:));
-const = ones(size(y1));
-vars.vars = [y1 y2 const];
+% Magnet Channel 1
+mag1Vel = mag1.vel_data;
+mag1Vel(mag1.saccades) = nan;
+[mag1.vel_amp, mag1.vel_phase, ~, mag1.vel_fit, mag1.vel_fitr2] = fit_sineWave(mag1Vel, mag1.samplerate, freq);
 
-% ------------ Chair -------------
-[vars.bHead,~,~,~,~] = regress(vars.magnetSeg(1).data, vars.vars);
-headAmp = sqrt(vars.bHead(1)^2+vars.bHead(2)^2);
-vars.headAmp = headAmp;
-headPhase = rad2deg(atan2(vars.bHead(2),vars.bHead(1)));
+% Manget Channel 2
+mag2Vel = mag2.vel_data;
+mag2Vel(mag2.saccades) = nan;
+[mag2.vel_amp, mag2.vel_phase, ~, mag2.vel_fit, mag2.vel_fitr2] = fit_sineWave(mag2Vel, mag2.samplerate, freq);
 
-% ------------ MAGNET 1------------
-[vars.bMag1,~,~,~,stat] = regress(vars.mag1Vel(~vars.sacLoc_mag1), vars.vars(~vars.sacLoc_mag1,:));
-mag1Amp = sqrt(vars.bMag1(1)^2+vars.bMag1(2)^2);
-vars.mag1Amp = mag1Amp;
-mag1Phase = mod((rad2deg(atan2(vars.bMag1(2),vars.bMag1(1))) - headPhase),360)-180;
-r2mag1 = stat(1);
-vars.r2mag1 = r2mag1;
+% Video
+vidVel = vid.vel_data_upsampled;
+vidVel(vid.saccades_upsampled) = nan;
+[vid.vel_amp,  vid.vel_phase,  ~, vid.vel_fit, vid.vel_fitr2] = fit_sineWave(vidVel, mag1.samplerate, freq);
 
-% ------------ MAGNET 2------------
-[vars.bMag2,~,~,~,stat] = regress(vars.mag2Vel(~vars.sacLoc_mag2), vars.vars(~vars.sacLoc_mag2,:));
-mag2Amp = sqrt(vars.bMag2(1)^2+vars.bMag2(2)^2);
-vars.mag2Amp = mag2Amp;
-mag2Phase = mod((rad2deg(atan2(vars.bMag2(2),vars.bMag2(1))) - headPhase),360)-180;
-r2mag2 = stat(1);
-vars.r2mag2 = r2mag2;
+%% SCALE FACTOR
 
-% ------------ VIDEO ------------
-[vars.bVid,~,~,~,stat] = regress(vars.vidVel(~vars.sacLoc_vid), vars.vars(~vars.sacLoc_vid,:));
-vidAmp = sqrt(vars.bVid(1)^2+vars.bVid(2)^2);
-vars.vidAmp = vidAmp;
-vidPhase = rad2deg(atan2(vars.bVid(2), vars.bVid(1)));
-r2vid = stat(1);
-vars.r2vid = r2vid;
+% Magnet Channel 1
+scaleCh1 = vid.vel_amp/mag1.vel_amp;
+mag1.vel_scale = scaleCh1;
 
+% Manget Channel 2
+scaleCh2 = vid.vel_amp/mag2.vel_amp;
+mag2.vel_scale = scaleCh2;
 
-%% SAVE SCALE FACTOR
-scaleCh1 = vidAmp/mag1Amp * (2*(abs(mag1Phase)<90)-1);
-vars.scaleCh1 = scaleCh1;
-scaleCh2 = vidAmp/mag2Amp * (2*(abs(mag2Phase)<90)-1);
-vars.scaleCh2 = scaleCh2;
+%% Print information to user
 
-fprintf('Chan 1: Scale = %.2f\n',vars.scaleCh1)
-fprintf('Chan 1: Fit Amp = %.2f\n',vars.mag1Amp)
-fprintf('Chan 1: Fit r^2 = %.2f\n',r2mag1)
-fprintf('Chan 1: Saccade = %.2f\n\n',mean(vars.sacLoc_mag1))
+% Magnet Channel 1
+fprintf('Chan 1: Scale = %.2f\n',mag1.vel_scale)
+fprintf('Chan 1: Fit Amp = %.2f\n',mag1.vel_amp)
+fprintf('Chan 1: Fit Phase = %.2f\n',mag1.vel_phase)
+fprintf('Chan 1: Fit r^2 = %.2f\n',mag1.vel_fitr2)
+fprintf('Chan 1: Saccade = %.2f\n\n',mean(mag1.saccades))
 
+% Manget Channel 2
+fprintf('Chan 2: Scale = %.2f\n',mag2.vel_scale)
+fprintf('Chan 2: Fit Amp = %.2f\n',mag2.vel_amp)
+fprintf('Chan 2: Fit Phase = %.2f\n',mag2.vel_phase)
+fprintf('Chan 2: Fit r^2 = %.2f\n',mag2.vel_fitr2)
+fprintf('Chan 2: Saccade = %.2f\n\n',mean(mag2.saccades))
 
-fprintf('Chan 2: Scale = %.2f\n',vars.scaleCh2)
-fprintf('Chan 2: Fit Amp = %.2f\n',vars.mag2Amp)
-fprintf('Chan 2: Fit r^2 = %.2f\n',r2mag2)
-fprintf('Chan 2: Saccade = %.2f\n\n',mean(vars.sacLoc_mag2))
+%% SAVE DATA
+
+mag1Amp = mag1.vel_amp;
+r2mag1 = mag1.vel_fitr2;
+threshMagChan1 = mag1.saccadeThresh;
+mag1Phase = mag1.vel_phase;
+
+mag2Amp = mag2.vel_amp;
+r2mag2 = mag2.vel_fitr2;
+threshMagChan2 = mag2.saccadeThresh;
+mag2Phase = mag2.vel_phase;
+
+vidAmp = vid.vel_amp;
+r2vid = vid.vel_fitr2;
+threshVid = vid.saccadeThresh;
 
 save(fullfile(cd, [filenameroot '.mat']),'scaleCh1', 'scaleCh2',...
     'vidAmp','mag1Amp','mag1Phase','mag2Amp','mag2Phase',...
     'r2mag1','r2mag2','r2vid','threshVid','threshMagChan1','threshMagChan2', 'freq');
 
+saveAnalysisInfo_APP;
+
 end
+
+%{
+TODO
+- bottom plots
+- Remaining buttons
+- Send fmind function to andrew
+%}
+

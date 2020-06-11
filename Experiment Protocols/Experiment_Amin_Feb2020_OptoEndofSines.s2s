@@ -1,0 +1,173 @@
+'--------------------------------------------------------------------------------
+' IMPORT RIG-SPECIFIC PARAMETERS AND UNIVERSAL PARAMETERS
+'--------------------------------------------------------------------------------
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\RigChoice.s2s"
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal.s2s"
+
+'--------------------------------------------------------------------------------
+' MAIN PROGRAM
+'--------------------------------------------------------------------------------
+var lightPhase;
+ToolbarConfig();
+'--------------------------------------------------------------------------------
+' Toolbar Callbacks
+'--------------------------------------------------------------------------------
+Func ToolbarIdle%()
+
+  ' Check a valid sampling view is running
+  var currView := ViewKind();
+
+  if  currView <> 0 then
+      return 1;
+  endif;
+
+  ' Keep sine wave from drifting
+  if MaxTime() > (prevTime + 1/sinHzChair) then
+    if driftFix = 1 then
+      driftFix%();
+    endif;
+  endif;
+
+
+  'If an experiment is running:
+  if runExpmt% = 1 then
+
+      'Check the time. Seconds is the current time - compare it to the goal time of each segment
+      if  MaxTime() > goalTime then
+
+          docase
+
+          ' GAP A
+          case test% = 0 then
+            SampleKey("x");
+            goalTime := MaxTime() + 5;
+            ToolbarInit%(); Yield();
+            test% := 7;
+
+          ' GAP B
+          case test% = 7 then
+            goalTime := MaxTime() + 5;
+            ToolbarInit%(); Yield();
+
+            ' Go to Pre/Post or Train/Test Section
+            docase
+              ' PRE & POST Tests
+              case expmtLoc% = 1 then
+                test% := 1;
+              ' TEST/TRAIN Blocks
+              case expmtLoc% = 2 then
+                test% := 2;
+                ' If you have already done the test/train blocks, quit instead.
+                if rep% = (nBlocks%+1)  then
+                  ToolbarQuitExpmt%();
+                  Return(1);
+                endif
+            endcase
+            runFlash(); Yield();
+            ToolbarInit%(); Yield();
+
+          ' PRE AND POST TEST
+          case test% = 1 then
+            SampleKey("X");
+            goalTime := MaxTime() + testLength;
+            test% := 0;
+
+            ' Keep track of how many PRE/POST tests that you've run
+            prePostNum := prePostNum + 1;
+
+            if prePostNum > 2 then
+              expmtLoc% := 2;
+              ' This check is for the 'T-35' test
+              if rep% < nBlocks% then
+                prePostNum := 1;
+              endif
+            else
+              expmtLoc% := 1;
+            endif
+            sinAmpChair := 0;
+            sinAmpDrum := 10;
+            SetSequencerValues();
+            ToolbarLightOn%(); Yield();
+            ToolbarSineStart%();
+
+          ' BLOCK: TEST
+          case test% = 2 then
+            SampleKey("X");
+            goalTime := MaxTime() + testLength;
+
+            testrep% := testrep% + 1;
+
+            if testrep% = nTestreps% then
+              test% := 3;
+              rep% := rep% + 1;
+            else
+              test% := 0;
+            endif;
+            sinAmpChair := 0;
+            sinAmpDrum := 10;
+            SetSequencerValues();
+            ToolbarLightOn%(); Yield();
+            ToolbarSineStart%();
+
+          ' BLOCK: TRAIN
+          case test% = 3 then
+            SampleKey("x");
+            SampleKey("X");
+            goalTime := MaxTime() + runLength;
+
+            if rep% < (nBlocks%+1) then
+              ToolbarLightOff%();
+              prevTime := MaxTime();
+              measuredZeroChair := ChanMeasure(hhposCh%, 2, prevTime-2, prevTime-.5);
+              measuredZeroDrum := ChanMeasure(htposCh%, 2, prevTime-2, prevTime-.5);
+              ToolbarSineStop%();
+              sinAmpChair := 10;
+              sinAmpDrum := 0;
+              SetSequencerValues();
+              SampleKey( "U" );
+              sineOn% := 1;
+              Yield();
+              ToolbarSet(SinePos, "Sine Off",ToolbarSineStop%);
+            else
+              ToolbarSineStop%();
+              expmtLoc% := 1;
+            endif;
+
+            if rep% = nBlocks% then
+
+              expmtLoc% := 1;
+            endif
+
+            test% := 0;
+            testrep% := 0;
+
+          endcase;
+
+      endif;
+  endif;
+  Return(1);
+End
+
+'--------------------------------------------------------------------------------
+'Configure expmt settings window
+'--------------------------------------------------------------------------------
+Func ToolbarConfigExpmt%()
+  DlgCreate("Experiment settings");  'Start new dialog
+  DlgInteger(1,"Number of run-test blocks",0,100,0,0,1);
+  DlgInteger(2,"Number of tests per block",1,100,0,0,1);    'set to 0 if not using Chair
+  DlgReal(3,"Run length (s)",0,5000);
+  DlgReal(4,"Test length (s)",0,5000);
+  DlgList(5,"Expmt mode", "ipsi|contra");
+
+  DlgShow(nBlocks%, nTestreps%, runLength, testLength, expmtMode);
+
+  docase
+  case expmtMode = 0 then     'ipsi
+      sinPhChair := 90;
+  case expmtMode = 1 then     'contra
+      sinPhChair := -90;
+  endcase;
+
+  SetSequencerValues();
+  Return(1);
+End

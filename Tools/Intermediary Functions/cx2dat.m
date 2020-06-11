@@ -10,6 +10,7 @@ function chanData = cx2dat(filename, chanAmt, samplerate)
     if isempty(behavior.data)
         warning('Something went wrong!')
         disp(filename);
+        disp(behavior.trialname)
         chanData = [];
         return
     end

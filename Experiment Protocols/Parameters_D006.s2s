@@ -38,12 +38,12 @@ var ChairVoltage2Velocity := ChairDegreesPerSecond2Voltage; '107.42869;         
 var ChairVoltage2VelocityC := 0;                'Voltage to Chair Velocity (offset)
 
 'Chair velocity readout
-var ChairVelReadoutScale := -100.3;
-var ChairVelReadoutOffset := -.1548;
+var ChairVelReadoutScale := -99.954375;
+var ChairVelReadoutOffset := 0.156419375;
 
 'Chair position readout
-var ChairPosReadoutScale := 8.495;
-var ChairPosReadoutOffset := .1167;
+var ChairPosReadoutScale := 8.496821818;
+var ChairPosReadoutOffset := 0.092273891;
 
 'Drum velocity readout
 var DrumVelReadoutScale := 9.33112;
