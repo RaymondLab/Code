@@ -9,9 +9,10 @@ function eyeAnalysis_APP(app)
 %% Parameters & Prep
 load settings
 prevsettings = 1;
+cam = num2str(app.CameraDropDown.Value);
 
 % Shouldn't need to change unless setup changes drastically
-edgeThresh = app.edgeThreshCam1EditField.Value;
+edgeThresh = app.edgeThreshEditField.Value;
 plotall = app.PlotAnalysisCheckBox.Value;
 debugOn = app.debugCheckBox.Value;
 enchanceContrast = app.ImproveImageContrastCheckBox.Value;
@@ -23,7 +24,7 @@ the=linspace(0,2*pi,100);
 %% Get Images
 disp('Opening Images...')
 tic
-[ImageStack, n_images] = getImageStack('img1.tiff');
+[ImageStack, n_images] = getImageStack(['img', cam, '.tiff']);
 toc
 
 %% Pre-process Images
@@ -67,7 +68,7 @@ tic
 %% Start looping
 tic
 for i = 1:n
-    if mod(i,120) ==0
+    if mod(i,15) ==0
         
         % Store results
         results.pupil = pupil;
@@ -85,6 +86,11 @@ for i = 1:n
         
         maxRadii = max([pupil(i-1,3:4)]);
         radiiPupil(2) = round(maxRadii*1.25);
+        
+        if isnan(maxRadii)
+            maxRadii = app.RadiusPupilEditField_2.Value;
+            radiiPupil(2) = maxRadii;
+        end
         %radiiPupil = [round(maxRadii*.8) round(maxRadii*1.2)];
     end
     
@@ -120,7 +126,7 @@ for i = 1:n
         plot5 = line(app.UIAxes2_2, ...
             pupil(i,3)*cos(the)*cos(pupil(i,5)) - sin(pupil(i,5))*pupil(i,4)*sin(the) + pupil(i,1), ...
             pupil(i,3)*cos(the)*sin(pupil(i,5)) + cos(pupil(i,5))*pupil(i,4)*sin(the) + pupil(i,2),...
-            'Color','m');
+            'Color','r');
         plot4 = plot(app.UIAxes2_2, pupil(i,1), pupil(i,2),'+m','LineWidth',2, 'MarkerSize',10);
         
         plot6 = plot(app.UIAxes2_2, epx_1, epy_1,'.c');
@@ -146,18 +152,14 @@ for i = 1:n
         set(plot7, 'YData', epy2_1)
     end
     
-    drawnow
     pause(0.001) % needed for things actually plot.
 end
 
 toc
 %% Store results
-results.pupil1 = pupil;
-results.pupil2 = pupil2;
-results.cr1a = CRa;
-results.cr2a = CR2a;
+results.pupil = pupil;
+results.cra = CRa;
 results.cr1b = CRb;
-results.cr2b = CR2b;
 
 %% Plot Summary
 A = figure('units','normalized','outerposition',[0 0 1 1]); clf
@@ -165,36 +167,34 @@ A = figure('units','normalized','outerposition',[0 0 1 1]); clf
 TrackSumFig = tight_subplot(2,1,[.01 .025],[.025 .025],[.03 .01]);
 axes(TrackSumFig(1));
 
-plot( results.time1, results.pupil1(:,1),'r-');hold on
-plot( results.time2, results.pupil2(:,1),'m-');
-plot( results.time1, results.cr1a(:,1),'b-');
-plot( results.time2, results.cr2b(:,1),'c-');
+plot( results.time1, results.pupil(:,1),'r-');hold on
+plot( results.time1, results.cra(:,1),'b-');
+plot( results.time2, results.crb(:,1),'c-');
 xticks([])
 box off
-xlim( [results.time2(1+1) results.time2(end-1)]);
+xlim( [results.time1(1+1) results.time1(end-1)]);
 
 ylabel( 'Horiz Pos (pix)')
 
 axes(TrackSumFig(2));
-plot( results.time1,max(results.pupil1(:,3:4),[],2),'r-'); hold on
-plot( results.time2,max(results.pupil2(:,3:4),[],2),'m-');  
-plot( results.time1,results.cr1a(:,3),'b-');
-plot( results.time2,results.cr2b(:,3),'c-');  
+plot( results.time1,max(results.pupil(:,3:4),[],2),'r-'); hold on
+plot( results.time1,results.cra(:,3),'b-');
+plot( results.time2,results.crb(:,3),'c-');  
 box off
 legend({'Cam1 - Pupil' 'Cam2 - Pupil', 'Cam1 - Left CR', 'Cam2 - Right CR'})
-xlim( [results.time2(1) results.time2(end)]);
+xlim( [results.time1(1) results.time1(end)]);
 ylabel( 'radii (pix)' )
 xlabel( 'Time (s)')
 
 set(A,'Units','Inches');
 pos = get(A,'Position');
 set(A,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
-print(A, fullfile(cd, 'Summary_EyeTracking.pdf'),'-dpdf');
-savefig('Summary_EyeTracking.fig')
+print(A, fullfile(cd, ['Summary_EyeTracking_Cam' num2str(cam), '.pdf']),'-dpdf');
+savefig(['Summary_EyeTracking_Cam' num2str(cam), '.fig'])
 
 
 %% Save Data
-save('videoresults.mat','results')
+save(['videoresults_cam', cam, '.mat'],'results')
 fprintf('\nResults saved\n')
 warning on
 

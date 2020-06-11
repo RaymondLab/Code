@@ -1,4 +1,4 @@
-function videoTest_APP(app, cam, radiiPupil, varargin)
+function setupEyeTracking_APP(app, cam, radiiPupil, varargin)
 
 manual = 1;
 p = inputParser;
@@ -21,11 +21,10 @@ CRfilter2 = p.Results.CRfilter2;
 minfeatures = p.Results.MinFeatures;
 imAdjust = p.Results.ImAdjust;
 
-edgeThresh1 = app.edgeThreshCam1EditField.Value; % Initial gradient threshold of pupil edge detection for cam 1
+edgeThresh1 = app.edgeThreshEditField.Value; % Initial gradient threshold of pupil edge detection for cam 1
 plotall= 1;
 debugOn = 0;
 ok = 0;
-
 
 %% Load image to test
 frame = 1;
@@ -33,13 +32,13 @@ frame = 1;
 
 %% User finds pupil center and analysis ROI
 [pupilStartLarge] = testradiipupilmanual_APP(app, imgLarge);
+pupilStart = [round(pupilStartLarge(1)), round(pupilStartLarge(2))];
 
-disp('Draw a box around analysis ROI.')
+disp('Draw an elipse around analysis ROI.')
 disp('When finished, press any key.');
 
-hRecta = drawrectangle;
-pos = round(hRecta.Position);
-pupilStart = [round(pupilStartLarge(1)) - pos(1), round(pupilStartLarge(2)) - pos(2)];
+roi = drawellipse;
+pos = double(roi.createMask());
 
 pause
 close all;
@@ -75,7 +74,6 @@ disp('Radii: ')
 disp(['Pupil: ', num2str(max(pupil(3:4)))]);
 disp(['CR a : ', num2str(CRa(3))]);
 disp(['CR b : ', num2str(CRb(3))]);
-
 
 %% Save settings
 save('settings','pos','radiiPupil','minfeatures',...

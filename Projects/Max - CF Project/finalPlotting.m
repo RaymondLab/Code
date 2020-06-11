@@ -17,8 +17,8 @@ dataTable(~contains(dataTable.alignedMat, {'aligned'}),:) = [];
 
 % ss firing rate calculation
 useSDF = 0;
-kernel_sd = .03; % Seconds
-bin_ifr = .05; % Seconds
+kernel_sd = .01; % Seconds
+bin_ifr = .02; % Seconds
 
 % Pattern to look for
 % NOcsNOcs, csNOcs, 2csNOcs
@@ -98,7 +98,7 @@ for i = 1:height(tempTable)
         [cycleMat_ss, cycleMean_ss] = VOR_breakTrace(cycleLen_e, startpt_e, sdf);
         segTime_ss = [0:1/sr_e:(length(sdf)-1)/sr_e]';
         segTime_ss = round(segTime_ss*100000)/100000;
-        bin_size = 1;
+        bin_size_e = 1;
         segment_ss = sdf;
     % Instantaneous Firing Rate
     else
@@ -107,21 +107,21 @@ for i = 1:height(tempTable)
             binned(round(recData(8).data(x)*sr_e)) = 1;
         end
         
-        bin_size = sr_e * bin_ifr;
+        bin_size_e = sr_e * bin_ifr;
         ifr = [];
-        for x = 1:bin_size:length(binned)
-            endPnt = min([(x+bin_size-1) length(binned)]);
+        for x = 1:bin_size_e:length(binned)
+            endPnt = min([(x+bin_size_e-1) length(binned)]);
             ifr(end+1) = sum( binned(x:endPnt) );
         end        
-        cycleLen_ifr = cycleLen_e/bin_size;
-        startpnt_ifr = startpt_e/bin_size;
+        cycleLen_ifr = floor(cycleLen_e/bin_size_e);
+        startpnt_ifr = startpt_e/bin_size_e;
         [cycleMat_ss, cycleMean_ss] = VOR_breakTrace(cycleLen_ifr, startpnt_ifr, ifr);
         cycleTime_ifr = linspace(0, 1/expmtFreq, length(cycleMean_ss));
         
         figure(); hold on
-        plot(cycleTime_ifr, cycleMean_ss/(bin_size/sr_e), 'k')
-        plot(cycleTime_ifr, (cycleMean_ss/(bin_size/sr_e))+std(cycleMat_ss), ':k')
-        plot(cycleTime_ifr, (cycleMean_ss/(bin_size/sr_e))-std(cycleMat_ss), ':k')
+        plot(cycleTime_ifr, cycleMean_ss/(bin_size_e/sr_e), 'k')
+        plot(cycleTime_ifr, (cycleMean_ss/(bin_size_e/sr_e))+std(cycleMat_ss), ':k')
+        plot(cycleTime_ifr, (cycleMean_ss/(bin_size_e/sr_e))-std(cycleMat_ss), ':k')
         segTime_ss = linspace(0,recData(8).data(end), length(ifr));
         cycleTime_e = linspace(0,recData(8).data(end), cycleLen_ifr);
         segment_ss = ifr;
@@ -209,14 +209,16 @@ for i = 1:height(tempTable)
     
     %% FIND appropriate Cycles
 
+    
+    cycleLen_bin = floor(cycleLen_e/bin_size_e);
     % First x% of cycle
     csWindow_no = 1:(sr_e * .201);
     csWindowN1 = (sr_e * .201):(cycleLen_e/2);
     csWindowN2 = 1:(cycleLen_e/2);
 
     % 300ms window
-    ssWindow = .3 * sr_e; 
-    ssWindow = round(ssWindow/bin_size);
+    ssWindow_e = .3 * sr_e; 
+    ssWindow_bin = floor(ssWindow_e/bin_size_e);
     conds = [];
     
     switch condition
@@ -255,12 +257,12 @@ for i = 1:height(tempTable)
         if goodCycles(k)
 
             csLoc_cycle = find(cycleMat_cs(k,:), 1);
-            csLoc_cycle = round(csLoc_cycle/bin_size);
+            csLoc_cycle_bin = floor(csLoc_cycle/bin_size_e);
 
             csLoc_seg = (k-1)*cycleLen_e+csLoc_cycle+startpt_e-1;
-            ssLog_seg = csLoc_seg/100;
-            ssChunkA  = segment_ss((ssLog_seg-ssWindow):(ssLog_seg+ssWindow));
-            ssChunkB  = segment_ss((ssLog_seg+cycleLen_e-ssWindow):(ssLog_seg+cycleLen_e+ssWindow));
+            ssLoc_seg = floor(csLoc_seg/bin_size_e);
+            ssChunkA  = segment_ss((ssLoc_seg-ssWindow_bin):(ssLoc_seg+ssWindow_bin));
+            ssChunkB  = segment_ss((ssLoc_seg+cycleLen_bin-ssWindow_bin):(ssLoc_seg+cycleLen_bin+ssWindow_bin));
             ssChunkDiff = ssChunkB - ssChunkA;
 
             %% PLOT individual examples
@@ -273,8 +275,8 @@ for i = 1:height(tempTable)
                 plot(cycleTimeVec_b, nanmean(cycleMat_tVel), 'r', 'LineWidth', 2); hold on
                 plot(cycleTimeVec_b, nanmean(cycleMat_hVel), 'b', 'LineWidth', 2);
                 vline(csLoc_cycle/sr_e, '-k')
-                vline((csLoc_cycle/sr_e)-ssWindow/sr_e, '--k')
-                vline((csLoc_cycle/sr_e)+ssWindow/sr_e, '--k')
+                vline((csLoc_cycle/sr_e)-ssWindow_e/sr_e, '--k')
+                vline((csLoc_cycle/sr_e)+ssWindow_e/sr_e, '--k')
                 xticks([])
                 yticks([])
                 hline(0, ':k')
@@ -286,8 +288,8 @@ for i = 1:height(tempTable)
                 plot(cycleTime_e, cycleMat_ss(k  ,:), 'Color', [0.9100    0.4100    0.1700], 'LineWidth', 2); hold on
                 plot(cycleTime_e, cycleMat_ss(k+1,:), 'Color', [0, 0.5, 0], 'LineWidth', 2);
                 vline(csLoc_cycle/sr_e, '-k')
-                vline((csLoc_cycle/sr_e)-ssWindow/sr_e, '--k')
-                vline((csLoc_cycle/sr_e)+ssWindow/sr_e, '--k')
+                vline((csLoc_cycle/sr_e)-ssWindow_e/sr_e, '--k')
+                vline((csLoc_cycle/sr_e)+ssWindow_e/sr_e, '--k')
                 yticks([])
                 hline(0, ':k')
                 legend({'Cycle N', 'Cycle N+1'})
@@ -296,8 +298,8 @@ for i = 1:height(tempTable)
 
                 % 601ms window sub-figure
                 axes(cycleExample(3));
-                plot( (1:((ssWindow*2)+1))/sr_e, ssChunkA, 'Color', [0.9100    0.4100    0.1700], 'LineWidth', 2); hold on
-                plot( (1:((ssWindow*2)+1))/sr_e, ssChunkB, 'Color', [0, 0.5, 0], 'LineWidth', 2);
+                plot( (1:((ssWindow_e*2)+1))/sr_e, ssChunkA, 'Color', [0.9100    0.4100    0.1700], 'LineWidth', 2); hold on
+                plot( (1:((ssWindow_e*2)+1))/sr_e, ssChunkB, 'Color', [0, 0.5, 0], 'LineWidth', 2);
 
                 title('600ms window around CS')
                 xlim([0 length(ssChunkA)/sr_e])
@@ -310,8 +312,8 @@ for i = 1:height(tempTable)
                 % Difference sub-figure
                 axes(cycleExample(4));
                 ssChunkDiff = ssChunkB - ssChunkA;
-                plot( (1:((ssWindow*2)+1))/sr_e, ssChunkDiff, 'Color', [0.9100    0.4100    0.1700], 'LineWidth', 3); hold on
-                plot( (1:((ssWindow*2)+1))/sr_e, ssChunkDiff, 'Color', [0, 0.5, 0], 'LineWidth', 3, 'LineStyle', '--');
+                plot( (1:((ssWindow_e*2)+1))/sr_e, ssChunkDiff, 'Color', [0.9100    0.4100    0.1700], 'LineWidth', 3); hold on
+                plot( (1:((ssWindow_e*2)+1))/sr_e, ssChunkDiff, 'Color', [0, 0.5, 0], 'LineWidth', 3, 'LineStyle', '--');
 
 
                 title('Cycle N+1 - Cycle N')
@@ -375,12 +377,16 @@ if PLOT_3
     
     % PLOT Average Differences
     figure()
-    plot((1:((ssWindow*2)+1))/sr_e, alldiffs'); hold on
-    plot((1:((ssWindow*2)+1))/sr_e, nanmean(alldiffs), 'k', 'LineWidth', 3)
+    plot((1:((ssWindow_bin*2)+1))/sr_e, alldiffs'); hold on
+    plot((1:((ssWindow_bin*2)+1))/sr_e, nanmean(alldiffs), 'k', 'LineWidth', 3)
     hline(0, 'k')
     ylim([-40 40])
     xlim([0 length(ssChunkA)/sr_e])
     title('CS+!CS ss Firing Rate Differences')
     vline(mean(xlim), 'k');
     vline(mean(xlim)-.120, 'k');
+    
+    
+    
+
 end
