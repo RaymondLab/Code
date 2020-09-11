@@ -1,14 +1,19 @@
-function [omitH, omitCenters, eye_pos_filt, eye_vel_pfilt] = desaccadeVel3(eye_pos_raw, samplerate, presaccade, postsaccade, freq, params, fit1)
+function [omitH, omitCenters, eye_pos_filt, eye_vel_pfilt] = desaccadeVel3_Modified(eye_pos_raw, samplerate, presaccade, postsaccade, freq, params, fit1)
+% REMOVE TRANSIENTS
+transient_threshold = params.transientThreshold;
+eye_pos_raw = removeTransients(eye_pos_raw, transient_threshold);
+
 % LOW PASS ON POSITION
 N = 4;
-fc = 15;
-[bb,aa] = butter(N, fc/samplerate, 'low');
+fc = params.lowpassCutoff;
+nq = samplerate / 2;
+[bb,aa] = butter(N, fc / nq, 'low');
 eye_pos_filt = filtfilt(bb,aa,eye_pos_raw);
 
 % CALC VEL - use Hannah's calulation method, not the 'diff()' function.
-veltau = .01;
-eye_vel_pfilt = movingslopeCausal(eye_pos_filt,round(samplerate*veltau))*samplerate;
-eye_vel_praw = movingslopeCausal(eye_pos_raw,round(samplerate*veltau))*samplerate;
+filter_window = params.filterWindow;
+eye_vel_pfilt = movingslope(eye_pos_filt,filter_window) * samplerate;
+eye_vel_praw = movingslope(eye_pos_raw, filter_window) * samplerate;
 
 %% REMOVE EXPMT FREQ
 option = 2;
@@ -62,7 +67,17 @@ if accel
     eyevelOut(logical(rejecttemp2))= NaN;
     omitH = isnan(eyevelOut);
 end
-    
+
+%% REMOVE TRANSIENTS
+function datout = removeTransients(datin, thresh)
+    datout = datin;
+    for i = 2 : length(datin) - 1
+        if abs(datin(i) - datin(i - 1)) > thresh && abs(datin(i) - datin(i + 1)) > thresh && abs(datin(i - 1) - datin(i + 1)) < thresh
+            datout(i) = (datin(i - 1) + datin(i + 1)) / 2;
+        end
+    end
+end
+
 %% FOR TESTING, DEBUGGING, AND TWEAKING DESACCADE %%%%%%%%%%%%%%%%%%%%%%%%
 if params.NoiseAnalysis
 
@@ -275,6 +290,7 @@ if params.NoiseAnalysis
     
       
     %disp('a')
+end
 end
 
 

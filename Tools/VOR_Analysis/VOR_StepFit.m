@@ -135,7 +135,7 @@ for count = 1:nSegs
         
     % NEW VERSION
     elseif params.newSac == 1
-        [omitH, omitCenters, eyePos_filt, eyeVel_proc] = desaccadeVel3(eyePos, samplerate, presaccadeN, postsaccadeN, freq, params, fit1);
+        [omitH, omitCenters, ~, eyeVel_proc] = desaccadeVel3(eyePos, samplerate, presaccadeN, postsaccadeN, freq, params, fit1);
         
         % Store Processed Trace
         eyeVel_proc_des = eyeVel_proc;

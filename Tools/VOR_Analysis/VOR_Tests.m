@@ -58,6 +58,7 @@ function singleAnalysis(params)
             VOR_DarkRearingGeneralization(params)
         otherwise
             fprintf('Running: Basic Overview\n')
+            %% changed to add filtering parameters
             params = VOR_Default(params);
     end
 

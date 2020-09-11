@@ -134,12 +134,14 @@ heposdata = scaleCh1*datchandata(data,'hepos1') + scaleCh2*datchandata(data,'hep
 % Create and add 'horizontal eye position' channel to channel list
 data(end+1) = dat(heposdata,'hepos',[],fs,data(1).tstart,data(1).tend,'deg');
 
-% Filter with 100 Hz lowpass
-data(end) = datlowpass(data(end),100);
+% Change data type to double
+for i = 1:length(data)
+    data(i).data = double(data(i).data);
+end
 
 % Calculate eye velocity for plotting
 veltau = .01;
-hevel = movingslopeCausal(datchandata(data,'hepos'),round(fs*veltau))*fs;
+hevel = movingslope(datchandata(data,'hepos'),round(fs*veltau))*fs;
 
 % Create and add 'horiontal eye velocity' channel to channel list
 data(end+1) = dat(hevel,'hevel',[],fs,data(1).tstart,data(1).tend,'deg/s');
