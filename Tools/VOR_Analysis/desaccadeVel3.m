@@ -1,4 +1,4 @@
-function [omitH, omitCenters, eye_pos_filt, eye_vel_pfilt] = desaccadeVel3_Modified(eye_pos_raw, samplerate, presaccade, postsaccade, freq, params, fit1)
+function [omitH, omitCenters, eye_pos_filt, eye_vel_pfilt] = desaccadeVel3(eye_pos_raw, samplerate, presaccade, postsaccade, freq, params, fit1)
 % REMOVE TRANSIENTS
 transient_threshold = params.transientThreshold;
 eye_pos_raw = removeTransients(eye_pos_raw, transient_threshold);
