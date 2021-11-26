@@ -29,7 +29,7 @@ catch
 end
 rawFrameData_cam2 = B.frameData;
 
-vid.pos_data = calceyeangle_APP(rawFrameData_cam1, rawFrameData_cam2); % old
+[vid.pos_data, vid.pos_data_vertical] = calceyeangle_APP(rawFrameData_cam1, rawFrameData_cam2); % old
 vid.percent_frames_missed = sum(int64(isnan(vid.pos_data)))*100/length(vid.pos_data); % old
 
 %% sort out time stamps
@@ -196,6 +196,9 @@ vid.pos_data_upsampled = interp1(vid.time,vid.pos_data,mag1.time(:),'linear');
 vid.pos_data_upsampled = inpaint_nans(vid.pos_data_upsampled);
 vid.time_upsampled = mag1.time;
 
+vid.pos_data_vertical_upsampled = interp1(vid.time, vid.pos_data_vertical, mag1.time(:), 'linear');
+vid.pos_data_vertical_upsampled = inpaint_nans(vid.pos_data_vertical_upsampled);
+
 %% DESACCADE 
 windowPre = app.SaccadeWindowmsEditField.Value;
 windowPost = app.SaccadeWindowEditField_2.Value;
@@ -206,7 +209,7 @@ mag1.saccadeThresh = app.SaccadeThresholdMagnetChan1EditField.Value;
 [mag1.saccades, ~, mag1.vel_data] = desaccadeVel_A(mag1.pos_data, mag1.samplerate, 1, windowPre, windowPost, mag1.saccadeThresh, minDataLength);
 title('Magnet Channel 1 (Unscaled!)')
 
-% Manget Channel 2
+% Magnet Channel 2
 mag2.saccadeThresh = app.SaccadeThresholdMagnetChan2EditField.Value;
 [mag2.saccades, ~, mag2.vel_data] = desaccadeVel_A(mag2.pos_data, mag2.samplerate, 1, windowPre, windowPost, mag2.saccadeThresh, minDataLength);
 title('Magnet Channel 2 (Unscaled!)')

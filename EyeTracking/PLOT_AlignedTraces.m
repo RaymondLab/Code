@@ -68,6 +68,7 @@ plot(app.UIAxes4_3, vid.time_upsampled_aligned, vid.pos_data_upsampled_aligned, 
 ylabel(app.UIAxes4_3, 'Position (deg)')
 legend(app.UIAxes4_3, 'Magnet Channel 1', 'Magnet Channel 2', 'Video')
 xlim(app.UIAxes4_3, [0 vid.time_upsampled_aligned(end)]);
+xticklabels('auto');
 hold(app.UIAxes4_3, 'off')
    
 
@@ -81,6 +82,7 @@ ylabel(app.UIAxes4_5, 'Velocity (deg/s)')
 ylim(app.UIAxes4_5, [-300 300])
 xlim(app.UIAxes4_5, [0 vid.time_upsampled_aligned(end)]);
 hold(app.UIAxes4_5, 'off')
+linkaxes([app.UIAxes4_3, app.UIAxes4_5], 'xy');
 
 % % Save Figure
 % set(A,'Units','Inches');

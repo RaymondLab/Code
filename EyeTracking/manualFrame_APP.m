@@ -1,7 +1,7 @@
 function [vars, trackParams, frameData] = manualFrame_APP(app, vars, trackParams, frameData, frame)
 
 %% Set up Figure
-manFig = figure()
+manFig = figure();
 manualFrameFig = tight_subplot(2,1,[0 0],[.0 .02],[0 0]); 
 
 subplot(2,2,3)

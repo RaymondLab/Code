@@ -16,6 +16,7 @@ if lag < 0
     
     % video
     vid.pos_data_upsampled_aligned = vid.pos_data_upsampled(1:end+lag);
+    vid.pos_data_vertical_upsampled_aligned = vid.pos_data_vertical_upsampled(1:end+lag);
     vid.vel_data_upsampled_aligned = vid.vel_data_upsampled(1:end+lag);
     vid.saccades_upsampled_aligned = vid.saccades_upsampled(1:end+lag);
 else
@@ -32,6 +33,7 @@ else
 
     % video
     vid.pos_data_upsampled_aligned = vid.pos_data_upsampled((lag)+1:end);
+    vid.pos_data_vertical_upsampled_aligned = vid.pos_data_vertical_upsampled((lag)+1:end);
     vid.vel_data_upsampled_aligned = vid.vel_data_upsampled((lag)+1:end);
     vid.saccades_upsampled_aligned = vid.saccades_upsampled((lag)+1:end);
 end
@@ -39,6 +41,7 @@ end
 %% If input vectors are not the same length, shorted the longer one
 if length(mag1.pos_data_aligned) < length(vid.pos_data_upsampled_aligned)
     vid.pos_data_upsampled_aligned = vid.pos_data_upsampled_aligned(1:length(mag1.pos_data_aligned));
+    vid.pos_data_vertical_upsampled_aligned = vid.pos_data_vertical_upsampled_aligned(1:length(mag1.pos_data_aligned));
     vid.vel_data_upsampled_aligned = vid.vel_data_upsampled_aligned(1:length(mag1.pos_data_aligned));
     vid.saccades_upsampled_aligned = vid.saccades_upsampled_aligned(1:length(mag1.pos_data_aligned));
     

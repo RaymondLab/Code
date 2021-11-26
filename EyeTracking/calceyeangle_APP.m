@@ -1,4 +1,4 @@
-function posH = calceyeangle_APP(frameData_cam1, frameData_cam2, theta)
+function [posH, posV] = calceyeangle_APP(frameData_cam1, frameData_cam2, theta)
 
 %% Angle between two cameras in degree  5/22 DONT CHANGE
 if ~exist('theta','var')
@@ -11,6 +11,17 @@ d2 = [frameData_cam2.pupil_x] - [frameData_cam2.cr2_x];
 
 posH = atand(sind(theta) ./ (d2./d1 + cosd(theta)));
 
+%% Vertical
+
+% This is my attempt to rewrite the code below for the new frameData data
+% structure.
+% - Kellen Vu, 17 Aug 2021
+
+pupilRadius = [frameData_cam1.pupil_r1];
+cr1_y = [frameData_cam1.cr1_y];
+pupil_y = [frameData_cam1.pupil_y];
+
+posV = asind((pupil_y - cr1_y) ./ pupilRadius);
 
 %% Vertical (less exact but pretty close) TODO, it works, but only with
 % old 'results' data structure. Need to make work with new 'frameData' data
