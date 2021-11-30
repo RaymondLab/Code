@@ -53,6 +53,9 @@ switch answer
         frameData(frame).pupil_r2 = roiPupil.SemiAxes(1);
         frameData(frame).pupil_angle = roiPupil.RotationAngle;
         app.ManualFrameReDosPanel.Children(end).Items(contains(app.ManualFrameReDosPanel.Children(end).Items, {num2str(frame)})) = [];
+
+        save(['videoresults_cam', num2str(trackParams.cam), '.mat'], 'frameData');
+        fprintf('\nResults saved\n');
     case 'No'
     case 'Remove Entire Frame'
         frameData(frame).cr1_x = nan;
@@ -69,6 +72,9 @@ switch answer
         frameData(frame).pupil_r2 = nan;
         frameData(frame).pupil_angle = nan;
         app.ManualFrameReDosPanel.Children(end).Items(contains(app.ManualFrameReDosPanel.Children(end).Items, {num2str(frame)})) = [];
+
+        save(['videoresults_cam', num2str(trackParams.cam), '.mat'], 'frameData');
+        fprintf('\nResults saved\n');
 end
 close(manFig)
 
