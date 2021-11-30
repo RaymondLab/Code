@@ -68,7 +68,7 @@ switch answer
         frameData(frame).pupil_r1 = nan;
         frameData(frame).pupil_r2 = nan;
         frameData(frame).pupil_angle = nan;
-        app.ManualFrameReDosPanel.Children(4).Items(contains(app.ManualFrameReDosPanel.Children(4).Items, {num2str(frame)})) = [];
+        app.ManualFrameReDosPanel.Children(end).Items(contains(app.ManualFrameReDosPanel.Children(end).Items, {num2str(frame)})) = [];
 end
 close(manFig)
 
