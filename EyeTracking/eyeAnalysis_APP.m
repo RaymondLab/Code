@@ -52,6 +52,11 @@ for i = 1:n-1
         hp = plotresults_APP(app, frameData, hp, i);
     end
     
+    % Stop if we exceed the number frames in the tiff stack
+    if i > size(ImageStackPreProcessed, 3)
+        break
+    end
+
     %% Load image
     img = ImageStackPreProcessed(:,:,i);
     
