@@ -8,7 +8,8 @@ lastGoodFrame = 1;
 %% Get Images
 disp('Opening Images...')
 tic
-[ImageStack, n_images] = getImageStack(['img', num2str(trackParams.cam), '.tiff']);
+customEndFrame = 9000;
+[ImageStack, n_images] = getImageStack(['img', num2str(trackParams.cam), '.tiff'], customEndFrame);
 toc
 
 %% Pre-process Images
@@ -53,7 +54,7 @@ for i = 1:n-1
     end
     
     % Stop if we exceed the number frames in the tiff stack
-    if i > size(ImageStackPreProcessed, 3)
+    if i > n_images
         break
     end
 
