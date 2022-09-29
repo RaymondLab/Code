@@ -1,10 +1,11 @@
-function [imageStack, n_images] = getImageStack(file)
+function [imageStack, n_images] = getImageStack(file, customEndFrame)
 
     info = imfinfo(file);
 
     nImage = info(1).Height;
     mImage = info(1).Width;
-    n_images = length(info);
+    % n_images = length(info);
+    n_images = customEndFrame;
     imageStack = zeros(nImage,mImage,n_images,'uint8');
     TifLink = Tiff(file, 'r');
 
