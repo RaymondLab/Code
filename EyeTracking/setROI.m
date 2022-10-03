@@ -4,10 +4,12 @@ function vid = setROI(vid, img1, img2,res, boxsize, boxoffset)
 figure(1);
 set(gcf, 'Position', get(0,'Screensize')); % Maximize figure.
 h(1) = subplot(1,2,1);
-imshow(img1); title('Camera 1')
-
+imshow(img1); title('Camera Left')
+text(-60,-82,'Please do it on the camera Left:','Color','red','FontSize',15)
+text(-53,-60,'First: Click and mark the center of the eye','Color','blue','FontSize',14)
+text(-53,-40,'Second: Click and drag (to set ROI)  ','Color','blue','FontSize',14)
 h(2) = subplot(1,2,2);
-imshow(img2); title('Camera 2')
+imshow(img2); title('Camera Right')
 
 %% Prompt for ROI around each eye
 disp('Click on the camera coming from the left angle')
@@ -20,8 +22,8 @@ if hout == h(2) % right subplot clicked, switch cameras
     img2temp = img1;
     img1 = img2;
     img2 = img2temp;
-    subplot(1,2,1); imshow(img1); title('Camera 1')
-    subplot(1,2,2); imshow(img2); title('Camera 2')
+    subplot(1,2,1); imshow(img1); title('Camera Left')
+    subplot(1,2,2); imshow(img2); title('Camera Right')
 end
 
 

@@ -92,6 +92,11 @@ function singleAnalysis(params)
             VOR_Summary_Sriram_CycleDiff(params, [15, 16 17], [1, 2, 3], 'T30 - T0', 'head')
             VOR_Summary_Sriram_CycleDiff(params, 14, 4, 'T27 5 - T2 5', 'head')
             
+        case 'Alz_BPS_VOR'
+            fprintf('Running: Dark Rearing''s t30 & t0 Analysis\n')
+            VOR_Summary_Sriram_CycleDiff(params, [11, 12, 13], [1, 2, 3], 'T30 - T0', 'head')
+            VOR_Summary_Sriram_CycleDiff(params, 10, 4, 'T27 5 - T2 5', 'head')
+            
         case 'Amin_Gen'
             VOR_Summary_Amin_Gen('eyeHgain', expmtExcelFile, 0);
             
