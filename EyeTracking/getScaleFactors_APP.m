@@ -154,7 +154,7 @@ vid.samplerate = 1/mean(diff(vid.time)); % old
 % rawFrameData_cam1_us.time = 0:(1/1000):(length(rawFrameData_cam1_us.cr1_x)-1)/1000;
 % 
 % % calculate position
-% vid.pos_data_upsampled = calceyeangle_APP(rawFrameData_cam1_us, rawFrameData_cam2_us);
+  % vid.pos_data_upsampled = calceyeangle_APP(rawFrameData_cam1_us, rawFrameData_cam2_us);
 % 
 % % TODo
 % % vid.percent_frames_missed = sum(int64(isnan(vid.pos_data)))*100/length(vid.pos_data);
@@ -170,12 +170,16 @@ fullfilename = fullfile(cd,[filenameroot '.smr']);
 
 if app.LeftButton.Value
     % Left Eye (default)
-    rawMagnetData = importSpike(fullfilename,[4 5 6 10]);
+    rawMagnetData = importSpike(fullfilename,[4 5 6 10 31]);
 else
     % Right Eye
-    rawMagnetData = importSpike(fullfilename,[4 7 8 10]);
+    rawMagnetData = importSpike(fullfilename,[4 7 8 10 31]);
 end
-
+%[data,dataSubset,keystrokes] = importDatObject(fullfilename);      %extracts raw data from .smr experimental file
+%SampKeys = strcat(keystrokes.samplerate(any(keystrokes.samplerate == ('V'), 2))');
+%SampKeyTimes = keystrokes.data(any(keystrokes.samplerate == ('V'), 2))';
+% 
+%segmentStart = SampKeyTimes(strfind(SampKeys, 'V'));
 % Select Proper Magnet window/segment
 lightpulses = rawMagnetData(end).data;
 segmentStart = lightpulses(1);

@@ -95,6 +95,34 @@ rawdata = importSpike(fullfile(params.folder,[params.file '.smr']),chanindsAll(c
 data = rawdata;
 fs = data(1).samplerate;
 
+%ADD for new rig setup (Changed by:Sima 2.11.22)
+if data(1).samplerate == 'event'
+    data(1).samplerate = data(3).samplerate ;
+    fs = data(1).samplerate;
+    d = readSpikeFile(fullfile(params.folder,[params.file '.smr']),chanindsAll);
+    indT = datchanind(data,'htpos');
+    indH = datchanind(data,'hhpos');
+    indTV = datchanind(data,'htvel');
+    indHV = datchanind(data,'hhvel');
+    DrumD = d(data(indT).chanval).data.adc';
+    data(indT).data = DrumD';
+    chairD = d(data(indH).chanval).data.adc;
+    data(indH).data = -1*chairD'; %-1 needed because chair movment view always is fliped while the actual movment is correct
+%     %%%%%%%For Step
+%     %Filter For step experiment
+%     Velocityfilter = [0 0.03 0.03 1];
+%     mlo = [1 1 0 0];
+%     blo = fir2(10000,Velocityfilter,mlo);
+%     delay = round(mean(grpdelay(blo)));
+%     newarry_f = filter(blo,1,data(indT).data);
+%     data(indTV).data = padarray(diff(newarry_f(delay:end))*fs,[0 delay],'replicate','post');
+%     newarry_f = filter(blo,1,data(indH).data);
+%     data(indHV).data = padarray(diff(newarry_f(delay:end))*fs,[0 delay],'replicate','post');
+    %%%%%%%For Sine
+    data(indTV).data = smooth([diff(smooth(data(indT).data,50)); 0],50)*fs;
+    data(indHV).data = smooth([diff(smooth(data(indH).data,50)); 0],50)*fs;
+end
+
 % Add a drum velocity channel if needed
 if isempty(datchan(data,'htvel')) || max(datchandata(data,'htvel'))<.1
     data(datchanind(data,'htvel')) = [];
@@ -129,8 +157,27 @@ else
 end
 
 % Calculate scaled eye position
-heposdata = scaleCh1*datchandata(data,'hepos1') + scaleCh2*datchandata(data,'hepos2');
+%heposdata = scaleCh1*datchandata(data,'hepos1') + scaleCh2*datchandata(data,'hepos2');
 
+%First check for eye magnets channel be in the same size (Added by:Sima 2.2.22)
+sizehepos1 = size(datchandata(data,'hepos1'));
+sizehepos2 = size(datchandata(data,'hepos2'));
+datahepos1 = datchandata(data,'hepos1');
+datahepos2 = datchandata(data,'hepos2');
+if sizehepos1 == sizehepos2
+    heposdata = scaleCh1*datahepos1 + scaleCh2*datahepos2;
+else
+    %error(sprintf('The size of the two magnets are not the same')) %In case to stop the further analysis  
+    
+    % In case to match the size of two channels, the end of the shortest channel padded with its last value
+    if sizehepos2(1) < sizehepos1(1)
+        datahepos2 = padarray(datahepos2,[sizehepos1-sizehepos2 0],'replicate','post');
+        heposdata = scaleCh1*datahepos1 + scaleCh2*datahepos2;
+    else
+        datahepos1 = padarray(datahepos1,[sizehepos2-sizehepos1 0],'replicate','post');
+        heposdata = scaleCh1*datahepos1 + scaleCh2*datahepos2;
+    end  
+end
 % Create and add 'horizontal eye position' channel to channel list
 data(end+1) = dat(heposdata,'hepos',[],fs,data(1).tstart,data(1).tend,'deg');
 
@@ -149,6 +196,11 @@ data(end+1) = dat(hevel,'hevel',[],fs,data(1).tstart,data(1).tend,'deg/s');
 %% === Run Sine Analysis for Each Relevant Segment ===================== %%
 if strcmp(params.analysis, 'Amin_GC_Steps')
     result = VOR_StepFit(data, frequency, labels, timepts, params);
+%ADDED By Sima (4.27.2022)
+elseif strcmp(params.analysis, 'No motor movment')
+    result = VOR_FitNew(data, frequency, labels, timepts, params);
+elseif strcmp(params.analysis, 'Sriram_OKR')
+    result = VOR_SineFitSriram(data, frequency, labels, timepts, params);
 else
     result = VOR_SineFit(data, frequency, labels, timepts, params);
 end

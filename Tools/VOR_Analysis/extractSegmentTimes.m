@@ -5,7 +5,10 @@ chanlist = readSpikeFile(fullfile(folder,[file '.smr']),[]);
 chanindsAll = [chanlist.number];
 chaninds = find(arrayfun(@(x) any(strcmp(x.title,{'Keyboard'})),chanlist));
 rawdata = importSpike(fullfile(folder,[file '.smr']),chanindsAll(chaninds));
-
+%ADDED By Sima For Sriram dark rearing(8.12.2022)
+idx = find(ismember(rawdata.samplerate, '5'));
+rawdata.samplerate(idx+1)='5';
+%
 %% Find Segment Start and stops
 SampleKeys = strcat(rawdata.samplerate(any(rawdata.samplerate == ['X' 'x'], 2))');
 SampleKeyTimes = rawdata.data(any(rawdata.samplerate == ['X' 'x'], 2))';
