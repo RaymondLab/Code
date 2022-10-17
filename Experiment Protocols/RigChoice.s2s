@@ -5,7 +5,10 @@
 ''#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D006.s2s"
 
 'D019
-#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D019.s2s"
+''#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D019.s2s"
 
 'D253
 ''#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D253.s2s"
+
+'D243a or D243b (both use the same parameters, the motors are the same in both rigs)
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D243a.s2s"

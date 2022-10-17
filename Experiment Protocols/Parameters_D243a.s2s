@@ -1,0 +1,38 @@
+' D243a Specific parameters
+
+'--------------------------------------------------------------------------------
+' SEQUENCER FILE LOCATION
+'--------------------------------------------------------------------------------
+var SequencerFile$ := "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Sequencer_D243a";
+
+'--------------------------------------------------------------------------------
+' MISC PARAMETERS
+'--------------------------------------------------------------------------------
+
+
+'--------------------------------------------------------------------------------
+' MOTOR CALIBRATION PARAMETERS
+'--------------------------------------------------------------------------------
+
+'Drum conversion factors
+var DrumDegreesPerSecond2Voltage := 0.51;    'Drum velocity to voltage (Scale)
+var DrumDegreesPerSecondOffsetDefault := 0;        'Drum velocity to voltage (offset)
+var DrumDegreesPerSecondOffset := 0;        'Starting value, is updated repeatedly
+
+'Channel 1: Scaling to display the drum COMMAND signal
+var DrumVoltage2Velocity :=  1.975;'3.99928/2;                'Voltage to Drum Velocity (Scale)
+var DrumVoltage2VelocityC := 0.000389977;'0.00170567/;                'Voltage to Drum Velocity (offset)
+
+
+'Chair converstion factors
+var ChairDegreesPerSecond2Voltage := 0.51; 'Chair velocity to voltage (Scale)
+var ChairDegreesPerSecondOffsetDefault := 0;         'Chair velocity to voltage (offset)
+var ChairDegreesPerSecondOffset := 0;         'Starting value, is updated repeatedly
+
+'Channel 2: Scaling to display the chair COMMAND signal
+var ChairVoltage2Velocity := -1.975;
+var ChairVoltage2VelocityC := 0.000162232;           'Voltage to Chair Velocity (offset)
+
+'Channel 5/6: Eye position readout
+var EyeVoltage2Position := 1;
+var EyeVoltage2PositionC := 0;
