@@ -1,0 +1,394 @@
+'--------------------------------------------------------------------------------
+' IMPORT RIG-SPECIFIC PARAMETERS AND UNIVERSAL PARAMETERS
+'--------------------------------------------------------------------------------
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\RigChoice.s2s"
+#include "C:\\Users\\katieli\\Development\\Code\\Experiment Protocols\\Parameters_Universal_Trace.s2s"
+'--------------------------------------------------------------------------------
+' MAIN PROGRAM
+'--------------------------------------------------------------------------------
+ToolbarConfig();
+
+'Setup for the pre-test experiment
+var expmtIndx := 0;
+
+'--------------------------------------------------------------------------------
+' Experimental protocols
+'--------------------------------------------------------------------------------
+' Main function copied from Experiment_Default.s2s that runs a series of
+' test, train, and rest periods. Split out into a helper function to simplify the 
+' code that is running in ToolbarInit%
+' Note that "goalTime" is a variable that is defined in another file - it's generally 
+' set as the current time
+Func runDefaultExperiment%()
+  'Check the time. Seconds is the current time - compare it to the goal time of each segment
+  if  MaxTime() > goalTime then
+
+      docase
+
+      ' GAP A
+      case test% = 0 then 
+        SampleKey("0");
+        SampleKey("x");
+        goalTime := MaxTime() + 5;
+        ToolbarInit%(); Yield();
+        test% := 7;
+
+      ' GAP B
+      case test% = 7 then
+        SampleKey("7");
+        goalTime := MaxTime() + 5;
+        ToolbarInit%(); Yield();
+
+
+        ' Go to Pre/Post or Train/Test Section
+        docase
+          ' PRE & POST Tests
+          case expmtLoc% = 1 then
+            test% := 1;
+          ' TEST/TRAIN Blocks
+          case expmtLoc% = 2 then
+            test% := 2;
+            ' If you have already done the test/train blocks, quit instead.
+            if rep% = (nBlocks%+1)  then
+              ToolbarQuitExpmt%();
+              Return(1);
+            endif
+        endcase
+        runFlash(); Yield();
+        ToolbarInit%(); Yield();
+
+      ' PRE AND POST TEST
+      case test% = 1 then
+        SampleKey("1");
+        SampleKey("X");
+        goalTime := MaxTime() + testLength;
+        test% := 0;
+
+        ' Keep track of how many PRE/POST tests that you've run
+        prePostNum := prePostNum + 1;
+
+        if prePostNum > 2 then
+          expmtLoc% := 2;
+          ' This check is for the 'T-35' test
+          if rep% < nBlocks% then
+            prePostNum := 1;
+          endif
+        else
+          expmtLoc% := 1;
+        endif
+
+        if expmtMode = 5 then
+          ToolbarStepOn%();
+        else
+          ToolbarSineStart%();
+        endif;
+
+      ' BLOCK: TEST
+      case test% = 2 then
+        SampleKey("2");
+        SampleKey("X");
+        goalTime := MaxTime() + testLength;
+
+        testrep% := testrep% + 1;
+
+        if testrep% = nTestreps% then
+          test% := 3;
+          rep% := rep% + 1;
+        else
+          test% := 0;
+        endif;
+
+        ' Start correct Stim, STEP or SINE
+        if expmtMode = 5 then
+          ToolbarStepOn%();
+        else
+          ToolbarSineStart%();
+        endif;
+
+      ' BLOCK: TRAIN
+      case test% = 3 then
+        SampleKey("3");
+        SampleKey("x");
+        SampleKey("X");
+        goalTime := MaxTime() + runLength;
+
+        if rep% < (nBlocks%+1) then
+          docase
+            '3 = ipsi, 4 = contra
+            case expmtMode = 3 or expmtMode = 4 then
+                ToolbarStimOn%();
+            '1 = x0, 2 = x2
+            case expmtMode = 1 or expmtMode = 2 then
+                ToolbarLightOn%();
+            '5 = step
+            case expmtMode = 5 then
+                ToolbarStepOff%(); Yield();
+                ToolbarLightOn%(); Yield();
+                ToolbarStepOn%();
+          endcase;
+        else
+          ToolbarSineStop%();
+          ToolbarStepOff%();
+          expmtLoc% := 1;
+        endif;
+
+        if rep% = nBlocks% then
+          expmtLoc% := 1;
+        endif
+
+        test% := 0;
+        testrep% := 0;
+
+      endcase;
+  endif;
+End
+
+
+Func runPretestExperiment%()
+  const GAP_A% := 0;
+  const GAP_B% := 1;
+  const REST% := 2;
+  const VORD% := 3;
+  const OKR% := 4;
+  const VORDX0% := 5;
+  const VORDX2% := 6;
+  const QUIT% := 9;
+  const DEFAULT_PEAK_AMPLITUDE% := 10;
+
+  const Order%[] := {0, 1, 2,
+                     0, 1, 3,
+                     0, 1, 4,
+                     0, 1, 5,
+                     0, 1, 6,
+                     0, 9};
+
+  'Check the time. Seconds is the current time - compare it to the goal time of each segment
+  if  MaxTime() > goalTime then
+     PrintLog(str$(expmtIndx));
+     PrintLog("\n");
+    'Print out the current experiment that is running
+    SampleKey(str$(Order%[expmtIndx]));
+    docase
+      ' GAP A
+      case Order%[expmtIndx] = GAP_A% then
+        SampleKey("x");
+        goalTime := MaxTime() + 5;
+        ToolbarInit%(); Yield();
+
+      ' GAP B
+      case Order%[expmtIndx] = GAP_B% then
+        goalTime := MaxTime() + 5;
+        ToolbarInit%(); Yield();
+        PrintLog("Running flash");
+        runFlash(); Yield();
+        ToolbarInit%(); Yield();
+
+      ' REST - spontaneous eye movements
+      case Order%[expmtIndx] = REST% then
+        SampleKey("X");
+        goalTime := MaxTime() + testLength;
+        
+      ' VORD
+      case Order%[expmtIndx] = VORD% then
+        SampleKey("X");
+        goalTime := MaxTime() + testLength;
+        sinPhDrum := 90;
+        sinPhChair := 90;
+        sinAmpChair := DEFAULT_PEAK_AMPLITUDE%;
+        sinAmpDrum := 0;
+        ToolbarSineStart%();
+
+      ' OKR
+      case Order%[expmtIndx] = OKR% then
+        SampleKey("X");
+        goalTime := MaxTime() + testLength;
+        sinPhDrum := 90;
+        sinPhChair := 90;
+        sinAmpChair := 0;
+        sinAmpDrum := DEFAULT_PEAK_AMPLITUDE%;
+        ToolbarLightOn%();Yield();
+        ToolbarSineStart%();
+
+      ' VOR x0
+      case Order%[expmtIndx] = VORDX0% then
+        SampleKey("X");
+        goalTime := MaxTime() + testLength;
+        sinPhDrum := 90;
+        sinPhChair := 90;
+        sinAmpChair := DEFAULT_PEAK_AMPLITUDE%;
+        sinAmpDrum := DEFAULT_PEAK_AMPLITUDE%;
+        ToolbarLightOn%(); Yield();
+        ToolbarSineStart%();
+
+      ' VOR x2
+      case Order%[expmtIndx] = VORDX2% then
+        SampleKey("X");
+        goalTime := MaxTime() + testLength;
+        sinPhDrum := 90;
+        sinPhChair := -90;
+        sinAmpChair := DEFAULT_PEAK_AMPLITUDE%;
+        sinAmpDrum := DEFAULT_PEAK_AMPLITUDE%;
+        ToolbarLightOn%(); Yield();
+        ToolbarSineStart%();
+
+      ' QUIT EXPMT
+      case Order%[expmtIndx] = 9 then
+        QuitPretestExperiment%();
+        Return(1);
+
+    endcase;
+    expmtIndx := expmtIndx + 1;
+  endif;
+  
+End
+
+'--------------------------------------------------------------------------------
+' Toolbar Callbacks
+'--------------------------------------------------------------------------------
+Func ToolbarIdle%()
+  'This function calls repeatedly whenever nothing else is happening
+  'if runExmpt=1, it is used to run a full expmt automatically.  -HP
+  'expmtMode: 0=habit, 1=0x, 2=2x, 3=ipsi stim, 4=contra stim
+  'test: 0=wait, 1=test, 2=train
+
+  ' Check a valid sampling view is running
+  var currView := ViewKind();
+  if  currView <> 0 then
+      return 1;
+  endif;
+
+  ' Keep sine wave from drifting
+  if MaxTime() > (prevTime + 1/sinHzChair) then
+    if driftFix = 1 then
+      driftFix%();
+    endif;
+  endif;
+
+  'If an experiment is running:
+  if runExpmt% = 1 then
+    runDefaultExperiment%();
+  endif;
+
+  if runExpmt% = 2 then
+    runPretestExperiment%();
+  endif;
+
+  Return(1);
+End
+
+'--------------------------------------------------------------------------------
+'--------------------------------------------------------------------------------
+' Configure expmt settings window
+'--------------------------------------------------------------------------------
+'--------------------------------------------------------------------------------
+
+Func ToolbarConfigExpmt%()
+var movementType;
+var learningType;
+
+var stimType;
+var lightType;
+var optoType;
+var gp%;
+
+DlgCreate("Experiment Settings", 0, 0, 50);  'Start new dialog
+DlgInteger(1,"Number of test/train blocks",0,100,0,0,1);
+DlgInteger(2,"Number of tests per block",1,100,0,0,1);
+DlgReal(3,"Train length (s)",0,5000);
+DlgReal(4,"Test length (s)",0,5000);
+DlgList(5,"Movement Type", "sine|step");
+DlgList(6,"Learning Type", "x2 (gain up)|x0 (gain down)|OKR (drum only)|habituation (chair only)");
+DlgList(7,"Opto During Training", "none|ipsi|contra");
+DlgList(8,"Light During Training", "Always On|none|match Opto");
+
+DlgShow(nBlocks%, nTestreps%, runLength, testLength, movementType, learningType, optoType, lightType);
+'--------------------------------------------------------------------------------
+' MOVEMENT AND LEARNING TYPES
+'--------------------------------------------------------------------------------
+docase
+  ' SINE
+  case movementType = 0 then
+
+    docase
+      ' SINE | x2
+      case learningType = 0 then
+        sinPhDrum := -90;
+        sinPhChair := 90;
+        sinAmpChair := 10;
+        sinAmpDrum := 10;
+
+      ' SINE | x0
+      case learningType = 1 then
+        sinPhDrum := 90;
+        sinPhChair := 90;
+        sinAmpChair := 10;
+        sinAmpDrum := 10;
+
+      ' SINE | drum only
+      case learningType = 2 then
+        sinPhDrum := 90;
+        sinPhChair := 90;
+        sinAmpChair := 0;
+        sinAmpDrum := 10;
+
+      ' SINE | chair only
+      case learningType = 3 then
+          sinPhDrum := 90;
+          sinPhChair := 90;
+          sinAmpChair := 10;
+          sinAmpDrum := 0;
+
+
+    endcase;
+    ToolbarSineConfig%()
+
+  ' STEP
+  case movementType = 1 then
+
+    docase
+      ' STEP | x2
+      case learningType = 0 then
+        step_AmpChair := 10;
+        step_AmpDrum := -10;
+
+      ' STEP | x0
+      case learningType = 1 then
+        step_AmpChair := 10;
+        step_AmpDrum := 10;
+
+      ' STEP | drum only
+      case learningType = 2 then
+        step_AmpChair := 0;
+        step_AmpDrum := 10;
+
+      ' STEP | chair only
+      case learningType = 3 then
+        step_AmpChair := 10;
+        step_AmpDrum := 0;
+
+    endcase;
+    StepConfigWindow%()
+
+endcase;
+
+'--------------------------------------------------------------------------------
+' STIM TYPES
+'--------------------------------------------------------------------------------
+docase
+  ' none
+  case optoType = 0 then
+    stepStim := 0;
+
+  ' ipsi
+  case optoType = 1 then
+    ToolbarPulseConfig%()
+
+  ' contra
+  case optoType = 2 then
+    ToolbarPulseConfig%()
+
+endcase;
+
+SetSequencerValues();
+Return(1);
+End
