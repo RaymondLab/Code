@@ -9,9 +9,6 @@
 'Setup the configuration toolbar and buttons
 ToolbarConfig();
 
-'Starting index of the pre-test experiment
-var expmtIndx := 0;
-
 '--------------------------------------------------------------------------------
 ' Experimental protocols
 '--------------------------------------------------------------------------------
@@ -189,7 +186,6 @@ Func runPretestExperiment%()
       case Order%[expmtIndx] = GAP_B% then
         goalTime := MaxTime() + 5;
         ToolbarInit%(); Yield();
-        PrintLog("Running flash");
         runFlash(); Yield();
         ToolbarInit%(); Yield();
 
@@ -243,7 +239,7 @@ Func runPretestExperiment%()
 
       ' QUIT EXPMT
       case Order%[expmtIndx] = 9 then
-        QuitPretestExperiment%();
+        ToolbarQuitPretestExperiment%();
         Return(1);
 
     endcase;

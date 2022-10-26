@@ -77,6 +77,7 @@ var trainAmount := 0;
 var expmtMode := 2;               'expmtMode: 0=off, 1=0x, 2=2x, 3=ipsi stim, 4=contra stim
 var testString$;
 var runExpmt% := 0;               ' Random note: % denotes integer types
+var expmtIndx := 0;               'Sets the starting position of the experiment
 var rep% := 0;                    'Rep (5min run, 40 sec test)
 var test% := 1;                   'test: 0=run testLength, 1=test testLength, 2=init&wait 20 sec, 3=init&wait 10 sec,  4=init&wait runLength
 var testrep% := 0;
@@ -473,20 +474,21 @@ End
 '--------------------------------------------------------------------------------
 
 Func ToolbarRunPretest%()
+  expmtIndx := 0; 'Set starting index of the pre-test experiment
   runExpmt% := 2;
-  ' TODO: unclear why we need to set the SampleKey "H"
-  SampleKey("H");
   goalTime := MaxTime();
+  SampleKey("H");
   ' Disable the real experiment from running
-  ToolbarSet(RunExpmtPretestPos, QuitPretestExpmtLabel$, QuitPretestExperiment%);
+  ToolbarSet(RunExpmtPretestPos, QuitPretestExpmtLabel$, ToolbarQuitPretestExperiment%);
   ' Prevent someone from trying to run the real 
   ToolbarEnable(ExpmtPos, 0);
   Return(1);
 End
 
-Func QuitPretestExperiment%()
+Func ToolbarQuitPretestExperiment%()
   runExpmt% := 0;
   ToolbarInit%();
+  expmtIndx := 0;   'Reset the starting index of the pre-test experiment
   SampleKey("h");  
   ToolbarSet(RunExpmtPretestPos, ExmptPretestLabel$, ToolbarRunPretest%);
   ToolbarEnable(ExpmtPos, 1);
