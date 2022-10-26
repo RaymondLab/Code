@@ -2,23 +2,24 @@
 ' IMPORT RIG-SPECIFIC PARAMETERS AND UNIVERSAL PARAMETERS
 '--------------------------------------------------------------------------------
 #include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\RigChoice.s2s"
-#include "C:\\Users\\katieli\\Development\\Code\\Experiment Protocols\\Parameters_Universal_Trace.s2s"
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal_Trace.s2s"
 '--------------------------------------------------------------------------------
 ' MAIN PROGRAM
 '--------------------------------------------------------------------------------
+'Setup the configuration toolbar and buttons
 ToolbarConfig();
 
-'Setup for the pre-test experiment
+'Starting index of the pre-test experiment
 var expmtIndx := 0;
 
 '--------------------------------------------------------------------------------
 ' Experimental protocols
 '--------------------------------------------------------------------------------
 ' Main function copied from Experiment_Default.s2s that runs a series of
-' test, train, and rest periods. Split out into a helper function to simplify the 
-' code that is running in ToolbarInit%
-' Note that "goalTime" is a variable that is defined in another file - it's generally 
-' set as the current time
+' test, train, and rest period, within the ToolbarInit%() call
+' It corresponds to the inputs from the ToolbarConfig() experiment
+' Note that "goalTime" is a variable that is defined in the Parameters_Universal file,
+' generally it is set as the current time
 Func runDefaultExperiment%()
   'Check the time. Seconds is the current time - compare it to the goal time of each segment
   if  MaxTime() > goalTime then
@@ -145,16 +146,27 @@ End
 
 
 Func runPretestExperiment%()
+  ' Labeling the expected order for the pretest experiments
+
+  'First "gap" or rest period
   const GAP_A% := 0;
+  'Second "gap" or rest period, with a light flash at the start
   const GAP_B% := 1;
+  'The stationary period, where neither the drum or the chari move
   const REST% := 2;
+  'Vestibulo ocular reflex testing in the dark
   const VORD% := 3;
+  'Optokinetic reflex - test with only drum movement
   const OKR% := 4;
+  'Vestibulo ocular reflex - with ipsim stimulation
   const VORDX0% := 5;
+  'Vestibulo ocular reflex - with contra stimulation
   const VORDX2% := 6;
+  'Stop experiment
   const QUIT% := 9;
   const DEFAULT_PEAK_AMPLITUDE% := 10;
 
+  'Order of the experiment running
   const Order%[] := {0, 1, 2,
                      0, 1, 3,
                      0, 1, 4,
@@ -164,9 +176,7 @@ Func runPretestExperiment%()
 
   'Check the time. Seconds is the current time - compare it to the goal time of each segment
   if  MaxTime() > goalTime then
-     PrintLog(str$(expmtIndx));
-     PrintLog("\n");
-    'Print out the current experiment that is running
+    'Output the current experiment step so that it is recorded
     SampleKey(str$(Order%[expmtIndx]));
     docase
       ' GAP A
@@ -183,7 +193,7 @@ Func runPretestExperiment%()
         runFlash(); Yield();
         ToolbarInit%(); Yield();
 
-      ' REST - spontaneous eye movements
+      ' REST - spontaneous eye movements - do nothing
       case Order%[expmtIndx] = REST% then
         SampleKey("X");
         goalTime := MaxTime() + testLength;
@@ -225,7 +235,7 @@ Func runPretestExperiment%()
         SampleKey("X");
         goalTime := MaxTime() + testLength;
         sinPhDrum := 90;
-        sinPhChair := -90;
+        sinPhChair := -1*90;
         sinAmpChair := DEFAULT_PEAK_AMPLITUDE%;
         sinAmpDrum := DEFAULT_PEAK_AMPLITUDE%;
         ToolbarLightOn%(); Yield();
@@ -248,6 +258,7 @@ End
 Func ToolbarIdle%()
   'This function calls repeatedly whenever nothing else is happening
   'if runExmpt=1, it is used to run a full expmt automatically.  -HP
+  'if runExmpt=2, it is used to run a pre-test experment - KL
   'expmtMode: 0=habit, 1=0x, 2=2x, 3=ipsi stim, 4=contra stim
   'test: 0=wait, 1=test, 2=train
 
@@ -269,6 +280,8 @@ Func ToolbarIdle%()
     runDefaultExperiment%();
   endif;
 
+  'If the pre-test experiment is running: 
+  'note that this is not responsive to the normal experiment configurations
   if runExpmt% = 2 then
     runPretestExperiment%();
   endif;
