@@ -2,8 +2,7 @@
 ' IMPORT RIG-SPECIFIC PARAMETERS AND UNIVERSAL PARAMETERS
 '--------------------------------------------------------------------------------
 #include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\RigChoice.s2s"
-' #include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal_temp.s2s"
-#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal_temp_SumofSines.s2s"
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_HG_sima.s2s"
 
 '--------------------------------------------------------------------------------
 ' MAIN PROGRAM
@@ -27,24 +26,24 @@ Func ToolbarIdle%()
   endif;
 
   ' Keep sine wave from drifting
-   if MaxTime() > (prevTime + 1/sinHzChair) then
-     if driftFix = 1 then
-       driftFix%();
-     endif;
-   endif;
+  if MaxTime() > (prevTime + 1/sinHzChair) then
+    if driftFix = 1 then
+      driftFix%();
+    endif;
+  endif;
+
 
   'If an experiment is running:
   if runExpmt% = 1 then
 
       'Check the time. Seconds is the current time - compare it to the goal time of each segment
       if  MaxTime() > goalTime then
-
+          stepFreq := 1000/((stepLength * 2) + 1000);
           docase
 
           ' GAP A
           case test% = 0 then
             SampleKey("0");
-            SampleKey("x");
             goalTime := MaxTime() + 5;
             ToolbarInit%(); Yield();
             test% := 7;
@@ -78,12 +77,16 @@ Func ToolbarIdle%()
             SampleKey("1");
             SampleKey("X");
             goalTime := MaxTime() + testLength;
+            sinHzDrum := stepFreq;
+            sinHzChair := stepFreq;
+            centerChair := 1;
+            centerDrum := 1;
             test% := 0;
 
             ' Keep track of how many PRE/POST tests that you've run
             prePostNum := prePostNum + 1;
 
-            if prePostNum > 2 then '*** Change to 1 for two pre- and post-tests 24June2022 ***
+            if prePostNum > 2 then
               expmtLoc% := 2;
               ' This check is for the 'T-35' test
               if rep% < nBlocks% then
@@ -104,15 +107,12 @@ Func ToolbarIdle%()
             SampleKey("2");
             SampleKey("X");
             goalTime := MaxTime() + testLength;
+            sinHzDrum := stepFreq;
+            sinHzChair := stepFreq;
+            centerDrum := 1;
 
             testrep% := testrep% + 1;
 
-            if testrep% = nTestreps% then
-              test% := 3;
-              rep% := rep% + 1;
-            else
-              test% := 0;
-            endif;
 
             ' Start correct Stim, STEP or SINE
             if expmtMode = 5 then
@@ -121,12 +121,21 @@ Func ToolbarIdle%()
               ToolbarSineStart%();
             endif;
 
+            if testrep% = nTestreps% then
+              test% := 3;
+              rep% := rep% + 1;
+            else
+              test% := 0;
+            endif;
           ' BLOCK: TRAIN
           case test% = 3 then
             SampleKey("3");
             SampleKey("x");
             SampleKey("X");
             goalTime := MaxTime() + runLength;
+            sinHzDrum := stepFreq;
+            sinHzChair := stepFreq;
+            centerDrum := 1;
 
             if rep% < (nBlocks%+1) then
               docase
@@ -145,7 +154,7 @@ Func ToolbarIdle%()
             else
               ToolbarSineStop%();
               ToolbarStepOff%();
-              'expmtLoc% := 1;
+              expmtLoc% := 1;
             endif;
 
             if rep% = nBlocks% then
@@ -162,127 +171,51 @@ Func ToolbarIdle%()
 End
 
 '--------------------------------------------------------------------------------
+'Configure expmt settings window
 '--------------------------------------------------------------------------------
-' Configure expmt settings window
-'--------------------------------------------------------------------------------
-'--------------------------------------------------------------------------------
-
 Func ToolbarConfigExpmt%()
-var movementType;
-var learningType;
+  DlgCreate("Experiment settings");  'Start new dialog
+  DlgInteger(1,"Number of run-test blocks",0,100,0,0,1);
+  DlgInteger(2,"Number of tests per block",1,100,0,0,1);    'set to 0 if not using Chair
+  DlgReal(3,"Run length (s)",0,5000);
+  DlgReal(4,"Test length (s)",0,5000);
+  DlgList(5,"Expmt mode", "habit|x0|x2|ipsi|contra|steps");
+  DlgInteger(6,"Light flash on?)",0,1,0,0,"0|1");
+  DlgReal(7,"Test stim and bilat (0 or 1)",0,1);
 
-var stimType;
-var lightType;
-var optoType;
-var gp%;
+  DlgShow(nBlocks%, nTestreps%, runLength, testLength, expmtMode, flashon%,testStim);
 
-DlgCreate("Experiment Settings", 0, 0, 50);  'Start new dialog
-DlgInteger(1,"Number of test/train blocks",0,100,0,0,1);
-DlgInteger(2,"Number of tests per block",1,100,0,0,1);
-DlgReal(3,"Train length (s)",0,5000);
-DlgReal(4,"Test length (s)",0,5000);
-DlgList(5,"Movement Type", "sine|step");
-DlgList(6,"Learning Type", "x2 (gain up)|x0 (gain down)|OKR (drum only)|habituation (chair only)");
-DlgList(7,"Opto During Training", "none|ipsi|contra");
-DlgList(8,"Light During Training", "Always On|none|match Opto");
-
-DlgShow(nBlocks%, nTestreps%, runLength, testLength, movementType, learningType, optoType, lightType);
-
-' DlgCreate("Experiment Settings", 0, 0, 50);  'Start new dialog
-' DlgInteger(2,"Number of test/train blocks",0,100,0,0,1);
-' DlgInteger(3,"Number of test/train blocks",0,100,0,0,1);
-' DlgInteger(5,"Number of test/train blocks",0,100,0,0,1);
-' DlgInteger(6,"Number of test/train blocks",0,100,0,0,1);
-' gp% := DlgGroup("CHAIR",1,1,48,3);
-' gp% := DlgGroup("DRUM",1,4,48,3);
-' DlgShow(nBlocks%, stimType, lightType, gp%, movementType, learningType);
-'--------------------------------------------------------------------------------
-' MOVEMENT AND LEARNING TYPES
-'--------------------------------------------------------------------------------
-docase
-  ' SINE
-  case movementType = 0 then
-
-    docase
-      ' SINE | x2
-      case learningType = 0 then
-        sinPhDrum := -90;
-        sinPhChair := 90;
-        sinAmpChair := 10;
-        sinAmpDrum := 10;
-
-      ' SINE | x0
-      case learningType = 1 then
-        sinPhDrum := 90;
-        sinPhChair := 90;
-        sinAmpChair := 10;
-        sinAmpDrum := 10;
-
-      ' SINE | drum only
-      case learningType = 2 then
-        sinPhDrum := 90;
-        sinPhChair := 90;
-        sinAmpChair := 0;
-        sinAmpDrum := 10;
-
-      ' SINE | chair only
-      case learningType = 3 then
-          sinPhDrum := 90;
-          sinPhChair := 90;
-          sinAmpChair := 10;
-          sinAmpDrum := 0;
+  docase
+  case expmtMode = 0 then     'habit
+      sinPhDrum := 90;
+      sinPhChair := 90;
+      sinAmpChair := 10;
+      sinAmpDrum := 0;
+  case expmtMode = 1 then     'x0
+      sinPhDrum := 90;
+      sinPhChair := 90;
+      sinAmpChair := 10;
+      sinAmpDrum := 10;
+  case expmtMode = 2 then     'x2
+      sinPhDrum := -90;
+      sinPhChair := 90;
+      sinAmpChair := 10;
+      sinAmpDrum := 10;
+  case expmtMode = 3  then     'ipsi
+      sinPhChair := 90;
+      sinAmpDrum := 0;
+  case expmtMode = 4 then      'contra
+      sinPhChair := -90;
+      sinAmpDrum := 0;
+  case expmtMode = 5 then      'steps
+      StepConfigWindow%();
+  endcase;
 
 
-    endcase;
-    ToolbarSineConfig%()
+  if testStim > 0 then
+      ToolbarPulseConfig%()
+  endif;
 
-  ' STEP
-  case movementType = 1 then
-
-    docase
-      ' STEP | x2
-      case learningType = 0 then
-        step_AmpChair := 10;
-        step_AmpDrum := -10;
-
-      ' STEP | x0
-      case learningType = 1 then
-        step_AmpChair := 10;
-        step_AmpDrum := 10;
-
-      ' STEP | drum only
-      case learningType = 2 then
-        step_AmpChair := 0;
-        step_AmpDrum := 10;
-
-      ' STEP | chair only
-      case learningType = 3 then
-        step_AmpChair := 10;
-        step_AmpDrum := 0;
-
-    endcase;
-    StepConfigWindow%()
-
-endcase;
-
-'--------------------------------------------------------------------------------
-' STIM TYPES
-'--------------------------------------------------------------------------------
-docase
-  ' none
-  case optoType = 0 then
-    stepStim := 0;
-
-  ' ipsi
-  case optoType = 1 then
-    ToolbarPulseConfig%()
-
-  ' contra
-  case optoType = 2 then
-    ToolbarPulseConfig%()
-
-endcase;
-
-SetSequencerValues();
-Return(1);
+  SetSequencerValues();
+  Return(1);
 End

@@ -116,6 +116,7 @@ const StepConfigPos     := StepPos+1;
 const ExpmtPos          := StepConfigPos+2;
 const ExpmtConfigPos    := ExpmtPos+1;
 const devPos            := ExpmtConfigPos+2;
+const SumOfSinesPos     := ExpmtConfigPos+3;
 
 const HTVELChCom% := 1;
 const HHVELChCom% := 2;
@@ -425,6 +426,21 @@ End
 '--------------------------------------------------------------------------------
 ' OTHER FUNCTIONS
 '--------------------------------------------------------------------------------
+Func SumOfSines%()
+    var fh%,d;
+    fh% := FileOpen("SumOfSinesVector.txt",0,0);
+    d := Read(fh%);
+    printLog(d)
+    'PlayWaveAdd("F", SumSine, 1, 1000, fh%); 'Second option in email
+    'var vh%; vh% := FileNew(0, 1); 'Create a data file (should check vh%); used to be 54
+    'SampleStart(0); 'Tell it to start
+    'while SampleStatus() <> 2 do Yield() wend; 'Wait for running
+    'SampleKey("F"); 'Tell area X to play
+    'while PlayWaveStatus$() = "F" do Yield() wend; 'Wait for played
+    'SampleStop(); 'stop sampling
+    'PlayWaveCycles(1, 30);
+End
+
 Proc ToolbarConfig()
   ToolbarClear();     'Remove any old buttons
 
@@ -445,6 +461,7 @@ Proc ToolbarConfig()
   ToolbarSet(CommentPos, "Comment", ToolbarComment%);
   ToolbarSet(NewFilePos, "New File", ToolbarNew%);
   ToolbarSet(devPos+1, "Dev", DevParams%);
+  ToolbarSet(SumOfSinesPos, "SumSine", SumOfSines%);
   Toolbar("", 231);
 End
 
@@ -821,7 +838,7 @@ Func driftFix%()
   ' Scales *1 for D253, *-1 for D019
   ChairDegreesPerSecondOffset :=  (ChairDegreesPerSecondOffsetDefault - hhposSlope/4 - hhposPos/4) * ChairResetDirection;
   DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - htposSlope/4 - htposPos/4) * DrumResetDirection;
-  printLog(ChanValue(hhposCh%, prevTime));
+
   'ToolbarStepConfig%();
 
   SetSequencerValues();
