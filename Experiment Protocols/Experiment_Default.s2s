@@ -27,11 +27,11 @@ Func ToolbarIdle%()
   endif;
 
   ' Keep sine wave from drifting
-   if MaxTime() > (prevTime + 1/sinHzChair) then
-     if driftFix = 1 then
-       driftFix%();
-     endif;
-   endif;
+  if MaxTime() > (prevTime + 1/sinHzChair) then
+    if driftFix = 1 then
+      driftFix%();
+    endif;
+  endif;
 
   'If an experiment is running:
   if runExpmt% = 1 then
@@ -145,7 +145,7 @@ Func ToolbarIdle%()
             else
               ToolbarSineStop%();
               ToolbarStepOff%();
-              'expmtLoc% := 1;
+              expmtLoc% := 1;
             endif;
 
             if rep% = nBlocks% then
