@@ -2,7 +2,7 @@
 ' IMPORT RIG-SPECIFIC PARAMETERS AND UNIVERSAL PARAMETERS
 '--------------------------------------------------------------------------------
 #include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\RigChoice.s2s"
-#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal_Sima.s2s"
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal.s2s"
 
 '--------------------------------------------------------------------------------
 ' MAIN PROGRAM
@@ -14,8 +14,8 @@
 ' 9 = quit experiment
 
 const Order%[] := {0, 1, 2,
-                   '0, 1, 2,
-                   '0, 1, 2,
+                   0, 1, 2,
+                   0, 1, 2,
                    0, 1, 3,
                    0, 1, 2,
                    0, 1, 2,
