@@ -2,7 +2,7 @@
 ' IMPORT RIG-SPECIFIC PARAMETERS AND UNIVERSAL PARAMETERS
 '--------------------------------------------------------------------------------
 #include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\RigChoice.s2s"
-#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal.s2s"
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal_temp_SumofSines.s2s"
 
 '--------------------------------------------------------------------------------
 ' MAIN PROGRAM

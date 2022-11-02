@@ -821,7 +821,7 @@ Func driftFix%()
   ' Scales *1 for D253, *-1 for D019
   ChairDegreesPerSecondOffset :=  (ChairDegreesPerSecondOffsetDefault - hhposSlope/4 - hhposPos/4) * ChairResetDirection;
   DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - htposSlope/4 - htposPos/4) * DrumResetDirection;
-  
+
   'ToolbarStepConfig%();
 
   SetSequencerValues();
