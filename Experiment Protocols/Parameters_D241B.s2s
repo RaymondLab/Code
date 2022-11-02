@@ -1,9 +1,10 @@
-' D006 Specific parameters
+' D241B Specific parameters
+' This used to be D006 on the D241B computer - separated into another file for clarity sake - KL
 
 '--------------------------------------------------------------------------------
 ' SEQUENCER FILE LOCATION
 '--------------------------------------------------------------------------------
-var SequencerFile$ := "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Sequencer_D019";
+var SequencerFile$ := "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Sequencer_D241B";
 
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS
@@ -20,9 +21,9 @@ var SequencerFile$ := "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\
 '--------------------------------------------------------------------------------
 
 'Chair converstion factors
-var ChairDegreesPerSecond2Voltage := -0.01;       'Chair velocity to voltage (Scale)
-var ChairDegreesPerSecondOffsetDefault :=  -.15;         'Chair velocity to voltage (offset)
-var ChairDegreesPerSecondOffset :=  -.15;         'Starting value, is updated repeatedly
+var ChairDegreesPerSecond2Voltage := -.01;       'Chair velocity to voltage (Scale)
+var ChairDegreesPerSecondOffsetDefault := 0;         'Chair velocity to voltage (offset)
+var ChairDegreesPerSecondOffset :=  0;         'Starting value, is updated repeatedly
 
 'Drum conversion factors
 var DrumDegreesPerSecond2Voltage := 0.5;    'Drum velocity to voltage (Scale)
@@ -30,8 +31,9 @@ var DrumDegreesPerSecondOffsetDefault := 0;        'Drum velocity to voltage (of
 var DrumDegreesPerSecondOffset := 0;        'Starting value, is updated repeatedly
 
 'Channel 1: Scaling to display the drum COMMAND signal
-var DrumVoltage2Velocity := -1/DrumDegreesPerSecond2Voltage;                'Voltage to Drum Velocity (Scale)
-var DrumVoltage2VelocityC := 0;                 'Voltage to Drum Velocity (offset)
+'var DrumVoltage2Velocity := -1/DrumDegreesPerSecond2Voltage;                'Voltage to Drum Velocity (Scale)
+var DrumVoltage2Velocity :=  2 ;                 'Voltage to Drum Velocity (Scale)
+var DrumVoltage2VelocityC := 0 ;                 'Voltage to Drum Velocity (offset)
 
 'Channel 2: Scaling to display the chair COMMAND signal
 var ChairVoltage2Velocity := ChairDegreesPerSecond2Voltage; '107.42869;         'Voltage to Chair Velocity (Scale)
