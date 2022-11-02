@@ -17,7 +17,7 @@ var sinPhDrum_Original := sinPhDrum;
 var sinAmpDrum_Original := sinAmpDrum;
 
 const CustomWaveformKey$ := "W";
-PlayWaveAdd(CustomWaveformKey$,"wave",0,0,24.975,2,0,"C:\\Users\\raymondlab\\Desktop\\Eunice\\test_25.smrx");
+PlayWaveAdd(CustomWaveformKey$,"wave",0,0,24.975,2,0,"C:\\Users\\Public\\RaymondLabCode\\Waveforms\\test_25.smrx");
 PlayWaveCycles("0",0);
 
 '--------------------------------------------------------------------------------
