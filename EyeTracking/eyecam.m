@@ -74,7 +74,6 @@ while ishandle(fhandle)
     img2 = rot90(img2,-1); % maybe unrotating them will give me an error later on
     img2 = rot90(img2,-1);
     if i > 0     % Store images in large 3D matrix
-        i % counter
         img1_all(:,:,i) = img1;
         img2_all(:,:,i) = img2;
     end
