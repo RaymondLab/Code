@@ -6,7 +6,14 @@ function VOR_Tests(params)
     if params.count == 1
        params.folder = params.smr_files(1).folder; % hackish. related to folder selection error
        [~, params.file] = fileparts(params.folder);
-       singleAnalysis(params)
+       
+       %ADDED By Sima 4/26/2022
+       switch params.analysis
+           case 'Sriram_New'
+               analysisSriram
+           otherwise
+               singleAnalysis(params)
+       end
        
     % Batch Analysis
     elseif params.count > 1
@@ -85,6 +92,11 @@ function singleAnalysis(params)
             VOR_Summary_Sriram_CycleDiff(params, [15, 16 17], [1, 2, 3], 'T30 - T0', 'head')
             VOR_Summary_Sriram_CycleDiff(params, 14, 4, 'T27 5 - T2 5', 'head')
             
+        case 'Alz_BPS_VOR'
+            fprintf('Running: Dark Rearing''s t30 & t0 Analysis\n')
+            VOR_Summary_Sriram_CycleDiff(params, [11, 12, 13], [1, 2, 3], 'T30 - T0', 'head')
+            VOR_Summary_Sriram_CycleDiff(params, 10, 4, 'T27 5 - T2 5', 'head')
+            
         case 'Amin_Gen'
             VOR_Summary_Amin_Gen('eyeHgain', expmtExcelFile, 0);
             
@@ -92,7 +104,7 @@ function singleAnalysis(params)
             VOR_Summary_Sriram_Gen('eyeHgain', expmtExcelFile, 1);
             VOR_Summary_Sriram_Gen('eyeHgain', expmtExcelFile, 0);
             VOR_Summary_Sriram_Gen('eyeHphase', expmtExcelFile, 0);
-            
+
         case 'Default (Sine Only)'
             VOR_Summary('eyeHgain', expmtExcelFile, 1);
             VOR_Summary('eyeHgain', expmtExcelFile, 0);

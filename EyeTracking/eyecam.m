@@ -74,7 +74,6 @@ while ishandle(fhandle)
     img2 = rot90(img2,-1); % maybe unrotating them will give me an error later on
     img2 = rot90(img2,-1);
     if i > 0     % Store images in large 3D matrix
-        i % counter
         img1_all(:,:,i) = img1;
         img2_all(:,:,i) = img2;
     end
@@ -82,7 +81,11 @@ while ishandle(fhandle)
     % Plot everything the first time
     if isempty(himg1) && isempty(himg2)
         subplot(1,2,1)
-        himg1 = imshow(img1);
+        himg1 = imshow(img1);title('Camera left: Should be left on the realworld setup')
+        text(-60,-80,'Please check for below: ','Color','red','FontSize',14)
+        text(360,600,'Reminder: Check for realworld camera position (Left and Right) ','Color','red','FontSize',14)
+        text(150,530,'Align: left CR from left camera to the vertical line  ','Color','blue','FontSize',11)
+        text(770,530,'Align: right CR from right camera to the vertical line   ','Color','blue','FontSize',11)
 
         cMap = gray(256); % Most of the image is grayscale
         cMap(1,:) = [0 0 1]; % Last row is blue.
@@ -90,19 +93,19 @@ while ishandle(fhandle)
         colormap(cMap);
 
         hold on;
-
         if ~exist('h','var')
             h(1) = plot(size(img1,2)/2, size(img1,1)/2,'+r', 'MarkerSize',1000);
         end
 
         subplot(1,2,2)
-        himg2 = imshow(img2);
+        himg2 = imshow(img2); title('Camera Right: Should be right on the realworld setup')
         hold on;     colormap(cMap);
-
+        
         if length(h)<2
             h(2) = plot(size(img1,2)/2, size(img1,1)/2,'+r', 'MarkerSize',1000);
         end
-
+        
+        
         % After the first time just update
      elseif ishandle(himg1) && ishandle(himg2)
         set(himg1, 'CData',img1);
