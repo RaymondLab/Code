@@ -10,6 +10,15 @@ var sinHzDrum := 1;
 var sinPhDrum := 90;
 var actualDrumPh;
 var sineOn% := 0;
+var sinAmpChair := 10;
+var sinAmpDrum := 10;
+var halfPhaseDelay := (sinHzDrum * 1000) / 2;
+var sinPhDrum_Original := sinPhDrum;
+var sinAmpDrum_Original := sinAmpDrum;
+
+const CustomWaveformKey$ := "W";
+PlayWaveAdd(CustomWaveformKey$,"wave",0,0,24.975,2,0,"C:\\Users\\Public\\RaymondLabCode\\Waveforms\\test_25.smrx");
+PlayWaveCycles("0",0);
 
 '--------------------------------------------------------------------------------
 ' STEP PARAMETERS
@@ -17,8 +26,8 @@ var sineOn% := 0;
 var stepPeriod := 1000;
 var stepLength := 250;
 var stepStim := 0;
-var stepAmpChair := 10;
-var stepAmpDrum := 10;
+var step_AmpChair := 10;
+var step_AmpDrum := 10;
 var sRest2;
 var sStart;
 var sLength;
@@ -105,6 +114,7 @@ var rotationVelocity := 0.02;
 var radianConversion := 57.295779513; 'divide a value in degrees by this number to convert to radians - from Spike2 manual'
 var measuredZeroChair := 0;
 var measuredZeroDrum := 0;
+var layoutChoice := 0;
 
 '--------------------------------------------------------------------------------
 ' TOOLBAR PARAMETERS
@@ -115,7 +125,8 @@ const CommentPos        := InitPos+1;
 const LightPos          := CommentPos+1;
 const LaserPos          := LightPos+1;
 const SinePos           := LaserPos+1;
-const SineConfigPos     := SinePos+1;
+const CustomWaveformPos := SinePos+1;
+const SineConfigPos     := CustomWaveformPos+1;
 const PulsePos          := SineConfigPos+1;
 const PulseConfigPos    := PulsePos+1;
 const VidPos            := PulseConfigPos+1;
@@ -125,19 +136,44 @@ const ExpmtPos          := StepConfigPos+1;
 const ExpmtConfigPos    := ExpmtPos+1;
 const devPos            := ExpmtConfigPos+1;
 
-const HHVELChCom% := 1;
-const hhposCh% := 2;
-const hhvelCh% := 3;
-const HTVELChCom% := 4;
-const htposCh% := 5;
-const htvelCh% := 6;
-const heposCh1% := 7;
-const heposCh2% := 8;
-
+'--------------------------------------------------------------------------------
+' DEFAULT CHAN PARAMETERS
+'--------------------------------------------------------------------------------
+var HTVELChCom% := 1;
+var HHVELChCom% := 2;
+var htposCh% := 3;
+var hhposCh% := 4;
+var heposCh1% := 5;
+var heposCh2% := 6;
+var ephysch% := 7;
+var hhvelCh% := 8;
+var htvelCh% := 13;
+var TTL1ch% := 9;
+var TTL2ch% := 10;
+var TTL3ch% := 11;
+var TTL4ch% := 12;
 
 '--------------------------------------------------------------------------------
 ' SINE FUNCTIONS
 '--------------------------------------------------------------------------------
+Func ToolbarCustomWaveformStart%()
+  prevTime := MaxTime();
+  measuredZeroChair := ChanMeasure(hhposCh%, 2, prevTime-2, prevTime-.5);
+  measuredZeroDrum := ChanMeasure(htposCh%, 2, prevTime-2, prevTime-.5);
+  SampleKey(CustomWaveformKey$);
+  sineOn% := 1;
+  Yield();
+  ToolbarSet(CustomWaveformPos, "Custom Waveform Off",ToolbarCustomWaveformStop%);
+  Return( 1 );
+End
+
+Func ToolbarCustomWaveformStop%()
+  SampleKey( "s" );
+  sineOn% := 0;
+  ToolbarSet(CustomWaveformPos, "Custom Waveform On",ToolbarCustomWaveformStart%);
+  Return( 1 );
+End
+
 Func ToolbarSineStart%()
   prevTime := MaxTime();
   measuredZeroChair := ChanMeasure(hhposCh%, 2, prevTime-2, prevTime-.5);
@@ -164,7 +200,13 @@ Func ToolbarSineConfig%()
   DlgReal(4,"Drum Freq (Hz)",0,50);
   DlgReal(5,"Drum Peak Velocity (deg/sec)",0,100);   'set to 0 if not using Drum
   DlgReal(6,"Drum Phase (degree)",-180,180);
-  DlgShow(sinHzChair,sinAmpChair, sinPhChair, sinHzDrum, sinAmpDrum,  sinPhDrum);
+  DlgShow(sinHzChair,sinAmpChair, sinPhChair, sinHzDrum, sinAmpDrum_Original, sinPhDrum_Original);
+
+  halfPhaseDelay := (sinHzDrum * 1000) / 2;
+
+  ' Convert Velocity Command Amplitude to Position Amplitude
+  sinPhDrum := sinPhDrum_Original - 90;
+  sinAmpDrum := sinAmpDrum_Original / (2 * 2.14159 * sinHzDrum);
 
   SetPulseSettings%();
 
@@ -279,13 +321,13 @@ End
 Func ToolbarStepOn%()
   stepOn% := 1;
   if (stepStim = 0) and (stepLight = 0) then
-    if (stepPeriod - (2*stepLength)) > 0 then
-  	SampleKey ( "T" );
-  	ToolbarSet(StepPos, "Step Stop", ToolbarStepOff%);
+    if (stepPeriod - (2*stepLength)) = 0 then
+      SampleKey ( "T" );
+      ToolbarSet(StepPos, "Step Stop", ToolbarStepOff%);
     else
       if QueTime > 0 then
-      SampleKey("K");
-      ToolbarSet(stepPos, "Step Stop", ToolbarStepOff%);
+        SampleKey("K");
+        ToolbarSet(stepPos, "Step Stop", ToolbarStepOff%);
       else
         SampleKey("k");
         ToolbarSet(stepPos, "Step Stop", ToolbarStepOff%);
@@ -355,32 +397,30 @@ Func ToolbarStepConfig%()
   endif
 
   ' Chair and drum velocity
-  sAmpChair := ChairVel2Int32%( stepAmpChair );   ' Amp chair
+  sAmpChair := ChairVel2Int32%( step_AmpChair );   ' Amp chair
   sAmpChairN := 0-sAmpChair;                      ' Amp chair (opposite direction)
-  sAmpDrum := DrumVel2Int32%( stepAmpDrum );      ' Amp drum
+  sAmpDrum := DrumVel2Int32%( step_AmpChair );      ' Amp drum
   sAmpDrumN := 0-sAmpDrum;                        ' Amp drum (opposite direction)
-''  if chairDegreesPerSecondOffset > 0 then
-''    'SampleKey("1");
-''    sAmpChair := ChairVel2Int32%( stepAmpChair + chairDegreesPerSecondOffset/50);   ' Amp chair
-''    sAmpChairN := 0-ChairVel2Int32%( stepAmpChair - chairDegreesPerSecondOffset);
-''  else
-''    'SampleKey("2");
-''    var chairDegreesPerSecondOffsetNEG := chairDegreesPerSecondOffset * -1;
-''    sAmpChair := ChairVel2Int32%( stepAmpChair + chairDegreesPerSecondOffsetNEG);   ' Amp chair
-''    sAmpChairN := 0-ChairVel2Int32%( stepAmpChair + chairDegreesPerSecondOffsetNEG + chairDegreesPerSecondOffsetNEG/50);
-''  endif
+  'if chairDegreesPerSecondOffset > 0 then
+    '''SampleKey("1");
+    'sAmpChair := ChairVel2Int32%( step_AmpChair + chairDegreesPerSecondOffset/50);   ' Amp chair
+    '''SampleKey("2");
+    'var chairDegreesPerSecondOffsetNEG := chairDegreesPerSecondOffset * -1;
+    'sAmpChair := ChairVel2Int32%( step_AmpChair + chairDegreesPerSecondOffsetNEG);   ' Amp chair
+    'sAmpChairN := 0-ChairVel2Int32%( step_AmpChair + chairDegreesPerSecondOffsetNEG + chairDegreesPerSecondOffsetNEG/50);
+  'endif
 
 
-''  if DrumDegreesPerSecondOffset > 0 then
-''    SampleKey("1");
-''    sAmpDrum := DrumVel2Int32%( stepAmpDrum + DrumDegreesPerSecondOffset);   ' Amp chair
-''    sAmpDrumN := 0-DrumVel2Int32%( stepAmpDrum - DrumDegreesPerSecondOffset*1.02);
-''  else
-''    SampleKey("2");
-''    var DrumDegreesPerSecondOffsetNEG := DrumDegreesPerSecondOffset * -1;
-''    sAmpDrum := DrumVel2Int32%( stepAmpDrum + DrumDegreesPerSecondOffsetNEG*.02);   ' Amp chair
-''    sAmpDrumN := 0-DrumVel2Int32%( stepAmpDrum + DrumDegreesPerSecondOffsetNEG);
-''  endif
+  'if DrumDegreesPerSecondOffset > 0 then
+    'SampleKey("1");
+    'sAmpDrum := DrumVel2Int32%( step_AmpChair + DrumDegreesPerSecondOffset);   ' Amp chair
+    'sAmpDrumN := 0-DrumVel2Int32%( step_AmpChair - DrumDegreesPerSecondOffset*1.02);
+  'else
+    'SampleKey("2");
+    'var DrumDegreesPerSecondOffsetNEG := DrumDegreesPerSecondOffset * -1;
+    'sAmpDrum := DrumVel2Int32%( step_AmpChair + DrumDegreesPerSecondOffsetNEG*.02);   ' Amp chair
+    'sAmpDrumN := 0-DrumVel2Int32%( step_AmpChair + DrumDegreesPerSecondOffsetNEG);
+  'endif
 
   ' Light pulse
   if stepLight = 1 then
@@ -424,7 +464,7 @@ Func StepConfigWindow%()
   DlgCheck(8, "Light");
   DlgReal(9, "Light duration (ms)", 0, 5000);
   DlgReal(10, "Start time rel. step", 0, 5000);
-  DlgShow(stepPeriod, stepLength, stepAmpChair, stepAmpDrum, stepStim, pulseDuration, pulseInterval, stepLight, lightDur, lightStart);
+  DlgShow(stepPeriod, stepLength, step_AmpChair, step_AmpChair, stepStim, pulseDuration, pulseInterval, stepLight, lightDur, lightStart);
 
   ToolbarStepConfig%();
   Return (1);
@@ -468,6 +508,7 @@ Proc ToolbarConfig()
   ToolbarSet(LightPos, "Light On", ToolbarLightOn%);
   ToolbarSet(LaserPos, "Lasers On", ToolbarLasersOn%);
   ToolbarSet(SinePos, "Sine On", ToolbarSineStart%);
+  ToolbarSet(CustomWaveformPos, "Custom Waveform On", ToolbarCustomWaveformStart%);
   ToolbarSet(SineConfigPos, "Sine Config", ToolbarSineConfig%);
   ToolbarSet(PulseConfigPos, "Pulse Config", ToolbarPulseConfig%);
   ToolbarSet(PulsePos, "Pulse On", ToolbarStimOn%);
@@ -482,101 +523,384 @@ Proc ToolbarConfig()
   Toolbar("", 231);
 End
 
-Proc WindowConfig()
+Func chanLayout%()
+  DlgCreate("Channel Layout"); 'Start new dialog for entering step commands
+  DlgList(1,"Layout: ","default|Trace 2020|Alex 2020");
+  DlgShow(layoutChoice);
 
+  docase
+    case layoutChoice = 0 then
+      chanLayout_default%();
+    case layoutChoice = 1 then
+      chanLayout_Trace2020%();
+    case layoutChoice = 2 then
+      chanLayout_Alex2020%();
+  endcase
+
+  Return (1);
+End
+
+Func chanLayout_default%()
+  HTVELChCom% := 1;
+  HHVELChCom% := 2;
+  htposCh% := 3;
+  hhposCh% := 4;
+  heposCh1% := 5;
+  heposCh2% := 6;
+  ephysch% := 7;
+  hhvelCh% := 8;
+  htvelCh% := 13;
+  TTL1ch% := 9;
+  TTL2ch% := 10;
+  TTL3ch% := 11;
+  TTL4ch% := 12;
+  setChannels%();
+
+  'Create a spike2 data file and make the new window visible immediately
+  SampleWindow% := FileNew(0,1);
+
+  ' Channel Order
+  ChanHide(-1);
+  ChanShow(1,2,3,4,5,6,7,8,9,10,11,12,13,14,30,31);
+  ChanOrder(0, -1, "5, 4, 8, 13, 3, 2, 1, 12, 11, 10, 9, 30, 31");
+
+  ' Initial Channel y-range
+  YRange( HTVELChCom%, -10, 10 );
+  YRange( HHVELChCom%, -10, 10 );
+  YRange( htposCh%, -10, 10 );
+  YRange( hhposCh%, -10, 10 );
+  YRange( heposCh1%, -10, 10 );
+  YRange( heposCh2%, -10, 10 );
+  YRange( ephysch%, -10, 10 );
+  YRange( hhvelCh% , -10, 10 );
+
+  ' Initial Channel x-range
+  XRange( 0, 20);
+
+  ' Make Command Channels Smaller'
+  ChanWeight(HTVELChCom%,.5);
+  ChanWeight(HHVELChCom%,.5);
+
+  ' Background Colour'
+  ViewColour(0,5);
+
+  ' Font
+  FontSet("Verdana", 8, 0);
+
+  ' Channel colors
+  chanColour(HTVELChCom%, 1, 28);
+  chanColour(htposCh%, 1, 28);
+  chanColour(htvelCh%, 1, 28);
+  chanColour(HHVELChCom%, 1, 30);
+  chanColour(hhposCh%, 1, 30);
+  chanColour(hhvelCh%, 1, 30);
+  chanColour(heposCh1%, 1, 1);
+  chanColour(heposCh2%, 1, 1);
+
+  ' Useful Zero line indicators
+  HCursorNew(1);
+  HCursor(1, 0, HTVELChCom%);
+  HCursorNew(2);
+  HCursor(2, 0, HHVELChCom%);
+  HCursorNew(3);
+  HCursor(3, 0, htposCh%);
+  HCursorNew(4);
+  HCursor(4, 0, hhposCh%);
+  HCursorNew(5);
+  HCursor(5, 0, hhvelCh%);
+  HCursorNew(6);
+  HCursor(6, 0, htvelCh%);
+
+  'Create a spike2 data file and make the new window visible immediately
+  SampleWindow% := FileNew(0,1);
+
+  return(1)
+End
+
+Func chanLayout_trace2020%()
+
+  HHVELChCom% := 1;
+  hhposCh% := 2;
+  hhvelCh% := 3;
+  HTVELChCom% := 4;
+  htposCh% := 5;
+  htvelCh% := 6;
+  heposCh1% := 7;
+  heposCh2% := 8;
+  ephysch% := 9;
+  TTL1ch% := 10;
+  TTL2ch% := 11;
+  TTL3ch% := 12;
+  TTL4ch% := 13;
+  var HTPOSChCom% := 14;
+  setChannels%();
+
+
+  ' Clear channels going to be replaced'
+  SampleClear(HTVELChCom%);
+  SampleClear(htvelCh%);
+  SampleClear(htposCh%);
+
+  SampleWaveform(HTPOSChCom%,0,1000);
+  SampleCalibrate(HTPOSChCom%,"deg", DrumVoltage2Velocity, DrumVoltage2VelocityC);
+  SampleTitle$(HTPOSChCom%,"HTPOS");
+  SampleComment$(HTPOSChCom%, "Position Signal sent to drum");
+
+  ' Horizontal Target Position - Talker
+  SampleTalker(htposCh%,"LS7366",0);
+  SampleCalibrate(htposCh%, "deg", 1111.111, 0);
+  SampleTitle$(htposCh%, "DrumPos");
+  SampleComment$(htposCh%,"Drum Position");
+
+  'Create a spike2 data file and make the new window visible immediately
+  SampleWindow% := FileNew(0,1);
+
+  ' Horizontal Target Velocity - virtual Channel
+  var htvelCh% := VirtualChan(0,"");
+  VirtualChan(htvelCh%, "rm(5)", 0, 0.001);
+  'VirtualChan(htvelCh%, "rm(5)");
+  ChanProcessAdd(htvelCh%, 3);
+  ChanProcessArg(htvelCh%, 1, 1, 0.006);
+  ChanTitle$(htvelCh%, "htvel");
+
+  ' Horizontal Target Velocity Command - virtual Channel
+  var HTVELChCom% := VirtualChan(0,"");
+  VirtualChan(HTVELChCom%, "ch(14)", 0, 0.001);
+  'VirtualChan(HTVELChCom%, "ch(14)");
+  ChanProcessAdd(HTVELChCom%, 3);
+  ChanProcessArg(HTVELChCom%, 1, 1, 0.006);
+  ChanTitle$(HTVELChCom%, "HTVEL");
+
+
+  ' Channel Order
+  ChanHide(-1);
+  ChanShow(1,2,3,4,5,6,7,8,9,10,11,12,13,14,30,31, "v1", "v2");
+  ChanOrder(0, -1, "2, 3, 14, v2, 4, 5, v1, 7, 8, 9, 10, 11, 12, 13, 30, 31");
+
+  ' Initial Channel y-range
+  YRange( HTVELChCom%, -10, 10 );
+  YRange( HHVELChCom%, -10, 10 );
+  YRange( htposCh%, -10, 10 );
+  YRange( hhposCh%, -10, 10 );
+  YRange( heposCh1%, -10, 10 );
+  YRange( heposCh2%, -10, 10 );
+  YRange( ephysch%, -10, 10 );
+  YRange( hhvelCh% , -10, 10 );
+
+  ' Initial Channel x-range
+  XRange( 0, 20);
+
+  ' Make Command Channels Smaller'
+  'ChanWeight(HTVELChCom%,.5);
+  ChanWeight(HHVELChCom%,.5);
+
+  ' Background Colour'
+  ViewColour(0,5);
+
+  ' Font
+  FontSet("Verdana", 8, 0);
+
+  ' channel colors
+  chanColour(heposCh1%, 1, 1);
+  chanColour(heposCh2%, 1, 1);
+  ChanColourSet(htvelCh%, 1, 0.501961, 0, 1);
+  ChanColourSet(htposCh%, 1, 0.501961, 0, 0.752941);
+  ChanColourSet(HTVELChCom%, 1, 0.501961, 0, 0.501961);
+  ChanColourSet(HTPOSChCom%, 1, 0.501961, 0, 0.501961);
+  ChanColourSet(hhvelCh%, 1, 0, 1, 0);
+  ChanColourSet(hhposCh%, 1, 0, 0.752941, 0);
+  ChanColourSet(HHVELChCom%, 1, 0, 0.501961, 0);
+
+  ' Useful Zero line indicators
+  HCursorNew(1);
+  HCursor(1, 0, HTVELChCom%);
+  HCursorNew(2);
+  HCursor(2, 0, HHVELChCom%);
+  HCursorNew(3);
+  HCursor(3, 0, htposCh%);
+  HCursorNew(4);
+  HCursor(4, 0, hhposCh%);
+  HCursorNew(5);
+  HCursor(5, 0, hhvelCh%);
+  HCursorNew(6);
+  HCursor(6, 0, htvelCh%);
+
+  Return(1)
+End
+
+Func chanLayout_alex2020%()
+
+  HTVELChCom% := 1;
+  HHVELChCom% := 2;
+  htposCh% := 3;
+  hhposCh% := 4;
+  heposCh1% := 5;
+  heposCh2% := 6;
+  ephysch% := 7;
+  hhvelCh% := 8;
+  htvelCh% := 13;
+  TTL1ch% := 9;
+  TTL2ch% := 10;
+  TTL3ch% := 11;
+  TTL4ch% := 12;
+  const TTL5ch% := 15;
+  setChannels%();
+
+  ' New Channel(s)
+  ' Channel 15
+  SampleEvent(TTL5ch%,4,2,1000);
+  SampleTitle$(TTL5ch%,"TTL5");
+  SampleComment$(TTL5ch%, "TTL5: FP Pulse");
+
+  'Create a spike2 data file and make the new window visible immediately
+  SampleWindow% := FileNew(0,1);
+
+  ' Channel Order
+  ChanHide(-1);
+  ChanShow(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,30,31);
+  ChanOrder(0, -1, "5, 4, 8, 13, 3, 2, 1, 12, 11, 10, 9, 30, 31, 15");
+
+  ' Initial Channel y-range
+  YRange( HTVELChCom%, -10, 10 );
+  YRange( HHVELChCom%, -10, 10 );
+  YRange( htposCh%, -10, 10 );
+  YRange( hhposCh%, -10, 10 );
+  YRange( heposCh1%, -10, 10 );
+  YRange( heposCh2%, -10, 10 );
+  YRange( ephysch%, -10, 10 );
+  YRange( hhvelCh% , -10, 10 );
+
+  ' Initial Channel x-range
+  XRange( 0, 20);
+
+  ' Make Command Channels Smaller'
+  ChanWeight(HTVELChCom%,.5);
+  ChanWeight(HHVELChCom%,.5);
+
+  ' Background Colour'
+  ViewColour(0,5);
+
+  ' Font
+  FontSet("Verdana", 8, 0);
+
+  ' Channel colors
+  chanColour(HTVELChCom%, 1, 28);
+  chanColour(htposCh%, 1, 28);
+  chanColour(htvelCh%, 1, 28);
+  chanColour(HHVELChCom%, 1, 30);
+  chanColour(hhposCh%, 1, 30);
+  chanColour(hhvelCh%, 1, 30);
+  chanColour(heposCh1%, 1, 1);
+  chanColour(heposCh2%, 1, 1);
+
+  ' Useful Zero line indicators
+  HCursorNew(1);
+  HCursor(1, 0, HTVELChCom%);
+  HCursorNew(2);
+  HCursor(2, 0, HHVELChCom%);
+  HCursorNew(3);
+  HCursor(3, 0, htposCh%);
+  HCursorNew(4);
+  HCursor(4, 0, hhposCh%);
+  HCursorNew(5);
+  HCursor(5, 0, hhvelCh%);
+  HCursorNew(6);
+  HCursor(6, 0, htvelCh%);
+
+
+
+  Return(1)
+End
+
+Func setChannels%();
   SampleClear(); 'Set the sampling configuration to a standard state
 
   'sequencer setup - returns zero if OK
   var err%; err% := SampleSequencer( SequencerFile$ );
   if err%<0 then
-  	Message(Print$("I can't find your Sequencer File:%s",Error$(err%)));
-  	halt
+    Message(Print$("I can't find your Sequencer File:%s",Error$(err%)));
+    halt
   endif
 
-  'Channel 1
-  SampleWaveform(HHVELChCom%,0,1000); 'Channel= 1, port= 0, ideal sampling rate= 1000 Hz
-  SampleCalibrate( HHVELChCom%, "deg/s", ChairVoltage2Velocity, ChairVoltage2VelocityC);
-  SampleTitle$(HHVELChCom%,"HHVEL");
-  SampleComment$(HHVELChCom%, "Velocity Signal sent to chair");
-
-  'Channel 2
-  SampleWaveform(hhposCh%,1,1000);
-  SampleCalibrate(hhposCh%,"deg", ChairPosReadoutScale, ChairPosReadoutOffset);
-  SampleTitle$(hhposCh%,"hhpos");
-  SampleComment$(hhposCh%, "Chair Position");
-
-  'Channel 3
-  SampleWaveform(hhvelCh%,2,1000);
-  SampleCalibrate(hhvelCh%,"deg/s",ChairVelReadoutScale,ChairVelReadoutOffset);
-  SampleTitle$(hhvelCh%,"hhvel");
-  SampleComment$(hhvelCh%, "Chair velocity");
-
-  'Channel 4
-  SampleWaveform(HTVELChCom%,3,1000);
+  ' Horizontal Target Velocity COMMAND
+  SampleWaveform(HTVELChCom%,0,1000);
   SampleCalibrate(HTVELChCom%,"deg/s", DrumVoltage2Velocity, DrumVoltage2VelocityC);
   SampleTitle$(HTVELChCom%,"HTVEL");
   SampleComment$(HTVELChCom%, "Velocity Signal sent to drum");
 
-  'Channel 5 COMMENT THIS OUT IF NOT USING HD MOTOR
-  'SampleWaveform(htposCh%,4,1000);
-  'SampleCalibrate(htposCh%, "deg", DrumPosReadoutScale, DrumPosReadoutOffset);
-  'SampleTitle$(htposCh%,"htpos");
-  'SampleComment$(htposCh%, "Drum position");
+  ' Horizontal Head Velocity COMMAND
+  SampleWaveform(HHVELChCom%,1,1000);
+  SampleCalibrate( HHVELChCom%, "deg/s", ChairVoltage2Velocity, ChairVoltage2VelocityC);
+  SampleTitle$(HHVELChCom%,"HHVEL");
+  SampleComment$(HHVELChCom%, "Velocity Signal sent to chair");
 
-  'Channel 5 UNCOMMENT THIS FOR HD MOTOR
-  SampleTalker(5,"LS7366",0);
-  'SampleCalibrate(7,"deg",1111.111,0);
-  SampleTitle$(5,"DrumPos");
-  SampleComment$(5,"Drum Position");
+  ' Horizontal Target Position
+  SampleWaveform(htposCh%,2,1000);
+  SampleCalibrate(htposCh%, "deg", DrumPosReadoutScale, DrumPosReadoutOffset);
+  SampleTitle$(htposCh%,"htpos");
+  SampleComment$(htposCh%, "Drum position");
 
-  'Channel 6 COMMENT THIS OUT IF NOT USING HD MOTOR
-  SampleWaveform(htvelCh%,5,1000);
+  ' Horizontal Head Position
+  SampleWaveform(hhposCh%,3,1000);
+  SampleCalibrate(hhposCh%,"deg", ChairPosReadoutScale, ChairPosReadoutOffset);
+  SampleTitle$(hhposCh%,"hhpos");
+  SampleComment$(hhposCh%, "Chair Position");
+
+  ' Horizontal Target Velocity
+  SampleWaveform(htvelCh%,8,1000);
   SampleCalibrate(htvelCh%,"deg/s",DrumVelReadoutScale,DrumVelReadoutOffset);
   SampleTitle$(htvelCh%,"htvel");
   SampleComment$(htvelCh%, "Drum Velocity");
 
-  'Channel 7
-  SampleWaveform(heposCh1%,6,1000);
+  ' Horizontal Head Velocity
+  SampleWaveform(hhvelCh%,7,1000);
+  SampleCalibrate(hhvelCh%,"deg/s",ChairVelReadoutScale,ChairVelReadoutOffset);
+  SampleTitle$(hhvelCh%,"hhvel");
+  SampleComment$(hhvelCh%, "Chair velocity");
+
+  ' Horizontal Eye Position 1
+  SampleWaveform(heposCh1%,4,1000);
   SampleCalibrate(heposCh1%,"V",EyeVoltage2Position,EyeVoltage2PositionC);
   SampleTitle$(heposCh1%,"hepos1");
   SampleComment$(heposCh1%, "Eye Position 1");
 
-  'Channel 8
-  SampleWaveform(heposCh2%,7,1000);
+  ' Horizontal Eye Position 2
+  SampleWaveform(heposCh2%,5,1000);
   SampleCalibrate(heposCh2%,"V", EyeVoltage2Position,EyeVoltage2PositionC);
   SampleTitle$(heposCh2%,"hepos2");
   SampleComment$(heposCh2%, "Eye Position 2");
 
-  'Channel 9 UCOMMENT THIS FOR EPHYS
-  SampleWaveform(9,4,1000);
-  'SampleCalibrate(7,"V",1,0);
-  SampleTitle$(9,"ephys");
-  SampleComment$(9, "ephys voltage");
+  'Channel 7 UCOMMENT THIS FOR EPHYS
+  'SampleWaveform(ephysch,6,1000);
+  'SampleCalibrate(ephysch,"V",1,0);
+  'SampleTitle$(ephysch,"ephys");
+  'SampleComment$(ephysch, "ephys");
 
-  'Channel 10
-  SampleEvent(10,0,2,1000);     'Func SampleEvent(chan%, port%, type%, rate);
-  SampleTitle$(9,"TTL1");
-  SampleComment$(9, "TTL1: Shutter");
+  'Channel 7 UNCOMMENT THIS FOR HD MOTOR
+  'SampleTalker(3,"LS7366",1000);
+  'SampleCalibrate(3,"deg",1111.111,0);
+  'SampleTitle$(3,"DrumPos");
+  'SampleComment$(3,"Drum Position");
 
-  'Channel 11
-  SampleEvent(11,1,2,1000);
-  SampleTitle$(10,"TTL2");
-  SampleComment$(10, "TTL2: IR LED");
+  ' TTL1: Shutter/LED/Light
+  SampleEvent(TTL1ch%,0,2,1000);
+  SampleTitle$(TTL1ch%,"TTL1");
+  SampleComment$(TTL1ch%, "TTL1: Shutter");
 
-  'Channel 12
-  SampleEvent(12,2,2,1000);
-  SampleTitle$(11,"TTL3");
-  SampleComment$(11, "TTL3: L laser");
+  ' TTL2: IR LED (used to be used for calibration, not used as of Feb 2020)
+  SampleEvent(TTL2ch%,1,2,1000);
+  SampleTitle$(TTL2ch%,"TTL2");
+  SampleComment$(TTL2ch%, "TTL2: IR LED");
 
-  'Channel 13
-  SampleEvent(13,3,2,1000);
-  SampleTitle$(12,"TTL4");
-  SampleComment$(12, "TTL4: R laser");
+  ' TLL3: Left Laser
+  SampleEvent(TTL3ch%,2,2,1000);
+  SampleTitle$(TTL3ch%,"TTL3");
+  SampleComment$(TTL3ch%, "TTL3: L laser");
 
-  'Channel 15 - ALEX FANNING
-  'SampleEvent(15,4,2,1000); '- ALEX FANNING
-  'SampleTitle$(15,"TTL5"); '- ALEX FANNING
-  'SampleComment$(12, "TTL5: FP Pulse"); '- ALEX FANNING
+  ' TTL4: Right Laser
+  SampleEvent(TTL4ch%,3,2,1000);
+  SampleTitle$(TTL4ch%,"TTL4");
+  SampleComment$(TTL4ch%, "TTL4: R laser");
 
   'Channel 30
   SampleTextMark(200);
@@ -587,94 +911,14 @@ Proc WindowConfig()
   'Continuous sampling
   SampleMode(1);
 
-  'Create a spike2 data file and make the new window visible immediately
-  SampleWindow% := FileNew(0,1);
-
-  'Add smoothing to some channels
-  'ChanProcessAdd(13, 1, 0.05);
-
   SetSequencerValues();
 
-  'Hide all
-  ChanHide(-1);
-
-  'Show certain channels in a particular order
-  ChanShow(1,2,3,4,5,6,7,8,9,10,11,12,13,14,30,31);
-  'ChanShow(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,30,31); 'Alex Fanning
-
-  'ChanSelect(13,1);    'Select channel 13
-  'ChanOrder(4,1,-3);   'Move selected channels
-  '-----------------------------------------
-
-  'Channel y-range (channel num, low, high)
-  YRange( 1, -10, 10 );
-  YRange( 2, -10, 10 );
-  YRange( 3, -10, 10 );
-  YRange( 4, -10, 10 );
-  YRange( 5, -10, 10 );
-  YRange( 6, -10, 10 );
-  YRange( 7, -10, 10 );
-  YRange( 8, -10, 10 );
-  'YRange( htvelChan%, -10, 10 ); ' OPTIONAL D019 CHANNELS???
-  'YRange( hhvelChan%, -10, 10 ); ' OPTIONAL D019 CHANNELS???
-
-  ChanWeight(1,.5);           ' Make command channel smaller
-  ChanWeight(2,.5);           ' Make command channel smaller
-
-  XRange( 0, 20);      ' Set the default X axis time range
-
-  ' Channel order
-  'ChanOrder(0, -1, "5, 4, 8, 13, 3, 2, 1, 12, 11, 10, 9, 30, 31");
-  'ChanOrder(0, -1, "5, 4, 8, 13, 3, 2, 1, 12, 11, 10, 9, 30, 31, 15"); 'Alex Fanning
-  ChanOrder(0, -1, "4, 8, 1, 3, 7, 13, 5, 6, 9, 10, 11, 12, 14, 30, 31"); 'Trace Stay
-
-  ' Background Colour'
-  ViewColour(0,5);
-  ' Font
-  FontSet("Verdana", 8, 0);
-  ' Chan colors
-  'chanColour(HTVELChCom%, 1, 28);
-  'chanColour(htposCh%, 1, 28);
-  'chanColour(htvelCh%, 1, 28);
-
-  ChanColourSet(HTVELChCom%, 1,0.501961,0,0.501961);
-  ChanColourSet(htposCh%, 1,0.501961,0,0.752941);
-  ChanColourSet(7, 1,0.501961,0,1);
-  ChanColourSet(htvelCh%, 1,0.501961,0,1);
-
-  chanColour(HHVELChCom%, 1, 30);
-  'chanColour(hhposCh%, 1, 30);
-  'chanColour(hhvelCh%, 1, 30);
-
-  ChanColourSet(hhposCh%, 1, 0,0.501961,0); 'Trace Stay Nov 2019'
-  ChanColourSet(hhvelCh%, 1, 0, 1, 0);
-
-  chanColour(heposCh1%, 1, 1);
-  chanColour(heposCh2%, 1, 1);
-
-
-  ' Useful Zero line indicators
-  HCursorNew(1);
-  HCursor(1, 0, 1);
-
-  HCursorNew(2);
-  HCursor(2, 0, 2);
-
-  HCursorNew(3);
-  HCursor(3, 0, 3);
-
-  HCursorNew(4);
-  HCursor(4, 0, 4);
-
-  HCursorNew(5);
-  HCursor(5, 0, 8);
-
-  HCursorNew(6);
-  HCursor(6, 0, 12);
+  return(1);
 End
 
 Func ToolbarNew%()
-  WindowConfig();
+  ' Ask User what layout they want'
+  chanLayout%();
   ' Make window full screen
   WindowVisible(3);
   Return (1);
@@ -712,6 +956,7 @@ Func ToolbarInit%()
   ToolbarStepOff%(); Yield();
   ToolbarSineStop%(); Yield(.01);
   ToolbarStimoff%(); Yield();
+  ToolbarLasersOff%(); Yield();
   prevTime := 0;  ' Reset prev time so sine offset code continues running in a new file
   SampleKey( "I" );
   Return( 1 );
@@ -778,6 +1023,7 @@ Proc SetSequencerValues()
   SampleSeqVar( 55, QueTime );
   SampleSeqVar( 56, DrumAmp2Int32%( DrumDegreesPerSecondOffsetDefault ) );
   SampleSeqVar( 57, ChairAmp2Int32%( ChairDegreesPerSecondOffsetDefault ) );
+  SampleSeqVar( 58, halfPhaseDelay);
 
 
   'Rotation Parameters
@@ -789,28 +1035,28 @@ Func driftFix%()
   docase
   case stepOn% = 1 then
     'SampleKey("7");
-    if stepAmpChair > 0 then
+    if step_AmpChair > 0 then
       'SampleKey("8");
-      centerLineChair := (stepLength/1000) * stepAmpChair * W;
+      centerLineChair := (stepLength/1000) * step_AmpChair * W;
     endif
-    if stepAmpChair < 0 then
+    if step_AmpChair < 0 then
       'SampleKey("9");
-      centerLineChair := (stepLength/1000) * stepAmpChair * X;
+      centerLineChair := (stepLength/1000) * step_AmpChair * X;
     endif
-    if stepAmpChair = 0 then
+    if step_AmpChair = 0 then
       'SampleKey("0");
       centerLineChair := 0;
     endif
 
-    if stepAmpDrum > 0 then
+    if step_AmpChair > 0 then
       'SampleKey("7");
-      centerLineDrum := (stepLength/1000) * stepAmpDrum * Y;
+      centerLineDrum := (stepLength/1000) * step_AmpChair * Y;
     endif
-    if stepAmpDrum < 0 then
+    if step_AmpChair < 0 then
       'SampleKey("6");
-      centerLineDrum := (stepLength/1000) * stepAmpDrum * Z;
+      centerLineDrum := (stepLength/1000) * step_AmpChair * Z;
     endif
-    if stepAmpDrum = 0 then
+    if step_AmpChair = 0 then
       centerLineDrum := 0;
     endif
 
