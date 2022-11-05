@@ -188,11 +188,11 @@ segmentEnd = segmentStart+vid.time(end);
 rawMagnetData = resettime(datseg(rawMagnetData,[segmentStart segmentEnd]));
 
 mag1.pos_data = double(rawMagnetData(2).data);
-mag1.samplerate = rawMagnetData(1).samplerate;
+mag1.samplerate = rawMagnetData(2).samplerate;
 mag1.time = dattime(rawMagnetData(2));
 
 mag2.pos_data = double(rawMagnetData(3).data);
-mag2.samplerate = rawMagnetData(2).samplerate;
+mag2.samplerate = rawMagnetData(3).samplerate;
 mag2.time = dattime(rawMagnetData(3));
 
 %% Upsample Video Traces OLD METHOD
