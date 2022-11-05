@@ -2,7 +2,7 @@
 ' IMPORT RIG-SPECIFIC PARAMETERS AND UNIVERSAL PARAMETERS
 '--------------------------------------------------------------------------------
 #include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\RigChoice.s2s"
-#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal_Trace.s2s"
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal.s2s"
 
 '--------------------------------------------------------------------------------
 ' MAIN PROGRAM
@@ -31,6 +31,7 @@ Func ToolbarIdle%()
       driftFix%();
     endif;
   endif;
+
 
   'If an experiment is running:
   if runExpmt% = 1 then
@@ -82,7 +83,7 @@ Func ToolbarIdle%()
             ' Keep track of how many PRE/POST tests that you've run
             prePostNum := prePostNum + 1;
 
-            if prePostNum > 2 then '*** Change to 1 for two pre- and post-tests 24June2022 ***
+            if prePostNum > 2 then
               expmtLoc% := 2;
               ' This check is for the 'T-35' test
               if rep% < nBlocks% then
