@@ -8,8 +8,6 @@ var sinPhChair := -90;
 var actualChairPh;
 var sinHzDrum := 1;
 var sinPhDrum := 90;
-var sinAmpChair := 10;
-var sinAmpDrum := 10;
 var actualDrumPh;
 var sineOn% := 0;
 var sinAmpChair := 10;
@@ -106,7 +104,6 @@ var SampleWindow%;
 var comment$;
 var vidOn := 0;
 var stepOn% := 0;
-var runPreExperiment% := 0; 'To run the steps for Trace pre-test of the mouse experiments
 var fullPulse := 0;
 'Voltage Range: check in Edit -> Edit Parameters
 var MaxVoltage := 10;
@@ -136,8 +133,7 @@ const PulseConfigPos    := PulsePos+1;
 const VidPos            := PulseConfigPos+1;
 const StepPos           := VidPos+1;
 const StepConfigPos     := StepPos+1;
-const RunExpmtPretestPos := StepConfigPos+1;
-const ExpmtPos          := RunExpmtPretestPos+1;
+const ExpmtPos          := StepConfigPos+1;
 const ExpmtConfigPos    := ExpmtPos+1;
 const devPos            := ExpmtConfigPos+1;
 
@@ -157,12 +153,6 @@ var TTL1ch% := 9;
 var TTL2ch% := 10;
 var TTL3ch% := 11;
 var TTL4ch% := 12;
-' Naming
-const ExmptPretestLabel$ := "Pretest";
-const QuitPretestExpmtLabel$ := "Stop";
-
-' Experiment button
-var expmt_button%;
 
 '--------------------------------------------------------------------------------
 ' SINE FUNCTIONS
@@ -508,31 +498,6 @@ Func ToolbarStimOff%()
 End
 
 '--------------------------------------------------------------------------------
-' EXPERIMENT HELPER FUNCTIONS
-'--------------------------------------------------------------------------------
-
-Func ToolbarRunPretest%()
-  expmtIndx := 0; 'Set starting index of the pre-test experiment
-  runExpmt% := 2;
-  goalTime := MaxTime();
-  SampleKey("H");
-  ' Disable the real experiment from running
-  ToolbarSet(RunExpmtPretestPos, QuitPretestExpmtLabel$, ToolbarQuitPretestExperiment%);
-  ' Prevent someone from trying to run the real 
-  ToolbarEnable(ExpmtPos, 0);
-  Return(1);
-End
-
-Func ToolbarQuitPretestExperiment%()
-  runExpmt% := 0;
-  ToolbarInit%();
-  expmtIndx := 0;   'Reset the starting index of the pre-test experiment
-  SampleKey("h");  
-  ToolbarSet(RunExpmtPretestPos, ExmptPretestLabel$, ToolbarRunPretest%);
-  ToolbarEnable(ExpmtPos, 1);
-  Return(1);
-End
-'--------------------------------------------------------------------------------
 ' OTHER FUNCTIONS
 '--------------------------------------------------------------------------------
 Proc ToolbarConfig()
@@ -551,7 +516,6 @@ Proc ToolbarConfig()
   ToolbarSet(VidPos, "Video On", ToolbarVidOn%);
   ToolbarSet(StepPos, "Step On", ToolbarStepOn%);
   ToolbarSet(StepConfigPos, "Step Config", StepConfigWindow%);
-  ToolbarSet(RunExpmtPretestPos, ExmptPretestLabel$, ToolbarRunPretest%);
   ToolbarSet(ExpmtPos, "Run Expmt", ToolbarRunExpmt%);
   ToolbarSet(ExpmtConfigPos, "Expmt Config", ToolbarConfigExpmt%);
   ToolbarSet(CommentPos, "Comment", ToolbarComment%);
@@ -939,6 +903,7 @@ Func setChannels%();
   SampleTitle$(TTL4ch%,"TTL4");
   SampleComment$(TTL4ch%, "TTL4: R laser");
 
+
   'Channel 30
   SampleTextMark(200);
 
@@ -973,12 +938,11 @@ Func ToolbarRunExpmt%()
   runExpmt% := 1;
   rep% := 0;                   'Rep (5min run, 40 sec test)
   test% := 0;                  'test: 0=run testLength, 1=test testLength, 2=init&wait 20 sec, 3=init&wait 10 sec,  4=init&wait runLength
-  testrep% := 0;                ' Changed from 0 to 1 5/2/14 so that VORD is only tested once at the beginning
+  testrep% := 0;               'Changed from 0 to 1 5/2/14 so that VORD is only tested once at the beginning
+  expmtIndx := 0;              'reset the order that the experiment is running to 0
   goalTime := MaxTime();
   SampleKey("H");
   ToolbarSet(ExpmtPos, "Quit Expmt",ToolbarQuitExpmt%);
-  'Prevent someone from clicking on the pre-test experiment while real one is running
-  ToolbarEnable(RunExpmtPretestPos, 0);
   Return(1);
 End
 
@@ -987,8 +951,6 @@ Func ToolbarQuitExpmt%()
   ToolbarInit%();
   SampleKey("h");
   ToolbarSet(ExpmtPos, "Run Expmt",ToolbarRunExpmt%);
-  'Allow us to run the "pre-test" experiment
-  ToolbarEnable(RunExpmtPretestPos, 1);
   Return(1);
 End
 
@@ -1079,7 +1041,7 @@ Func driftFix%()
     if step_AmpChair > 0 then
       'SampleKey("8");
       centerLineChair := (stepLength/1000) * step_AmpChair * W;
-    endif 
+    endif
     if step_AmpChair < 0 then
       'SampleKey("9");
       centerLineChair := (stepLength/1000) * step_AmpChair * X;
