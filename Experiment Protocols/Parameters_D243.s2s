@@ -1,9 +1,9 @@
-' D243a Specific parameters
+' D243 Specific parameters
 
 '--------------------------------------------------------------------------------
 ' SEQUENCER FILE LOCATION
 '--------------------------------------------------------------------------------
-var SequencerFile$ := "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Sequencer_D243a";
+var SequencerFile$ := "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Sequencer_D243";
 
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS

@@ -13,7 +13,7 @@
 
 
 'D243a or D243b (both use the same parameters, the motors are the same in both rigs)
-#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D243a.s2s"
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_D243.s2s"
 
 
 'D253
