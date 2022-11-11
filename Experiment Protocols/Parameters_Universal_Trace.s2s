@@ -82,6 +82,7 @@ var trainAmount := 0;
 var expmtMode := 2;               'expmtMode: 0=off, 1=0x, 2=2x, 3=ipsi stim, 4=contra stim
 var testString$;
 var runExpmt% := 0;               ' Random note: % denotes integer types
+var expmtIndx := 0;               'Sets the starting position of the experiment
 var rep% := 0;                    'Rep (5min run, 40 sec test)
 var test% := 1;                   'test: 0=run testLength, 1=test testLength, 2=init&wait 20 sec, 3=init&wait 10 sec,  4=init&wait runLength
 var testrep% := 0;
@@ -902,6 +903,7 @@ Func setChannels%();
   SampleTitle$(TTL4ch%,"TTL4");
   SampleComment$(TTL4ch%, "TTL4: R laser");
 
+
   'Channel 30
   SampleTextMark(200);
 
@@ -936,7 +938,8 @@ Func ToolbarRunExpmt%()
   runExpmt% := 1;
   rep% := 0;                   'Rep (5min run, 40 sec test)
   test% := 0;                  'test: 0=run testLength, 1=test testLength, 2=init&wait 20 sec, 3=init&wait 10 sec,  4=init&wait runLength
-  testrep% := 0;                ' Changed from 0 to 1 5/2/14 so that VORD is only tested once at the beginning
+  testrep% := 0;               'Changed from 0 to 1 5/2/14 so that VORD is only tested once at the beginning
+  expmtIndx := 0;              'reset the order that the experiment is running to 0
   goalTime := MaxTime();
   SampleKey("H");
   ToolbarSet(ExpmtPos, "Quit Expmt",ToolbarQuitExpmt%);
@@ -948,7 +951,7 @@ Func ToolbarQuitExpmt%()
   ToolbarInit%();
   SampleKey("h");
   ToolbarSet(ExpmtPos, "Run Expmt",ToolbarRunExpmt%);
-  Return(1)
+  Return(1);
 End
 
 Func ToolbarInit%()

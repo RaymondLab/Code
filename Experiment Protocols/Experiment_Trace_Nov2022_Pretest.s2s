@@ -1,0 +1,161 @@
+'--------------------------------------------------------------------------------
+' IMPORT RIG-SPECIFIC PARAMETERS AND UNIVERSAL PARAMETERS
+' This script is meant to be run in D241B, and is based 
+' off the formatting found in Experiment_Alex_Nov2019_GagnonPredictor.s2s
+'--------------------------------------------------------------------------------
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\RigChoice.s2s"
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal_Trace.s2s"
+'--------------------------------------------------------------------------------
+' MAIN PROGRAM
+'--------------------------------------------------------------------------------
+'Setup the configuration toolbar and buttons
+ToolbarConfig();
+'Default, initial values for the peak amplitude, frequency of the chair and drum
+var peakAmplitude:= 10;
+var sinHzFrequency := 1.0;
+
+'--------------------------------------------------------------------------------
+' Toolbar Callbacks
+'--------------------------------------------------------------------------------
+Func ToolbarIdle%()
+  'This function calls repeatedly whenever nothing else is happening
+
+  ' Check a valid sampling view is running
+  var currView := ViewKind();
+  if  currView <> 0 then
+      return 1;
+  endif;
+
+  ' Keep sine wave from drifting
+  if MaxTime() > (prevTime + 1/sinHzChair) then
+    if driftFix = 1 then
+      driftFix%();
+    endif;
+  endif;
+
+  'If an experiment is running:
+  if runExpmt% = 1 then
+    'First "gap" or rest period
+    const GAP_A% := 0;
+    'Second "gap" or rest period, with a light flash at the start
+    const GAP_B% := 1;
+    'The stationary period, where neither the drum or the chair move
+    const REST% := 2;
+    'Vestibulo ocular reflex testing in the dark. Chair movement only
+    const VORD% := 3;
+    'Optokinetic reflex - test with only drum movement
+    const OKR% := 4;
+    'Vestibulo ocular reflex - with ipsim stimulation
+    const VOR_X0% := 5;
+    'Vestibulo ocular reflex - with contra stimulation
+    const VOR_X2% := 6;
+    'Stop experiment
+    const QUIT% := 9;
+
+    'Order of the experiment running
+    const Order%[] := {0, 1, 2,
+                      0, 1, 3,
+                      0, 1, 4,
+                      0, 1, 5,
+                      0, 1, 6,
+                      0, 9};
+
+    'Check the time. Seconds is the current time - compare it to the goal time of each segment
+    if  MaxTime() > goalTime then
+      'Output the current experiment step so that it is recorded
+      SampleKey(str$(Order%[expmtIndx]));
+      docase
+        ' GAP A
+        case Order%[expmtIndx] = GAP_A% then
+          SampleKey("x");
+          goalTime := MaxTime() + 5;
+          ToolbarInit%(); Yield();
+
+        ' GAP B
+        case Order%[expmtIndx] = GAP_B% then
+          goalTime := MaxTime() + 5;
+          ToolbarInit%(); Yield();
+          runFlash(); Yield();
+          ToolbarInit%(); Yield();
+
+        ' REST - spontaneous eye movements - do nothing
+        case Order%[expmtIndx] = REST% then
+          SampleKey("X");
+          goalTime := MaxTime() + testLength;
+          
+        ' VORD - chair only
+        case Order%[expmtIndx] = VORD% then
+          SampleKey("X");
+          goalTime := MaxTime() + testLength;
+          sinPhDrum := 90;
+          sinPhChair := 90;
+          sinAmpChair := peakAmplitude;
+          sinAmpDrum := 0;
+          SetSequencerValues();
+          ToolbarSineStart%();
+
+        ' OKR
+        case Order%[expmtIndx] = OKR% then
+          SampleKey("X");
+          goalTime := MaxTime() + testLength;
+          sinPhDrum := 90;
+          sinPhChair := 90;
+          sinAmpChair := 0;
+          sinAmpDrum := peakAmplitude;
+          ToolbarLightOn%();Yield();
+          SetSequencerValues();
+          ToolbarSineStart%();
+
+        ' VOR x0
+        case Order%[expmtIndx] = VOR_X0% then
+          SampleKey("X");
+          goalTime := MaxTime() + testLength;
+          sinPhDrum := 90;
+          sinPhChair := 90;
+          sinAmpChair := peakAmplitude;
+          sinAmpDrum := peakAmplitude;
+          ToolbarLightOn%(); Yield();
+          SetSequencerValues();
+          ToolbarSineStart%();
+
+        ' VOR x2
+        case Order%[expmtIndx] = VOR_X2% then
+          SampleKey("X");
+          goalTime := MaxTime() + testLength;
+          sinPhDrum := 90;
+          sinPhChair := -1*90;
+          sinAmpChair := peakAmplitude;
+          sinAmpDrum := peakAmplitude;
+          ToolbarLightOn%(); Yield();
+          SetSequencerValues();
+          ToolbarSineStart%();
+
+        ' QUIT EXPMT
+        case Order%[expmtIndx] = 9 then
+          ToolbarQuitExpmt%();
+          'break early
+          Return(1);
+
+      endcase;
+      expmtIndx := expmtIndx + 1;
+      endif;
+  endif;
+  Return(1);
+End
+
+
+'--------------------------------------------------------------------------------
+'Configure expmt settings window
+'--------------------------------------------------------------------------------
+Func ToolbarConfigExpmt%()
+  DlgCreate("Experiment settings");  'Start new dialog
+  DlgReal(1,"Test length (s)",0,500);
+  DlgReal(2,"Peak Velocity (deg/sec)",0,100);
+  DlgReal(3,"Chair and Drum Freq (Hz)",0,50);
+  DlgShow(testLength, peakAmplitude, sinHzFrequency);
+
+  'Set the frequency of the chair and drum equal
+  sinHzChair := sinHzFrequency;
+  sinHzDrum := sinHzFrequency;
+  Return(1);
+End
