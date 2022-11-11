@@ -153,5 +153,9 @@ Func ToolbarConfigExpmt%()
   DlgReal(2,"Peak Velocity (deg/sec)",0,100);
   DlgReal(3,"Chair and Drum Freq (Hz)",0,50);
   DlgShow(testLength, peakAmplitude, sinHzFrequency);
+
+  'Set the frequency of the chair and drum equal
+  sinHzChair := sinHzFrequency;
+  sinHzDrum := sinHzFrequency;
   Return(1);
 End
