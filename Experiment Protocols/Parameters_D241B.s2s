@@ -60,8 +60,8 @@ var EyeVoltage2Position := 1;
 var EyeVoltage2PositionC := 0;
 
 'Default servo direction for chair and drum -- 1 or -1'
-var ChairResetDirection := 1;
-var DrumResetDirection := 1;
+var ChairResetDirection := -1;
+var DrumResetDirection := -1;
 
 'Scale factor for amplitude of sine wave drift'
 var ChairDriftFactor := 0;
