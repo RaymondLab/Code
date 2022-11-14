@@ -170,11 +170,19 @@ fullfilename = fullfile(cd,[filenameroot '.smr']);
 
 if app.LeftButton.Value
     % Left Eye (default)
-    rawMagnetData = importSpike(fullfilename,[4 5 6 10]);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Changed by Trace Stay on March 3, 2021 for correct magnet channels
+    % They should correspond to hhpos, hepos1, hepos2, light pulses TTL2
+    
+%     rawMagnetData = importSpike(fullfilename,[4 5 6 10]);
+    rawMagnetData = importSpike(fullfilename,[2 7 8 11]);
 else
     % Right Eye
-    rawMagnetData = importSpike(fullfilename,[4 7 8 10]);
+%     rawMagnetData = importSpike(fullfilename,[4 7 8 10]);
+    rawMagnetData = importSpike(fullfilename,[2 7 8 11]);
 end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Need to update this if light pulses are not being sent correctly 03/08/21
 
 % Select Proper Magnet window/segment
 lightpulses = rawMagnetData(end).data;

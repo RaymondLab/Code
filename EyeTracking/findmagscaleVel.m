@@ -14,7 +14,7 @@ pathname = cd;
 fullfilename = fullfile(pathname,[filenameroot '.smr']);
 
 % Left Eye
-magnet = importSpike(fullfilename,[4 5 6 10]);
+magnet = importSpike(fullfilename,[4 5 6 11]);
 
 % Right Eye
 % magnet = importSpike(fullfilename,[4 7 8 10]);

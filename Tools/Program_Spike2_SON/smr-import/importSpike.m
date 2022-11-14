@@ -103,7 +103,7 @@ while iIn < nchans
     end
     
     % Make the object instance
-    if size(iData,2)==2
+     if size(iData,2)==2
         datout(iOut) = dat(iData(:,1),ichanlabel,ichanval,isamplerate,itstart,itend,iunits);
         datout(iOut+1) = dat(iData(:,2),ichanlabel,ichanval,isamplerate,itstart,itend,iunits);
         if iscell(datout(iOut).chanlabel)
@@ -129,27 +129,27 @@ end
 
 %% Make sure all channels with same samplerate are the same size
 
-contchans = arrayfun(@(x) strcmp(x,'cont'),getchantype(datout));
-
-samplerates_sub = arrayfun(@(x) x.samplerate, datout(contchans));
-samplerates = zeros(size(contchans)); samplerates(contchans) = samplerates_sub;
-unique_samplerates = unique(samplerates(samplerates>0));
-if ~any(samplerates)
-    return
-end
-
-
-for ii = length(unique_samplerates)
-    curr_mask = unique_samplerates(ii)==samplerates & contchans;
-    
-    ns = arrayfun(@(x) length(x.data),datout(curr_mask));
-    targetN = min(ns);
-    
-    for jj = find(curr_mask)
-        datout(jj).data = datout(jj).data(1:targetN);
-    end
-    
-end
+% contchans = arrayfun(@(x) strcmp(x,'cont'),getchantype(datout));
+% 
+% samplerates_sub = arrayfun(@(x) x.samplerate, datout(contchans));
+% samplerates = zeros(size(contchans)); samplerates(contchans) = samplerates_sub;
+% unique_samplerates = unique(samplerates(samplerates>0));
+% if ~any(samplerates)
+%     return
+% end
+% 
+% 
+% for ii = length(unique_samplerates)
+%     curr_mask = unique_samplerates(ii)==samplerates & contchans;
+%     
+%     ns = arrayfun(@(x) length(x.data),datout(curr_mask));
+%     targetN = min(ns);
+%     
+%     for jj = find(curr_mask)
+%         datout(jj).data = datout(jj).data(1:targetN);
+%     end
+%     
+% end
 
 end
 

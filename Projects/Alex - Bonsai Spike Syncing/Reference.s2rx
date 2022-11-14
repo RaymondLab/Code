@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CEDResources App="Spike2" AppVer="905">
+	<DocTime>
+		<Templates/>
+		<View>
+			<WPlace flags="2" showc="3" minx="-1" miny="-1" maxx="-9" maxy="-38" t="64" b="634" l="64" r="1724"/>
+			<Font hgt="-13" hthou="-108" wgt="400" qual="1" fnam="Verdana"/>
+			<Chan Chan="30" DMode="9" DWidth="-9.999999999999999e-6" DTrig="65535" DBoth="1" DHLine="1" Ax="0" AdcAxMax="1" FreqAxMax="2" AxType="1" ChType="5" BackOv="0">
+				<FitParam DrawFR="1" ShowF="0">
+					<c id="0"/>
+					<c id="1"/>
+					<c id="2"/>
+				</FitParam>
+			</Chan>
+			<Chan Chan="29" DMode="9" DWidth="-9.999999999999999e-6" DTrig="65535" DBoth="1" DHLine="1" Ax="0" AdcAxMax="1" FreqAxMax="2" AxType="1" ChType="8" BackOv="0">
+				<FitParam DrawFR="1" ShowF="0">
+					<c id="0"/>
+					<c id="1"/>
+					<c id="2"/>
+				</FitParam>
+			</Chan>
+			<Chan Chan="8" DMode="10" DWidth="-9.999999999999999e-6" DTrig="65535" DBoth="1" DHLine="1" Ax="0" AdcAxMax="1" FreqAxMax="2000" AxType="1" ChType="4" BackOv="0">
+				<FitParam DrawFR="1" ShowF="0">
+					<c id="0"/>
+					<c id="1"/>
+					<c id="2"/>
+				</FitParam>
+			</Chan>
+			<Chan Chan="9" DMode="10" DWidth="-9.999999999999999e-6" DTrig="65535" DBoth="1" DHLine="1" Ax="0" AdcAxMax="1" FreqAxMax="2000" AxType="1" ChType="4" BackOv="0">
+				<FitParam DrawFR="1" ShowF="0">
+					<c id="0"/>
+					<c id="1"/>
+					<c id="2"/>
+				</FitParam>
+			</Chan>
+			<Chan Chan="10" DMode="10" DWidth="-9.999999999999999e-6" DTrig="65535" DBoth="1" DHLine="1" Ax="0" AdcAxMax="1" FreqAxMax="2000" AxType="1" ChType="4" BackOv="0">
+				<FitParam DrawFR="1" ShowF="0">
+					<c id="0"/>
+					<c id="1"/>
+					<c id="2"/>
+				</FitParam>
+			</Chan>
+			<Chan Chan="11" DMode="10" DWidth="-9.999999999999999e-6" DTrig="65535" DBoth="1" DHLine="1" Ax="0" AdcAxMax="1" FreqAxMax="2000" AxType="1" ChType="4" BackOv="0">
+				<FitParam DrawFR="1" ShowF="0">
+					<c id="0"/>
+					<c id="1"/>
+					<c id="2"/>
+				</FitParam>
+			</Chan>
+			<Chan Chan="0" DMode="11" DWidth="-9.999999999999999e-6" DDSize="-1" AxMin="-10" AxMax="10" AdcAxMin="-10" AdcAxMax="10" FreqAxMax="500" AxType="1" CWeight="0.5" ChType="1" PriCol="29" PriOv="12615808" BackOv="0">
+				<FitParam DrawFR="1" ShowF="0">
+					<c id="0"/>
+					<c id="1"/>
+					<c id="2"/>
+				</FitParam>
+			</Chan>
+			<Chan Chan="1" DMode="11" DWidth="-9.999999999999999e-6" DDSize="-1" AxMin="-10" AxMax="10" AdcAxMin="-10" AdcAxMax="10" FreqAxMax="500" AxType="1" CWeight="0.5" ChType="1" PriCol="10" PriOv="8421376" BackOv="0">
+				<FitParam DrawFR="1" ShowF="0">
+					<c id="0"/>
+					<c id="1"/>
+					<c id="2"/>
+				</FitParam>
+			</Chan>
+			<Chan Chan="2" DMode="11" DWidth="-9.999999999999999e-6" DDSize="-1" AxMin="-10" AxMax="10" AdcAxMin="-10" AdcAxMax="10" FreqAxMax="500" AxType="1" ChType="1" PriCol="29" PriOv="12615808" BackOv="0">
+				<FitParam DrawFR="1" ShowF="0">
+					<c id="0"/>
+					<c id="1"/>
+					<c id="2"/>
+				</FitParam>
+			</Chan>
+			<Chan Chan="12" DMode="11" DWidth="-9.999999999999999e-6" DDSize="-1" AxMin="-46.6648635" AxMax="46.6463365" AdcAxMin="-46.6648635" AdcAxMax="46.6463365" FreqAxMax="500" AxType="1" ChType="1" PriCol="29" PriOv="12615808" BackOv="0">
+				<FitParam DrawFR="1" ShowF="0">
+					<c id="0"/>
+					<c id="1"/>
+					<c id="2"/>
+				</FitParam>
+			</Chan>
+			<Chan Chan="7" DMode="11" DWidth="-9.999999999999999e-6" DDSize="-1" AxMin="-10" AxMax="10" AdcAxMin="-10" AdcAxMax="10" FreqAxMax="500" AxType="1" ChType="1" PriCol="10" PriOv="8421376" BackOv="0">
+				<FitParam DrawFR="1" ShowF="0">
+					<c id="0"/>
+					<c id="1"/>
+					<c id="2"/>
+				</FitParam>
+			</Chan>
+			<Chan Chan="3" DMode="11" DWidth="-9.999999999999999e-6" DDSize="-1" AxMin="-10" AxMax="10" AdcAxMin="-10" AdcAxMax="10" FreqAxMax="500" AxType="1" ChType="1" PriCol="10" PriOv="8421376" BackOv="0">
+				<FitParam DrawFR="1" ShowF="0">
+					<c id="0"/>
+					<c id="1"/>
+					<c id="2"/>
+				</FitParam>
+			</Chan>
+			<Chan Chan="4" DMode="11" DWidth="-9.999999999999999e-6" DDSize="-1" AxMin="-10" AxMax="10" AdcAxMin="-10" AdcAxMax="10" FreqAxMax="500" AxType="1" ChType="1" PriCol="2" PriOv="5723991" BackOv="0"/>
+			<Chan Chan="5" DMode="11" DWidth="-9.999999999999999e-6" DDSize="-1" AxMin="-10" AxMax="10" AdcAxMin="-10" AdcAxMax="10" FreqAxMax="500" AxType="1" ChType="1" PriCol="2" PriOv="5723991" BackOv="0">
+				<FitParam DrawFR="1" ShowF="0">
+					<c id="0"/>
+					<c id="1"/>
+					<c id="2"/>
+				</FitParam>
+			</Chan>
+			<XInfo Left="899.7273149546966" Right="919.7273499999999" XAxSmall="5" BackOvr="1" CRBack="14671839" VCLabMode="2" HCLabMode="1" VCCount="1" HCCount="6">
+				<VCur id="0" LabMode="2" LabPos="0.2" Num="0"/>
+				<HCur id="0" LabMode="1" LabPos="0.2" Num="1"/>
+				<HCur id="1" LabMode="1" LabPos="0.2" Num="2" Chan="1"/>
+				<HCur id="2" LabMode="1" LabPos="0.2" Num="3" Chan="2"/>
+				<HCur id="3" LabMode="1" LabPos="0.2" Num="4" Chan="3"/>
+				<HCur id="4" LabMode="1" LabPos="0.2" Num="5" Chan="7"/>
+				<HCur id="5" LabMode="1" LabPos="0.2" Num="6" Chan="12"/>
+			</XInfo>
+			<ChOrder Chans="14">
+				<c id="0" Chan="30"/>
+				<c id="1" Chan="29"/>
+				<c id="2" Chan="8"/>
+				<c id="3" Chan="9"/>
+				<c id="4" Chan="10"/>
+				<c id="5" Chan="11"/>
+				<c id="6"/>
+				<c id="7" Chan="1"/>
+				<c id="8" Chan="2"/>
+				<c id="9" Chan="12"/>
+				<c id="10" Chan="7"/>
+				<c id="11" Chan="3"/>
+				<c id="12" Chan="4"/>
+				<c id="13" Chan="5"/>
+			</ChOrder>
+			<CursVals/>
+			<CursRegs/>
+			<OvDraw3d YProp="0.5" XScale="0.5" YScale="0.5"/>
+		</View>
+	</DocTime>
+</CEDResources>

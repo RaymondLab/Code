@@ -1,13 +1,15 @@
-%% runEyeCalibration
+    %% runEyeCalibration
 % Run a mouse video eye tracking calibration session
 %
 % Hannah Payne
-% Raymond Lab, Stanford University 2013
+% Raymond Lab, Stanford University 2013-2018
 % hpayne@alumni.stanford.edu
 %
 % NOTES
 % - To install cameras, enter: imaqhwinfo('winvideo')
-% If an error returns, click the link and install the OS Generic Video
+% If
+
+% an error returns, click the link and install the OS Generic Video
 % Interface
 % - If two cameras are not detected - unplug and replug both USBS one at a
 % time, and restart matlab
