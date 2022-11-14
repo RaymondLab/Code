@@ -7,7 +7,7 @@ end
 
 %% Horizontal
 d1 = [frameData_cam1.pupil_x] - [frameData_cam1.cr1_x];
-d2 = - [frameData_cam2.pupil_x] + [frameData_cam2.cr2_x];
+d2 = -[frameData_cam2.pupil_x] + [frameData_cam2.cr2_x];
 
 posH = atand(sind(theta) ./ (d2./d1 + cosd(theta)));
 

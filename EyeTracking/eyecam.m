@@ -149,6 +149,6 @@ if eyetrack
 
     catch msgid
         disp(msgid.message) % If you get an error here, run the cell above:
-        keyboard            % ("%% Save as tiff")
+       keyboard            % ("%% Save as tiff")
     end
 end

@@ -73,6 +73,7 @@ for count = 1:nSegs
     freq = sinefreq(count);
 
     % Segment data to current time segment
+%     dataseg = datseg(data, [params.segStarts(count) params.segStarts(count)+45]);
     dataseg = datseg(data, [params.segStarts(count) params.segEnds(count)]);
 
     % Import Eye, Chair, and Drum velocity
