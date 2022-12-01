@@ -1,9 +1,10 @@
 function[]=SONTest(file)
+
 % SONTEST tests the integrity of a SON File usinf CED's SonFix program.
 %
 % SONTEST(FILE)
 % FILE may be a string or a file identifier
-% If FILE  contains a directory root but no filename or *.smr, all
+% If FILE  contains a directory root but no filename or *.smrx, all
 % files in the directory will be tested. 
 % Files currently open for writing within Matlab will not be tested.
 % The version of SonFix should be dated 18 Feb 2002 or later to cope with version 6.
@@ -11,10 +12,11 @@ function[]=SONTest(file)
 %
 % Malcolm Lidierth 03/02
 % Updated 06/05 ML
-% Copyright © The Author & King's College London 2002-2006
+% Copyright ï¿½ The Author & King's College London 2002-2006
+spike2_file_extension = '.smrx';
 
 if (nargin<1)
-    file='*.smr';
+    file=strcat('*', spike2_file_extension);
 end;
 
 if strcmp(class(file),'char')~=1        % If not a character string expect a file identifier

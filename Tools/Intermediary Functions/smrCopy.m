@@ -1,4 +1,5 @@
 function fhand2 = smrCopy(smrFile, ending)
+spike2_file_extension = '.smrx';
 
 maxPointsToRead = 200000000;
 
@@ -11,7 +12,7 @@ timebase 		= CEDS64TimeBase( fhand1 );
 maxchans 		= CEDS64MaxChan( fhand1 );
 
 %% Create new file & set info to match original file
-newFile = strrep(smrFile, '.smr', [ending, '.smr']);
+newFile = strrep(smrFile, spike2_file_extension, [ending, spike2_file_extension]);
 fhand2 = CEDS64Create( newFile, maxchans);
 if (fhand2 <= 0);  fprintf(fhand2); CEDS64ErrorMessage(fhand2); unloadlibrary ceds64int; return; end
 CEDS64TimeBase( fhand2, timebase );

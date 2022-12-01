@@ -1,4 +1,5 @@
 function[data,header]=SONGetChannel(fid, chan, varargin)
+
 % SONGETCHANNEL provides a gateway to the individual channel read functions.
 %
 % [DATA{, HEADER}]=SONGETCHANNEL(FID, CHAN{, OPTIONS});
@@ -30,7 +31,8 @@ function[data,header]=SONGetChannel(fid, chan, varargin)
 % Malcolm Lidierth 02/02
 % Updated 06/07 ML
 %       Error checking now allows Spike for Mac files to be loaded
-% Copyright © The Author & King's College London 2002-2006
+% Copyright ï¿½ The Author & King's College London 2002-2006
+spike2_file_extension = '.smrx';
 
 MatFlag=0;
 SizeOfHeader=20;    % Block header is 20 bytes long
@@ -51,7 +53,7 @@ end;
 
 
 [path, name, ext]=fileparts(fopen(fid));
-if strcmpi(ext,'.smr') ~=1 && strcmpi(ext,'.son') ~=1
+if strcmpi(ext,spike2_file_extension) ~=1 && strcmpi(ext,'.son') ~=1
     warning('SONGetChannel: file handle points to "%s". \nThis is not a valid Spike file',fopen(fid));
     data=[];
     header=[];

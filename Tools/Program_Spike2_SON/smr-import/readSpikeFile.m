@@ -6,13 +6,14 @@ function d = readSpikeFile(filename,chans)
 %
 % -------------------------------------------------------------------------
 % Author: Malcolm Lidierth 07/06
-% Copyright © The Author & King's College London 2006-2007
+% Copyright ï¿½ The Author & King's College London 2006-2007
 % -------------------------------------------------------------------------
 %
 % Revisions:
 % Modified by Hannah Payne 07/2012 for Raymond lab
 % If no channels specified, output is structure c with channel list
-
+% Modified by Katie Li 11/2022 to use .smrx instead of smrx files
+spike2_file_extension = '.smrx';
 
 if SONVersion('nodisplay')<2.31
     errordlg('ImportSMR: An old version of the SON library is on the MATLAB path.\nDelete this and use the version in sigTOOL');
@@ -25,7 +26,7 @@ end
 %fprintf('Reading Spike2 file: %s\n',fullfile(pathname, filename2));
 warning('off','backtrace')
 
-if strcmpi(extension,'.smr')==1 || strcmpi(extension,'.srf')==1
+if strcmpi(extension, spike2_file_extension)==1 || strcmpi(extension,'.srf')==1
     % Spike2 for Windows source file so little-endian
     fid=fopen(filename,'r','l');
 elseif strcmpi(extension,'.son')==1
@@ -94,7 +95,7 @@ else
             end
             
             switch header.kind
-                case {1,9}% Waveform int16 or single in SMR file
+                case {1,9}% Waveform int16 or single in SMRX file
                     
                     imp.tim(:,1)=header.start;
                     imp.tim(:,2)=header.stop;
@@ -122,7 +123,7 @@ else
                     hdr.adc.Func=[];
                     hdr.adc.Units=header.units;
                     hdr.adc.Multiplex=header.interleave;
-                    hdr.adc.MultiInterval=[0 0];%not known from SMR format
+                    hdr.adc.MultiInterval=[0 0];%not known from SMRX format
                     hdr.adc.Npoints=header.npoints;
                     hdr.adc.YLim =[header.min header.max]*hdr.adc.Scale+hdr.adc.DC;
                     
@@ -132,7 +133,7 @@ else
                     hdr.tim.Func=[];
                     hdr.tim.Units=F.dTimeBase;
                     
-                case {2,3}% Event+ or Event- in SMR file
+                case {2,3}% Event+ or Event- in SMRX file
                     imp.tim(:,1)=data;
                     imp.adc=[];
                     imp.mrk=zeros(size(imp.tim,1),4,'uint8');
@@ -150,7 +151,7 @@ else
                     hdr.tim.Func=[];
                     hdr.tim.Units=F.dTimeBase;
                     
-                case {4}% EventBoth in SMR file
+                case {4}% EventBoth in SMRX file
                     if header.initLow==0 % insert a rising edge...
                         data=vertcat(-1, data);   % ...if initial state is high
                     end
@@ -175,7 +176,7 @@ else
                     hdr.tim.Func=[];
                     hdr.tim.Units=F.dTimeBase;
                     
-                case {5}% Marker channel in SMR file
+                case {5}% Marker channel in SMRX file
                     imp.tim(:,1)=data.timings;
                     imp.adc=[];
                     imp.mrk=data.markers;
@@ -190,7 +191,7 @@ else
                     hdr.tim.Func=[];
                     hdr.tim.Units=F.dTimeBase;
                     
-                case {6}% int16 ADC Marker in SMR file
+                case {6}% int16 ADC Marker in SMRX file
                     imp.tim(:,1)=data.timings;
                     % 24.02.08 remove -1 and include interleave factor
                     imp.tim(:,2)=data.timings...
@@ -215,7 +216,7 @@ else
                     hdr.adc.Units=header.units;
                     hdr.adc.Npoints(1:size(imp.adc,2))=header.values;
                     hdr.adc.Multiplex=header.interleave;
-                    hdr.adc.MultiInterval=[0 0];%not known from SMR format
+                    hdr.adc.MultiInterval=[0 0];%not known from SMRX format
                     
                     hdr.tim.TargetClass='tstamp';
                     hdr.tim.Scale=F.usPerTime;
@@ -246,7 +247,7 @@ else
                     hdr.adc.DC=0;
                     hdr.adc.Units='';
                     hdr.adc.Multiplex=NaN;
-                    hdr.adc.MultiInterval=[0 0];%not known from SMR format
+                    hdr.adc.MultiInterval=[0 0];%not known from SMRX format
                     hdr.adc.Npoints(1:size(imp.adc,2))=header.values;
                     
                     hdr.tim.TargetClass='tstamp';
