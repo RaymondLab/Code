@@ -1,4 +1,5 @@
 function vars = getScaleFactors_APP(app, vars)
+spike2_file_extension = '.smrx';
 
 %% SETUP
 try
@@ -166,7 +167,7 @@ vid.samplerate = 1/mean(diff(vid.time)); % old
 
 % Load Magnet Data
 [~, filenameroot]= fileparts(cd);
-fullfilename = fullfile(cd,[filenameroot '.smr']);
+fullfilename = fullfile(cd,[filenameroot spike2_file_extension]);
 
 if app.LeftButton.Value
     % Left Eye (default)
@@ -175,7 +176,7 @@ else
     % Right Eye
     rawMagnetData = importSpike(fullfilename,[4 7 8 10 31]);
 end
-%[data,dataSubset,keystrokes] = importDatObject(fullfilename);      %extracts raw data from .smr experimental file
+%[data,dataSubset,keystrokes] = importDatObject(fullfilename);      %extracts raw data from .smrx experimental file
 %SampKeys = strcat(keystrokes.samplerate(any(keystrokes.samplerate == ('V'), 2))');
 %SampKeyTimes = keystrokes.data(any(keystrokes.samplerate == ('V'), 2))';
 % 

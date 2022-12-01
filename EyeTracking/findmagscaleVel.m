@@ -7,11 +7,12 @@ close all;
 magthresh = 5; % 15
 vidthresh = 100; % 100
 freq = 1;
+spike2_file_extension = '.smrx';
 
 %% Load magnet
 pathname = cd;
 [~, filenameroot]= fileparts(pathname);
-fullfilename = fullfile(pathname,[filenameroot '.smr']);
+fullfilename = fullfile(pathname,[filenameroot spike2_file_extension]);
 
 % Left Eye
 magnet = importSpike(fullfilename,[4 5 6 10]);
