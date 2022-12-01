@@ -1,10 +1,11 @@
 function [startTimes, endTimes] = extractSegmentTimes(folder)
+spike2_file_extension = '.smrx';
 %% setup
 [~, file] = fileparts(folder);
-chanlist = readSpikeFile(fullfile(folder,[file '.smr']),[]);
+chanlist = readSpikeFile(fullfile(folder,[file spike2_file_extension]),[]);
 chanindsAll = [chanlist.number];
 chaninds = find(arrayfun(@(x) any(strcmp(x.title,{'Keyboard'})),chanlist));
-rawdata = importSpike(fullfile(folder,[file '.smr']),chanindsAll(chaninds));
+rawdata = importSpike(fullfile(folder,[file spike2_file_extension]),chanindsAll(chaninds));
 %ADDED By Sima For Sriram dark rearing(8.12.2022)
 idx = find(ismember(rawdata.samplerate, '5'));
 rawdata.samplerate(idx+1)='5';

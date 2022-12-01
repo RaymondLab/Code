@@ -2,14 +2,14 @@ function params = VOR_Default(params)
 %{
 VOR_Default
 
-This script takes information stored inside of an smr file and
+This script takes information stored inside of an smrx file and
     1) preprocces it
     2) run the default sine analysis script
 
 This is a modified version of Hannah Payne's script 'runVOR'.
 
 Requires three files to be stored in the current folder
-  1. '.smr' data file with channels named 'hepos' etc
+  1. '.smrx' data file with channels named 'hepos' etc
   2. '.csv' or '.xls' or 'xlsx' spreadsheet with time segments for analysis
   3. 'calib.mat' file with scaleCh1 and scaleCh2 specifying scale factors
   from calibration (one channel should be 0)
@@ -17,8 +17,9 @@ Requires three files to be stored in the current folder
 Max Gagnon 8/6/18
 
 %}
+spike2_file_extension = '.smrx';
 
-%% === Import start/stop times from .smr file ========================== %%
+%% === Import start/stop times from .smrx file ========================== %%
 
 
 
@@ -79,17 +80,17 @@ end
 
 %% === Import Spike2 Data ============================================== %%
 
-% if no smr file found automatically, prompt user
-if ~exist(fullfile(params.folder, [params.file '.smr']), 'file')
-    [params.file, params.folder] = uigetfile( {'*.smr','Spike2 (*.smr)'},'Pick an smr or pre-loaded .mat file');
+% if no smrx file found automatically, prompt user
+if ~exist(fullfile(params.folder, [params.file spike2_file_extension]), 'file')
+    [params.file, params.folder] = uigetfile( {strcat('*', spike2_file_extension),'Spike2 (*.smrx)'},'Pick an smrx or pre-loaded .mat file');
 end
 
 % Load data from Spike2
-chanlist = readSpikeFile(fullfile(params.folder,[params.file '.smr']),[]);
+chanlist = readSpikeFile(fullfile(params.folder,[params.file spike2_file_extension]),[]);
 chanindsAll = [chanlist.number];
 chanlabels = {'hhpos','htpos','hepos1','hepos2','hepos','vepos','hhvel','htvel','htvel','TTL3','TTL4'};
 chaninds = find(      arrayfun(@(x) any(strcmp(x.title,chanlabels)),chanlist)     );
-rawdata = importSpike(fullfile(params.folder,[params.file '.smr']),chanindsAll(chaninds));
+rawdata = importSpike(fullfile(params.folder,[params.file spike2_file_extension]),chanindsAll(chaninds));
 
 %% === Calculate Drum and Chair Velocities ============================= %%
 data = rawdata;
@@ -99,7 +100,7 @@ fs = data(1).samplerate;
 if data(1).samplerate == 'event'
     data(1).samplerate = data(3).samplerate ;
     fs = data(1).samplerate;
-    d = readSpikeFile(fullfile(params.folder,[params.file '.smr']),chanindsAll);
+    d = readSpikeFile(fullfile(params.folder,[params.file spike2_file_extension]),chanindsAll);
     indT = datchanind(data,'htpos');
     indH = datchanind(data,'hhpos');
     indTV = datchanind(data,'htvel');

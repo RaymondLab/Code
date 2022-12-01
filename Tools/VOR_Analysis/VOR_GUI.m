@@ -91,11 +91,13 @@ function varargout = VOR_GUI_OutputFcn(hObject, eventdata, handles)
 
 % --- Executes on button press in pushbutton1.
 function pushbutton1_Callback(hObject, eventdata, handles)
+    spike2_file_extension = '.smrx';
+
     % Project Information
     warning('on');
     params.analysis = handles.popupmenu1.String{handles.popupmenu1.Value};
     params.folder = handles.edit1.String;
-    params.smr_files = dir([params.folder '\**\*.smr']);
+    params.smr_files = dir([params.folder strcat('\**\*', spike2_file_extension)]);
     params.smr_files = params.smr_files(~contains({params.smr_files.name}, '_cali'));
     params.count = length(params.smr_files);
     params.cleanPlot = handles.radiobutton8.Value;
@@ -197,7 +199,8 @@ function edit1_CreateFcn(hObject, eventdata, handles)
 
 % Determines if given folder is valid
 function checkFolderStructure( folder, handles )
-   
+    spike2_file_extension = '.smrx';
+
     handles.text7.String = ' ';
     handles.text7.ForegroundColor = [0 0 0];
     
@@ -209,7 +212,7 @@ function checkFolderStructure( folder, handles )
     end
     
     % Search for non-calibration smr files
-    smr_files = dir([char(folder) '\**\*.smr']);
+    smr_files = dir([char(folder) strcat('\**\*', spike2_file_extension)]);
     smr_files = smr_files(~contains({smr_files.name}, '_cali'));
 
     % How many files were found?

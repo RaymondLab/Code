@@ -1,10 +1,12 @@
 function [startTimes, endTimes] = extractStepSegs(folder)
+spike2_file_extension = '.smrx';
+
 %% setup
 [~, file] = fileparts(folder);
-chanlist = readSpikeFile(fullfile(folder,[file '.smr']),[]);
+chanlist = readSpikeFile(fullfile(folder,[file spike2_file_extension]),[]);
 chanindsAll = [chanlist.number];
 chaninds = find(      arrayfun(@(x) any(strcmp(x.title,{'Keyboard'})),chanlist)     );
-rawdata = importSpike(fullfile(folder,[file '.smr']),chanindsAll(chaninds));
+rawdata = importSpike(fullfile(folder,[file spike2_file_extension]),chanindsAll(chaninds));
 
 %% Pulse Experiments
 SampleKeys = strcat(rawdata.samplerate(any(rawdata.samplerate == ['P' 'p' 'l' 'L'], 2))');

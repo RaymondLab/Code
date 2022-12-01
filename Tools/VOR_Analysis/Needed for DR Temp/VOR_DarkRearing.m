@@ -1,15 +1,15 @@
 function VOR_DarkRearing(params)
 
 
-%% runVOR   Analyze VOR behavioral data directly from Spike2 files (.smr)
+%% runVOR   Analyze VOR behavioral data directly from Spike2 files (.smrx)
 %
 % modified from SineFitBNwSlip_GenSD_auto 8/2012 by Hannah Payne:
-%   - automatically import files directly from Spike2 (.smr) to Matlab
+%   - automatically import files directly from Spike2 (.smrx) to Matlab
 %   - improve readability/maintainability
 %   - Display saccade elimination traces
 %
 % Requires three files to be stored in the current folder
-%   1. '.smr' data file with channels named 'hepos' etc
+%   1. '.smrx' data file with channels named 'hepos' etc
 %   2. '.csv' or '.xls' or 'xlsx' spreadsheet with time segments for analysis
 %   3. 'calib.mat' file with scaleCh1 and scaleCh2 specifying scale factors
 %   from calibration (one channel should be 0)
@@ -27,7 +27,7 @@ function VOR_DarkRearing(params)
 %       plotVOR.m
 
 %% === Setup =========================================================== &&
-
+spike2_file_extension = '.smrx';
 % if nothing was input into the function, use default settings
  if ~exist('params','var')
      params.do_individual = 1;
@@ -79,17 +79,17 @@ end
 
 %% === Import Spike2 Data ============================================== %%
 
-if ~exist(fullfile(pathname, [filenameroot '.smr']),'file')
-    [filename, pathname] = uigetfile( {'*.smr','Spike2 (*.smr)'},'Pick an smr or pre-loaded .mat file');
+if ~exist(fullfile(pathname, [filenameroot spike2_file_extension]),'file')
+    [filename, pathname] = uigetfile( {strcat('*', spike2_file_extension),'Spike2 (*.smrx)'},'Pick an smr or pre-loaded .mat file');
     [~,filenameroot] = fileparts(fullfile(pathname,filename));
 end
 
 %  Load data from Spike2
-chanlist = readSpikeFile(fullfile(pathname,[filenameroot '.smr']),[]);
+chanlist = readSpikeFile(fullfile(pathname,[filenameroot spike2_file_extension]),[]);
 chanindsAll = [chanlist.number];
 chanlabels = {'hhpos','htpos','hepos1','hepos2','hepos','vepos','hhvel','htvel','htvel','TTL3','TTL4'};
 chaninds = find(arrayfun(@(x) any(strcmp(x.title,chanlabels)),chanlist));
-rawdata = importSpike(fullfile(pathname,[filenameroot '.smr']),chanindsAll(chaninds));
+rawdata = importSpike(fullfile(pathname,[filenameroot spike2_file_extension]),chanindsAll(chaninds));
 
 %% === Calculate Drum and Chair Velocities ============================= %%
 data = rawdata;

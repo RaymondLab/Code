@@ -46,7 +46,7 @@ function VOR_Tests(params)
         end
 
     else
-        disp('No smr files found!')
+        disp('No smrx files found!')
     end
     fprintf('File Completed! :) \n\n\n')
 end
