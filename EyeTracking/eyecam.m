@@ -8,10 +8,13 @@ if ~exist('nframes','var')
     nframes = 180*30;
 end
 
+
 himg1 = [];
 himg2 = [];
-time1 = [];
-time2 = [];
+% Preallocate arrays for storing time
+time1 = zeros(nframes);
+time2 = zeros(nframes);
+time3 = zeros(nframes);
 
 % Start recording!
 start(vid(1));
@@ -52,23 +55,23 @@ while ishandle(fhandle)
     end
 
     trigger(vid)
-    if ~exist('msgh','var') ||  ~ishandle(msgh)
+    if eyetrack && (~exist('msgh','var') ||  ~ishandle(msgh))
         i = i + 1;
 
         [img1, time1(i)] = getdata(vid(1),1);
         [img2, time2(i)] = getdata(vid(2),1);
         time3(i) = toc;
 
-
         if i==30
-            fps = 30/(time1(i) - time1(i-29))
+            fprintf("frames per second (fps): %d\n", ...
+                    30/(time1(i) - time1(i-29)));
         end
 
     else
         img1  = getdata(vid(1),1);
         img2  = getdata(vid(2),1);
     end
-    %i
+
     img1 = rot90(img1,-1); % hobin don't know why things were rotated but I left them unrotated
     img1 = rot90(img1,-1);
     img2 = rot90(img2,-1); % maybe unrotating them will give me an error later on
@@ -114,7 +117,7 @@ while ishandle(fhandle)
 end
 
 stop(vid);
-if exist('time1','var')
+if eyetrack
     meanFrameRate = mean(1./diff(time1))
     results.time1 = time1';
     results.time2 = time2';
