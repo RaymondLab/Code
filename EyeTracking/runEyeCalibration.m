@@ -1,8 +1,8 @@
-    %% runEyeCalibration
+%% runEyeCalibration
 % Run a mouse video eye tracking calibration session
 %
 % Hannah Payne
-% Raymond Lab, Stanford University 2013-2018
+% Raymond Lab, Stanford University 2013
 % hpayne@alumni.stanford.edu
 %
 % NOTES

@@ -103,7 +103,7 @@ while iIn < nchans
     end
     
     % Make the object instance
-     if size(iData,2)==2
+    if size(iData,2)==2
         datout(iOut) = dat(iData(:,1),ichanlabel,ichanval,isamplerate,itstart,itend,iunits);
         datout(iOut+1) = dat(iData(:,2),ichanlabel,ichanval,isamplerate,itstart,itend,iunits);
         if iscell(datout(iOut).chanlabel)

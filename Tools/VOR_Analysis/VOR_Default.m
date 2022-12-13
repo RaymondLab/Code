@@ -2,11 +2,11 @@ function params = VOR_Default(params)
 %{
 VOR_Default
 
-This script takes information stored inside of an smr file and 
+This script takes information stored inside of an smr file and
     1) preprocces it
     2) run the default sine analysis script
 
-This is a modified version of Hannah Payne's script 'runVOR'. 
+This is a modified version of Hannah Payne's script 'runVOR'.
 
 Requires three files to be stored in the current folder
   1. '.smr' data file with channels named 'hepos' etc
@@ -35,11 +35,9 @@ T = T(goodRows,:);
 [params.segStarts, params.segEnds] = extractSineSegs_B(params.folder);
 
 if length(params.segStarts) ~= params.segAmt
-    
     % Old Version
     [params.segStarts, params.segEnds] = extractSineSegs(params.folder);
     if length(params.segStarts) ~= params.segAmt
-        
         % New Version
         [params.segStarts, params.segEnds] = extractSegmentTimes(params.folder);
         if length(params.segStarts) ~= params.segAmt
