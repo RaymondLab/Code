@@ -1,0 +1,131 @@
+
+' Experiment file for integrator experiments
+'
+' Shortcut for determining eye positive direction
+' Turn on sinusoids
+' Look at the positive peak of hhpos
+' If hepos is positive, then eye positive is counter-clockwise
+' Else, eye positive is clockwise
+
+'--------------------------------------------------------------------------------
+' IMPORT RIG-SPECIFIC PARAMETERS AND UNIVERSAL PARAMETERS
+'--------------------------------------------------------------------------------
+
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\RigChoice.s2s"
+#include "Parameters_Toolbar_Integrator.s2s"
+
+'--------------------------------------------------------------------------------
+' MAIN PROGRAM
+'--------------------------------------------------------------------------------
+
+ToolbarConfig();
+
+'--------------------------------------------------------------------------------
+' TOOLBAR CALLBACKS
+'--------------------------------------------------------------------------------
+
+func ToolbarIdle%()
+    ' This function calls repeatedly whenever nothing else is happening
+    ' PrintLog("V23 = %f\n", SampleSeqVar(23));
+
+    ' Check a valid sampling view is running
+    var currView := ViewKind();
+    if currView <> 0 then
+        return 1;
+    endif
+
+    if MaxTime() > prevCommTime + deltaComm then
+        sendCommand();
+    endif
+
+    ' If an experiment is running:
+    if isRunningExpmt% = 1 then
+        ' Whenever curr time reaches goal time, update the experimental phase
+        if MaxTime() > goalTime then
+            docase
+                ' PRE-TEST
+                ' Light off, no stim
+                case nextPhase% = 1 then
+                    if leakInstabilityScale = 1 then
+                        SampleText("Leak, pre-test");
+                    else
+                        SampleText("Instability, pre-test");
+                    endif
+                    PrintLog("PRE-TEST\n");
+                    goalTime := MaxTime() + preTestLength;
+                    nextPhase% := 2;
+
+                ' TRAIN
+                ' Light on, drum tracks eye
+                case nextPhase% = 2 then
+                    Sound(60, 1, 1);
+                    docase
+                        ' Before first block, find null eye pos
+                        case blocksCompleted% = 0 then
+                            findNullEye();
+
+                        ' After first block, increment the gain
+                        case blocksCompleted% < nBlocks% then
+                            gain := gain + gainIncrement;
+
+                        ' All blocks completed
+                        else
+                            ToolbarQuitExpmt%();
+                            SampleText("Experiment complete");
+                            PrintLog("Experiment complete\n");
+                            PrintLog("nBlocks: %d\n", nBlocks%);
+                            PrintLog("preTestLength: %d s\n", preTestLength);
+                            PrintLog("trainLength: %d s\n", trainLength);
+                            PrintLog("testLength: %d s\n", testLength);
+                            PrintLog("nullEyePos: %f V\n", nullEyePos);
+                            PrintLog("deltaNull: %d s\n", deltaNull);
+                            PrintLog("leakInstabilityScale: %d (1 for leak)\n", leakInstabilityScale);
+                            PrintLog("eyePositiveIsClockwise: %d\n", eyePositiveIsClockwise%);
+                            PrintLog("lastGain: %f\n", gain);
+                            PrintLog("gainIncrement: %f\n", gainIncrement);
+                            PrintLog("bestChannel: %d\n", bestChannel);
+                            PrintLog("eyeScaleFactor: %f deg/V\n", eyeScaleFactor);
+                            PrintLog("maxTrackVel: %f deg/s\n", maxTrackVel);
+                            return 1;
+                    endcase
+                    var comment$ := Print$("Train, gain = %f", gain);
+                    SampleText(comment$);
+                    PrintLog("TRAIN\n");
+                    goalTime := MaxTime() + trainLength;
+                    ToolbarTrackEyeOn%();
+                    nextPhase% := 3;
+
+                ' TEST
+                ' Light off, no stim
+                case nextPhase% = 3 then
+                    Sound(60, 1, 1);
+                    SampleText("Test");
+                    PrintLog("Phase 3: TEST\n");
+                    ToolbarTrackEyeOff%();
+                    goalTime := MaxTime() + testLength;
+                    nextPhase% := 2;
+                    blocksCompleted% := blocksCompleted% + 1;
+            endcase
+        endif
+
+        ' Repeatedly compute null eye pos during training
+        if nextPhase% = 3 and MaxTime() > prevNullTime + deltaNull then
+            findNullEye();
+        endif
+    endif
+    return 1;
+end
+
+'--------------------------------------------------------------------------------
+' CONFIGURE EXPMT SETTINGS WINDOW
+'--------------------------------------------------------------------------------
+
+func ToolbarConfigExpmt%()
+    DlgCreate("Experiment settings"); ' Start new dialog
+    DlgInteger(1, "Number of train-test blocks", 0, 100, 0, 0, 1);
+    DlgReal(2, "Pre-test length (s)", 0, 5000);
+    DlgReal(3, "Train length (s)", 0, 5000);
+    DlgReal(4, "Test length (s)", 0, 5000);
+    DlgShow(nBlocks%, preTestLength, trainLength, testLength);
+    return 1;
+end
