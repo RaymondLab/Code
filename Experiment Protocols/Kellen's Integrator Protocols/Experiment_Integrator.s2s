@@ -38,6 +38,10 @@ func ToolbarIdle%()
         sendCommand();
     endif
 
+    if MaxTime() > (prevTime + 1/sinHzChair) then
+        driftFix%();
+    endif
+
     ' If an experiment is running:
     if isRunningExpmt% = 1 then
         ' Whenever curr time reaches goal time, update the experimental phase

@@ -1,7 +1,9 @@
-' Parameters specific to D243 in velocity mode
+' Parameters specific to D243b in velocity mode
 '
 ' Drum: Positive is counter-clockwise
 ' Chair: Positive is clockwise
+'
+' I don't know where these numbers came from, and I don't know how to verify them. -KV
 
 '--------------------------------------------------------------------------------
 ' SEQUENCER FILE LOCATION
@@ -19,19 +21,19 @@ var SequencerFile$ := "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\
 
 ' Drum conversion factors
 var DrumDegreesPerSecond2Voltage := 0.01; ' Drum velocity to voltage (scale)
-var DrumDegreesPerSecondOffsetDefault := 0.1; ' Drum velocity to voltage (offset)
+var DrumDegreesPerSecondOffsetDefault := -0.05; ' Drum velocity to voltage (offset), verified by KV
 var DrumDegreesPerSecondOffset := 0;
 
 ' Chair converstion factors
 var ChairDegreesPerSecond2Voltage := 0.009323; ' Chair velocity to voltage (scale)
-var ChairDegreesPerSecondOffsetDefault := -0.2; ' Chair velocity to voltage (offset)
+var ChairDegreesPerSecondOffsetDefault := -0.08; ' Chair velocity to voltage (offset), verified by KV
 var ChairDegreesPerSecondOffset := 0;
 
-' Channel 1: Scaling to display the drum COMMAND signal (TODO: Verify)
+' Channel 1: Scaling to display the drum COMMAND signal
 var DrumVoltage2Velocity := 100;
 var DrumVoltage2VelocityOffset := 0;
 
-' Channel 2: Scaling to display the chair COMMAND signal (TODO: Verify)
+' Channel 2: Scaling to display the chair COMMAND signal
 var ChairVoltage2Velocity := 1 / ChairDegreesPerSecond2Voltage; ' 107.42869;
 var ChairVoltage2VelocityOffset := 0;
 

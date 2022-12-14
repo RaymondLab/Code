@@ -7,8 +7,7 @@
 ' I also cleaned up a lot of the formatting and removed parts of the GUI that are
 ' unrelated to the integrator experiment.
 '
-' I wasn't able to figure out how to incorporate the sinusoid drift fix, so if
-' you try to run Sine On or a sinusoids experiment, you will probably see drift.
+' I was able to get the drift fix working for sines. I haven't tested it on steps.
 '
 ' Kellen Vu (kellen.vo.vu@gmail.com), Dec 3, 2022
 
@@ -150,7 +149,6 @@ var stepOn% := 0;
 var fullPulse := 0;
 ' Voltage Range: check in Edit -> Edit Parameters
 var MaxVoltage := 10;
-var driftFix := 1;
 var centerLineChair := 0;
 var centerLineDrum := 0;
 var testStim := 0;
@@ -181,8 +179,7 @@ const StepConfigPos     := StepPos+1;
 const TrackPos          := StepConfigPos+1; ' Integrator experiments
 const TrackConfigPos    := TrackPos+1; ' Integrator experiments
 const FindNullEyePos    := TrackConfigPos+1; ' Integrator experiments
-const AutoCalibratePos  := FindNullEyePos+1; ' Integrator experiments
-const ExpmtPos          := AutoCalibratePos+1;
+const ExpmtPos          := FindNullEyePos+1;
 const ExpmtConfigPos    := ExpmtPos+1;
 const devPos            := ExpmtConfigPos+1;
 
@@ -578,6 +575,7 @@ proc sendCommand()
         returnDrum();
         returnChair();
     endif
+    drumVelCommand := 0;
     SetSequencerValues();
 end
 
@@ -631,43 +629,18 @@ proc findNullEye()
     var i := Floor(n% / 2);
     var chanMedian := buffer[i];
     nullEyePos := chanMedian;
+
+    if bestChannel = 1 then
+        HCursor(heposCh1%, nullEyePos, heposCh1%);
+    else
+        HCursor(heposCh2%, nullEyePos, heposCh2%);
+    endif
+
     PrintLog("n: %f, nullEyePos: %f\n", n%, nullEyePos);
 end
 
 func ToolbarFindNullEye%()
     findNullEye();
-    return 1;
-end
-
-func ToolbarAutoCalibrate%()
-    var autoCalibrateTime := 2;
-    var comment$ := Print$("Auto calibrate over %d s", autoCalibrateTime);
-    SampleText(comment$);
-    var hhposMin, hhposMax, hhposMinTime, hhposMaxTime;
-    MinMax(hhposCh%, MaxTime() - autoCalibrateTime, MaxTime(), hhposMin, hhposMax, hhposMinTime, hhposMaxTime);
-    var hhposAmplitude := hhposMax - hhposMin;
-    PrintLog("hhposAmplitude: %f\n", hhposAmplitude);
-
-    var heposAtMaxTime, heposAmplitude, heposMean;
-    if bestChannel = 1 then
-        heposAtMaxTime := ChanValue(heposCh1%, hhposMaxTime);
-        heposAmplitude := ChanMeasure(heposCh1%, autoCalibrateTime, MaxTime() - autoCalibrateTime, MaxTime());
-        heposMean := ChanMeasure(heposCh1%, 2, MaxTime() - autoCalibrateTime, MaxTime());
-    else
-        heposAtMaxTime := ChanValue(heposCh2%, hhposMaxTime);
-        heposAmplitude := ChanMeasure(heposCh2%, 10, MaxTime() - autoCalibrateTime, MaxTime());
-        heposMean := ChanMeasure(heposCh2%, 2, MaxTime() - autoCalibrateTime, MaxTime());
-    endif
-
-    eyeScaleFactor := hhposAmplitude / heposAmplitude;
-    PrintLog("eyeScaleFactor: %f\n", eyeScaleFactor);
-    if heposAtMaxTime > heposMean then
-        eyePositiveIsClockwise% := 0;
-    else
-        eyePositiveIsClockwise% := 1;
-    endif
-    PrintLog("heposAmplitude: %f, hhposMaxTime: %f, heposAtMaxTime: %f, heposMean: %f, eyePositiveIsClockwise: %d\n", heposAmplitude, hhposMaxTime, heposAtMaxTime, heposMean, eyePositiveIsClockwise%);
-
     return 1;
 end
 
@@ -713,7 +686,6 @@ proc ToolbarConfig()
     ToolbarSet(TrackPos, "Track On", ToolbarTrackEyeOn%);
     ToolbarSet(TrackConfigPos, "Track Config", ToolbarTrackConfig%);
     ToolbarSet(FindNullEyePos, "Find Null Pos", ToolbarFindNullEye%);
-    ToolbarSet(AutoCalibratePos, "Auto Calibrate", ToolbarAutoCalibrate%);
     ' ToolbarSet(devPos, "Dev", DevParams%);
     Toolbar("", 231);
 end
@@ -930,7 +902,6 @@ proc SetSequencerValues()
     actualDrumPh  := ((sinPhDrum  + pulsePhase + 180) mod 360) - 180;
 
     ' Chair parameters
-    ' PrintLog("ChairDegreesPerSecondOffset: %f, DrumDegreesPerSecondOffset: %f\n", ChairDegreesPerSecondOffset, DrumDegreesPerSecondOffset);
     SampleSeqVar(23, ChairAmp2Int32%(ChairDegreesPerSecondOffset));
     SampleSeqVar(27, ChairAmp2Int16%(sinAmpChair));
     SampleSeqVar(28, Angle2Int32%(actualChairPh));
@@ -972,8 +943,8 @@ proc SetSequencerValues()
     SampleSeqVar(58, halfPhaseDelay);
 
     ' Vel commands for non-periodic movement (e.g. integrator experiment)
-    SampleSeqVar(65, DrumVel2Int32%(drumVelCommand + DrumDegreesPerSecondOffset));
-    SampleSeqVar(66, ChairVel2Int32%(chairVelCommand + ChairDegreesPerSecondOffset));
+    SampleSeqVar(65, DrumVel2Int32%(drumVelCommand + DrumDegreesPerSecondOffsetDefault));
+    SampleSeqVar(66, ChairVel2Int32%(chairVelCommand + ChairDegreesPerSecondOffsetDefault));
 end
 
 func driftFix%()
@@ -1030,9 +1001,9 @@ func driftFix%()
             var theoreticalCenterChair := (centerForPhaseChair + measuredZeroChair) * chairSign;
             var theoreticalCenterDrum := (centerForPhaseDrum + measuredZeroDrum) * drumSign;
 
-            ' NOTE: there is something funky with the motors where there is an error that follows a sine wave from phase
+            ' NOTE: There is something funky with the motors where there is an error that follows a sine wave from phase
             ' WE DON'T KNOW WHY, ONLY THAT IT HAPPENS
-            ' the drift coefficients need to be calculated manually by testing the error for different phase offsets
+            ' The drift coefficients need to be calculated manually by testing the error for different phase offsets
             var errorOffsetChair := ChairDriftFactor * sinAmpChair * sin(2 * sinPhChair / radianConversion);
             var errorOffsetDrum := DrumDriftFactor * sinAmpDrum * sin(2 * sinPhDrum / radianConversion);
 
@@ -1045,12 +1016,14 @@ func driftFix%()
     endcase
 
     prevTime := MaxTime();
+    var hhposPrevTime := LastTime(hhposCh%, prevTime);
+    var htposPrevTime := LastTime(htposCh%, prevTime);
     ' Measure slope from last 1 cycle of chair/drum position feedback
-    var hhposSlope := ChanValue(hhposCh%, prevTime) - ChanValue(hhposCh%, prevTime-(1/sinHzChair));
-    var htposSlope := ChanValue(htposCh%, prevTime) - ChanValue(htposCh%, prevTime-(1/sinHzDrum));
+    var hhposSlope := ChanValue(hhposCh%, hhposPrevTime) - ChanValue(hhposCh%, hhposPrevTime - (1/sinHzChair));
+    var htposSlope := ChanValue(htposCh%, htposPrevTime) - ChanValue(htposCh%, htposPrevTime - (1/sinHzDrum));
 
-    var hhposPos := ChanMeasure(hhposCh%, 2, prevTime-(1/sinHzChair), prevTime) + (centerLineChair);
-    var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime) + (centerLineDrum);
+    var hhposPos := ChanMeasure(hhposCh%, 2, hhposPrevTime - (1/sinHzChair), hhposPrevTime) + (centerLineChair);
+    var htposPos := ChanMeasure(htposCh%, 2, htposPrevTime - (1/sinHzDrum), htposPrevTime) + (centerLineDrum);
 
     ' Scales *1 for D253, *-1 for D019
     ChairDegreesPerSecondOffset := (ChairDegreesPerSecondOffsetDefault - hhposSlope/4 - hhposPos/4) * ChairResetDirection;
