@@ -575,7 +575,6 @@ proc sendCommand()
         returnDrum();
         returnChair();
     endif
-    drumVelCommand := 0;
     SetSequencerValues();
 end
 
