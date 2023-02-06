@@ -569,12 +569,17 @@ end
 ' This is called once every deltaComm seconds
 proc sendCommand()
     prevCommTime := MaxTime();
-    if isTracking% = 1 then
-        trackEye();
-    else
-        returnDrum();
-        returnChair();
-    endif
+    docase
+        case isTracking% = 1 then
+            trackEye();
+        case isRunningExpmt% = 1 then
+            ' We don't want the chair or drum to move unintentionally during an experiment
+            chairVelCommand := 0;
+            drumVelCommand := 0;
+        else
+            returnDrum();
+            returnChair();
+    endcase
     SetSequencerValues();
 end
 
