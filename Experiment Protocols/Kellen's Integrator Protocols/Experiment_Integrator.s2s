@@ -38,7 +38,7 @@ func ToolbarIdle%()
         sendCommand();
     endif
 
-    if MaxTime() > (prevTime + 1/sinHzChair) then
+    if MaxTime() > (prevTime + 1/sinHzChair) and isRunningExpmt% = 0 then
         driftFix%();
     endif
 

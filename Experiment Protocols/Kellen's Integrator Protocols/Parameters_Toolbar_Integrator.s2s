@@ -580,7 +580,7 @@ proc sendCommand()
             returnDrum();
             returnChair();
     endcase
-    PrintLog("chairVelCommand: %f deg/s, drumVelCommand: %f deg/s\n", chairVelCommand, drumVelCommand);
+    ' PrintLog("chairVelCommand: %f deg/s, drumVelCommand: %f deg/s\n", chairVelCommand, drumVelCommand);
     SetSequencerValues();
 end
 
