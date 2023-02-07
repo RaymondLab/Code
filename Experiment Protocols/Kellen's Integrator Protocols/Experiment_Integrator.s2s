@@ -84,7 +84,7 @@ func ToolbarIdle%()
                             PrintLog("Test length: %d s\n", testLength);
                             PrintLog("TRACK CONFIG\n");
                             PrintLog("Delta: %d s\n", deltaComm);
-                            PrintLog("Gain (initial): %f\n", gain - (nBlocks-1) * gainIncrement);
+                            PrintLog("Gain (initial): %f\n", gain - (nBlocks% - 1) * gainIncrement);
                             PrintLog("Gain increment: %f\n", gainIncrement);
                             PrintLog("Train type: %d (1 for leak)\n", leakInstabilityScale);
                             PrintLog("Best eye channel: %d\n", bestChannel);
