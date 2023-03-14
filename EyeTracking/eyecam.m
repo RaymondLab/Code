@@ -12,9 +12,9 @@ end
 himg1 = [];
 himg2 = [];
 % Preallocate arrays for storing time
-time1 = zeros(nframes);
-time2 = zeros(nframes);
-time3 = zeros(nframes);
+time1 = zeros(nframes,1);
+time2 = zeros(nframes,1);
+time3 = zeros(nframes,1);
 
 % Start recording!
 start(vid(1));
