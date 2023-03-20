@@ -3,7 +3,7 @@
 ' This script is meant to be run in D241B, and is based 
 ' off the formatting found in Experiment_Alex_Nov2019_GagnonPredictor.s2s
 '--------------------------------------------------------------------------------
-#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\RigChoice.s2s"
+#include "C:\\Users\\Public\\RaymondLabCode\\rig_config.s2s"
 #include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal_Trace.s2s"
 '--------------------------------------------------------------------------------
 ' MAIN PROGRAM
