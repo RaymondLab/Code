@@ -9,7 +9,7 @@
 ' SEQUENCER FILE LOCATION
 '--------------------------------------------------------------------------------
 
-var SequencerFile$ := "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Kellen's Integrator Protocols\\Sequencer_D243_Velocity.pls";
+var SequencerFile$ := "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Kellen's Integrator Protocol\\Sequencer_D243_Velocity.pls";
 
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS
