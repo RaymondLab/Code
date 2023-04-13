@@ -4,7 +4,8 @@ accel = 0;
 % STEP 1:  LOW PASS ON POSITION
 N = 4;
 fc = 15;
-[bb,aa] = butter(N, fc/samplerate, 'low');
+nq = samplerate / 2;
+[bb, aa] = butter(N, fc / nq, 'low');
 eye_pos_filt = filtfilt(bb,aa,data);
 
 
