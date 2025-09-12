@@ -54,7 +54,7 @@ all_colors = {
                 [94 250 81] ./ 255
               };
           
-uniqueSegs = unique(seg_labels);
+uniqueSegs = unique(seg_labels, 'stable');
 seg_colors = cell(size(seg_measure));
 
 % Use Consistant color for each condition
