@@ -20,10 +20,11 @@
 
 function R = VOR_SineFitSriram(data, sinefreq, labels, timepts, params)
 %% === Create R data Array and other parameters ======================== %%
-sp1 = figure('Visible', 'off'); clf;
-sp2 = figure('Visible', 'off'); clf;
-t1 = tiledlayout(sp1, params.sp_Dim(1), 9, 'Padding','compact', 'TileSpacing','tight');
-t2 = tiledlayout(sp2, params.sp_Dim(1), 3, 'Padding','compact', 'TileSpacing','tight');
+
+set(groot, 'DefaultFigureVisible', 'off');
+sp1 = figure(); clf;
+sp2 = figure(); clf;
+row = 0;
 
 % Set up cell structure to hold all R.data
 fprintf('\n\nGenerating Segment Figures...')
@@ -40,7 +41,7 @@ R.header = header;
 R.labels = labels;
 
 if ~exist('timepts','var')
-    timepts = mean([params.segStarts params.segEnds], 2);
+    timepts = mean([params.segStarts params.segEnds],2);
 end
 R.data(:,strcmpi(header,'timept')) = timepts;
 
@@ -131,6 +132,7 @@ for count = 1:nSegs
         eyeVel_des = eyeVel_raw_des;
     end
     
+
     % remove pieces of the trace that are too small  
     
     % 1's are nan locations (artifacts)
@@ -274,6 +276,9 @@ for count = 1:nSegs
     
     ylimits = double([round(min(plotStim)/10)*12, round(max(plotStim)/10)*12]);
     
+    % Jaydev: Big Axis
+    %ylimits = double([round(min(plotStim)/10)*20 round(max(plotStim)/10)*20])
+    
     % check for bad or missing stim
     if abs(ylimits(1)) <= 2
         ylimits(1) = -2;
@@ -281,219 +286,221 @@ for count = 1:nSegs
     end
     
     if params.do_subplot1
-
-        ax = nexttile(t1);
-        ax.Layout.TileSpan = [1, 6];
-        hold(ax, 'on');
+        
+        set(groot, 'CurrentFigure', sp1);
+        subplot(params.sp_Dim(1), params.sp_Dim(2), (1:8) + row);
         
         % Plot proc or raw
         if params.cleanPlot
-            plot(ax, segTime(1:length(eyeVel_proc)), eyeVel_proc, 'k', 'LineWidth', .2);
-            plot(ax, segTime(1:length(eyeVel_proc_des)), eyeVel_proc_des, 'b', 'LineWidth', .2);
-            plot(ax, segTime, vars*b,'r', 'LineWidth', .05);
+            plot(segTime(1:length(eyeVel_proc)), eyeVel_proc, 'k', 'LineWidth', .2); hold on
+            plot(segTime(1:length(eyeVel_proc_des)), eyeVel_proc_des, 'b', 'LineWidth', .2);
+            plot(segTime, vars*b,'r', 'LineWidth', .05);
         else
-            plot(ax, segTime(1:length(eyeVel_raw)), eyeVel, 'k', 'LineWidth', .2);
-            plot(ax, segTime(1:length(eyeVel_raw_des)), eyeVel_raw_des, 'b', 'LineWidth', .2);
-            plot(ax, segTime, vars*b,'r', 'LineWidth', .3);
+            plot(segTime(1:length(eyeVel_raw)), eyeVel, 'k', 'LineWidth', .2); hold on
+            plot(segTime(1:length(eyeVel_raw_des)), eyeVel_raw_des, 'b', 'LineWidth', .2);
+            plot(segTime, vars*b,'r', 'LineWidth', .3);
         end
         
         % Old de-saccade: Plot Thresh lines
         if params.newSac == 0
-            plot(ax, segTime, fit1 + rawThres1(1), ':r', 'LineWidth', .2);
-            plot(ax, segTime, fit1 + rawThres1(2), ':r', 'LineWidth', .2);
+            plot(segTime, fit1 + rawThres1(1), ':r', 'LineWidth', .2);
+            plot(segTime, fit1 + rawThres1(2), ':r', 'LineWidth', .2);
         end
-
-        hold(ax, 'off');
         
         % Cosmetics
-        xlim(ax, [0 max(segTime)]);
-        ylim(ax, [-100 100]);
-        title(ax, datatype);
+        xlim([0 max(segTime)]);
+        ylim([-100 100])
+        title(datatype)
         
         % Only add xlabel on final segment
         if count == nSegs
-            xlabel(ax, 'Time (s)');    
+            xlabel('Time (s)');    
         end 
         
         % Text displaying absolute time of segment start
-        text(ax, 0, max(ylim)*1.15, ['@ ' num2str(round(params.segStarts(count), 2)), 's'], 'FontSize', 7);
+        text(0, max(ylim)*1.15, ['@ ' num2str(round(params.segStarts(count), 2)), 's'], 'FontSize', 7)
         
         % Manual y axis b/c matlab is literal garbage
-        yticks(ax, [min(ylim) 0 max(ylim)]);
-        yticklabels({});
-        text(ax, 0-max(xlim)*.02, .9*max(ylim), num2str(max(ylim)), 'FontSize', 7); % top
-        text(ax, 0-max(xlim)*.02, 0, num2str(0), 'FontSize', 7); % 0
-        text(ax, 0-max(xlim)*.02, .9*min(ylim), num2str(min(ylim)), 'FontSize', 7); % bottom
+        yticks([min(ylim) 0 max(ylim)])
+        yticklabels({})
+        text(0-max(xlim)*.02, .9*max(ylim), num2str(max(ylim)), 'FontSize', 7) % top
+        text(0-max(xlim)*.02, 0, num2str(0), 'FontSize', 7) % 0
+        text(0-max(xlim)*.02, .9*min(ylim), num2str(min(ylim)), 'FontSize', 7) % bottom
         
         % Manual x axis  b/c matlab is literal garbage
-        xticks(ax, [0 round(max(xlim)/2, 1) max(xlim)]);
-        xticklabels(ax, {});
-        text(ax, max(xlim)*.99, min(ylim)*1.1, num2str(round(max(xlim))), 'FontSize', 7);
-        text(ax, max(xlim)/2, min(ylim)*1.1, num2str(round(max(xlim)/2)), 'FontSize', 7);
+        xticks([0 round(max(xlim)/2, 1) max(xlim)])
+        xticklabels({})
+        text(max(xlim)*.99, min(ylim)*1.1, num2str(round(max(xlim))), 'FontSize', 7)
+        text(max(xlim)/2, min(ylim)*1.1, num2str(round(max(xlim)/2)), 'FontSize', 7)
+        drawnow;
         
         % --- Subplot-1: Cycle and Fit ---------------------------------- %
-        ax = nexttile(t1);
-        ax.Layout.TileSpan = [1, 2];
+        subplot(params.sp_Dim(1), params.sp_Dim(2), (9:10) + row);
+        
 
-        % Plot
-        hold(ax, 'on');
-        plot(ax, cycleTime, smooth(eyeVel_good_cycleMean, 50),'b'); hold on
-        plot(ax, cycleTime, smooth(eyeVel_des_cycleMean, 50), 'g');
-        plot(ax, cycleTime, eyeVel_des_cycleFit, 'r');
-        plot(ax, cycleTime, plotStim, 'k');
-        yline(ax, 0,':k');
-        hold(ax, 'off');
+        % plot
+        plot(cycleTime, smooth(eyeVel_good_cycleMean, 50),'b'); hold on
+        plot(cycleTime, smooth(eyeVel_des_cycleMean, 50), 'g');
+        plot(cycleTime, eyeVel_des_cycleFit, 'r');
+        plot(cycleTime, plotStim, 'k');
+        yline(0,':k');
+        %sp1.Children.Children(end).MarkerSize = 1;
         
         % Cosmetics
-        box(ax, 'off');
-        ylim(ax, ylimits);
-        xlim(ax, [0 max(cycleTime)]);
+        box off
+        ylim(ylimits);
+        xlim([0 max(cycleTime)]);
         
         if count == 1
-            text(ax, 0-max(xlim)*.06, 0, 'deg/s', 'FontSize', 8, 'Rotation', 90);
+            text(0-max(xlim)*.06, 0, 'deg/s', 'FontSize', 8, 'Rotation', 90)
         end
         
         if count == nSegs
-            xlabel(ax, 'Time (s)'); 
+            xlabel('Time (s)');    
         end 
-
-        % Manual y axis b/c matlab is literal garbage
-        yticks(ax, [min(ylim) 0 max(ylim)]);
-        yticklabels(ax, {});
-        text(ax, 0-max(xlim)*.05, .9*max(ylim), num2str(max(ylim)), 'FontSize', 7);
-        text(ax, 0-max(xlim)*.05, 0, num2str(0), 'FontSize', 7);
-        text(ax, 0-max(xlim)*.05, .9*min(ylim), num2str(min(ylim)), 'FontSize', 7);
-        
-        % Manual x axis b/c matlab is literal garbage
-        xticks(ax, [0 round(max(xlim)/2, 1) max(xlim)]);
-        xticklabels(ax, {});
-        text(ax, max(xlim)*.99, min(ylim)*1.1, num2str(max(xlim)), 'FontSize', 7);
-        text(ax, max(xlim)/2, min(ylim)*1.1, num2str(max(xlim)/2), 'FontSize', 7);
         
         % Add quick reference text
-        ax = nexttile(t1);
-        ax.Layout.TileSpan = [1, 1];
-        xtxt = min(xlim(ax)) + (0.2 * max(ylim(ax)));
-        ytxt = max(ylim(ax));
-        sep = (max(ylim(ax)) - 0.5*min(ylim(ax))) / 8;
-        text(ax, xtxt, ytxt-1*sep, sprintf('Good Cycles: %d / %d', goodCount, length(badCycles)), 'FontSize',7);
-        text(ax, xtxt, ytxt-2*sep, sprintf('Rel Gain: %g', eyeVel_rel_gain), 'FontSize',7);
-        text(ax, xtxt, ytxt-3*sep, sprintf('Eye Amp: %.3f', eyeVel_amp), 'FontSize',7);
-        text(ax, xtxt, ytxt-4*sep, sprintf('Rel Phase: %.3f', eyeVel_rel_phase), 'FontSize',7);
-        text(ax, xtxt, ytxt-5*sep, sprintf('Stim: %s', stimType), 'FontSize',7);
-        text(ax, xtxt, ytxt-6*sep, sprintf('r^2: %g', stat(1)), 'FontSize',7, 'Interpreter','none');
-        text(ax, xtxt, ytxt-7*sep, sprintf('sacFrac: %g', mean(omitH)), 'FontSize',7);
-        box(ax, 'off');
-        grid(ax, 'off');
-        axis(ax, 'off');
+        ylimRange = ylimits(2) - ylimits(1);
+        text(max(cycleTime)*1.05, ylimits(2)-.1*ylimRange, ['Good Cycles: ', num2str(goodCount), '/', num2str(length(badCycles))],'FontSize',7);
+        text(max(cycleTime)*1.05, ylimits(2)-.2*ylimRange, ['Rel Gain: ' num2str(eyeVel_rel_gain)], 'Fontsize', 7);
+        text(max(cycleTime)*1.05, ylimits(2)-.3*ylimRange, ['Eye Amp: ', num2str(eyeVel_amp,3)],'FontSize',7);
+        text(max(cycleTime)*1.05, ylimits(2)-.4*ylimRange, ['Rel. Phase: ', num2str(eyeVel_rel_phase,3)],'FontSize',7);
+        text(max(cycleTime)*1.05, ylimits(2)-.5*ylimRange, ['Stim: ', stimType],'FontSize',7);
+        text(max(cycleTime)*1.05, ylimits(2)-.6*ylimRange, ['r^2: ', num2str(stat(1))],'FontSize',7);
+        text(max(cycleTime)*1.05, ylimits(2)-.7*ylimRange, ['sacFrac: ', num2str(mean(omitH))],'FontSize',7);
+
+        % Manual y axis b/c matlab is literal garbage
+        yticks([min(ylim) 0 max(ylim)])
+        yticklabels({})
+        text(0-max(xlim)*.05, .9*max(ylim), num2str(max(ylim)), 'FontSize', 7)
+        text(0-max(xlim)*.05, 0, num2str(0), 'FontSize', 7)
+        text(0-max(xlim)*.05, .9*min(ylim), num2str(min(ylim)), 'FontSize', 7)
+        
+        % Manual x axis b/c matlab is literal garbage
+        xticks([0 round(max(xlim)/2, 1) max(xlim)])
+        xticklabels({})
+        text(max(xlim)*.99, min(ylim)*1.1, num2str(max(xlim)), 'FontSize', 7)
+        text(max(xlim)/2, min(ylim)*1.1, num2str(max(xlim)/2), 'FontSize', 7)
+        drawnow;
     end
     
     %% === Subplot-2: Mean Trace Visualization ========================= %%
     
     if params.do_subplot2
+        
+        % Prep
+        set(groot, 'CurrentFigure', sp2);
 
         % Skip segments with 0 good cycles
         if any(~badCycles)
-            
-            eyeVel_des_mat_goodCycles = eyeVel_des_mat(~badCycles,:)';
-            eyeVel_des_mat_Residuals = eyeVel_des_mat_goodCycles - eyeVel_des_cycleFit(:);
-            axylims = quantile(eyeVel_des_mat_goodCycles(:), [0.001, 0.999]);
-            nSamples = length(cycleTime);
-            nCycles = size(eyeVel_des_mat_goodCycles, 2);
+            ylims2 = 35;
 
-            % Figure (A) Plot Full-Good Cycles & Mean Trace
-            ax = nexttile(t2);
-            hold(ax, 'on');
-            plot(ax, cycleTime, eyeVel_des_mat(~badCycles,:)', 'b', 'LineWidth', .1); 
-            plot(ax, cycleTime, eyeVel_good_cycleMean, 'k', 'LineWidth', 2);
-            yline(ax, 0, ':k');
-            hold(ax, 'off');
+            % Figure A) Plot Full-Good Cycles & Mean Trace
+            subplot(params.sp_Dim(1), params.sp_Dim(2), (1:3) + row);
+            plot(cycleTime, eyeVel_des_mat(~badCycles,:)', 'b', 'LineWidth', .2); hold on;
+            plot(cycleTime, eyeVel_good_cycleMean, 'k', 'LineWidth', 1);
+            yline(0, ':k')
 
             % Cosmetics
-            xlim(ax, [0 cycleTime(end)]);
-            ylim(ax, axylims);
-            ylabel(ax, sprintf('%d / %d', goodCount, length(badCycles)), 'FontSize',12);
-            box(ax, 'on');
-            grid(ax, 'on');
-            
-            % Figure (B) Raster Plot of Residuals (Cycle - CycleFit)
-            ax = nexttile(t2);
-            hold(ax, 'on');
-            clim(ax, [min(eyeVel_des_mat_Residuals(:)), max(eyeVel_des_mat_Residuals(:))]);
-            x_data = [repmat(cycleTime(:),1,nCycles); NaN(1,nCycles)];
-            y_data = [repmat(1:nCycles,nSamples,1); NaN(1,nCycles)];
-            c_data = [eyeVel_des_mat_Residuals; NaN(1,nCycles)];
-            p = patch(ax, x_data, y_data, c_data, ...
-                'EdgeColor','interp', ...
-                'FaceColor','none', ...
-                'LineWidth',2);
-            yline(ax, 0, ':k');
-            hold(ax, 'off');
+            xlim([0 max(cycleTime)]);
+            ylim([-ylims2 ylims2])
+            yticks([min(ylim) 0 max(ylim)])
+            yticklabels({})
+            text(0-max(xlim)*.02, .9*max(ylim), num2str(max(ylim)), 'FontSize', 7) % top
+            text(0-max(xlim)*.02, 0, num2str(0), 'FontSize', 7) % 0
+            text(0-max(xlim)*.02, .9*min(ylim), num2str(min(ylim)), 'FontSize', 7) % bottom
+            xticks([])
+            xticklabels([])
+            ylabel([num2str(goodCount), ' / ', num2str(length(badCycles))])
+            box off
+
+            % Figure B) Error Bars + Mean Trace
+            subplot(params.sp_Dim(1), params.sp_Dim(2), (4:6) + row);
+            plot(cycleTime, eyeVel_good_cycleMean, 'k', 'LineWidth', 1); hold on
+            plot(cycleTime, eyeVel_good_cycleMean + eyeVel_good_cycleStd, ':k', 'LineWidth', .2);
+            plot(cycleTime, eyeVel_good_cycleMean - eyeVel_good_cycleStd, ':k', 'LineWidth', .2);
+            plot(cycleTime, eyeVel_des_cycleFit,'r', 'LineWidth', .2);
+            yline(0, ':k')
+
+            % find (+) peaks for Fit and Mean
+            [maxVal, maxLoc] = max(eyeVel_des_cycleFit);
+            maxLoc = maxLoc/length(eyeVel_des_cycleFit);
+            line([maxLoc maxLoc], [0 maxVal], 'color', 'r', 'LineWidth', .2);
+            %scatter(maxLoc, maxVal, 'r', 'filled', 'SizeData', .2)
+
+            [maxVal, maxLoc] = max(eyeVel_good_cycleMean);
+            maxLoc = maxLoc/length(eyeVel_good_cycleMean);
+            line([maxLoc maxLoc], [0 maxVal], 'color', 'k', 'LineWidth', .2);
+            %scatter(maxLoc, maxVal, 'k', 'filled', 'SizeData', .2)
+
+
+            % find (-) peaks for Fit and Mean
+            [minVal, minLoc] = min(eyeVel_des_cycleFit);
+            minLoc = minLoc/length(eyeVel_des_cycleFit);
+            line([minLoc minLoc], [0 minVal], 'color', 'r', 'LineWidth', .2);
+            %scatter(minLoc, minVal, 'r', 'filled', 'SizeData', .2)
+
+            [minVal, minLoc] = min(eyeVel_good_cycleMean);
+            minLoc = minLoc/length(eyeVel_good_cycleMean);
+            line([minLoc minLoc], [0 minVal], 'color', 'k', 'LineWidth', .2);
+            %scatter(minLoc, minVal, 'k', 'filled', 'SizeData', .2)
 
             % Cosmetics
-            colormap(ax, 'jet');
-            cb.Layout.Tile = ax.Layout.Tile;
-            xlim(ax, [0 cycleTime(end)]);
-            ylim(ax, [0 nCycles+1]);
-            ylabel(ax, 'Cycle Number', 'FontSize',12);
-            box(ax, 'on');
-            grid(ax, 'on');
-            ax.YDir = 'reverse';
-            title(ax, datatype);
+            title(datatype)
+            xlim([0 max(cycleTime)]);
+            ylim([-ylims2 ylims2])
+            xticklabels([])
+            
+            yticks([])
+            yticklabels([])
+            box off
 
-            % Figure (C) Power Spectrum of Traces
+            % Figure C) Power Spectrum of Traces
+            subplot(params.sp_Dim(1), params.sp_Dim(2), (7:9) + row);
+
             L = length(eyeVel(startpt:end));
             Y = fft(eyeVel(startpt:end));
             P2 = abs(Y/L);
             P1 = P2(1:floor(L/2+1));
             P1(2:end-1) = 2*P1(2:end-1);
             f = samplerate*(0:(L/2))/L;
-
-            ax = nexttile(t2);
-            hold(ax, 'on');
-            plot(ax, f, P1, 'k')
-            hold(ax, 'on');
-
+            plot(f,P1, 'k') 
+            title([num2str(freq), 'Hz'])
+            
             % Cosmetics
-            xlim(ax, [0 15]);
-            ylim(ax, [0 max(P1(:))+(0.1*max(P1(:)))]);
-            box(ax, 'on');
-            grid(ax, 'on');
+            xlim([0 15])
+            ylim([0 30])
+            xticks([1:15])
+            set(gca, 'TickDir', 'out')
+            xticklabels([])
+            yticks([])
+            yticklabels([])
+            box off
 
             % Text
-            sep = (max(ylim)-0.5*max(ylim))/7;
-            text(ax, 11, max(ylim)-1*sep, ['Good Cycles: ', num2str(goodCount), '/', num2str(length(badCycles))],'FontSize',7);
-            text(ax, 11, max(ylim)-2*sep, ['Rel Gain: ' num2str(eyeVel_rel_gain)], 'Fontsize', 7);
-            text(ax, 11, max(ylim)-3*sep, ['Eye Amp: ', num2str(eyeVel_amp,3)],'FontSize',7);
-            text(ax, 11, max(ylim)-4*sep, ['Rel. Phase: ', num2str(eyeVel_rel_phase,3)],'FontSize',7);
-            text(ax, 11, max(ylim)-5*sep, ['Stim: ', stimType],'FontSize',7);
+            text(10, max(ylim), ['Good Cycles: ', num2str(goodCount), '/', num2str(length(badCycles))],'FontSize',7);
+            text(10, max(ylim)-5, ['Rel Gain: ' num2str(eyeVel_rel_gain)], 'Fontsize', 7);
+            text(10, max(ylim)-10, ['Eye Amp: ', num2str(eyeVel_amp,3)],'FontSize',7);
+            text(10, max(ylim)-15, ['Rel. Phase: ', num2str(eyeVel_rel_phase,3)],'FontSize',7);
+            text(10, max(ylim)-20, ['Stim: ', stimType],'FontSize',7);
         end
 
     end
+    
+    % Update Row information
+    row = row + params.sp_Dim(2);
     
 end
 
 
 %% === Save Figures ==================================================== %%
-plot1WidthIn = 5;
-plot1HeightIn = 2;
-paper1Width = plot1WidthIn * 2;
-paper1Height = plot1HeightIn * params.sp_Dim(1);
+sp1.PaperSize = [params.sp_Dim(2)*1.8 params.sp_Dim(1)*1.45];
+sp1.PaperPosition = [-2 -sp1.PaperSize(2)*.125 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
+sp1.Renderer = 'painters'; sp1.RendererMode = 'manual';
 
-sp1.PaperUnits = 'inches'; 
-sp1.PaperSize = [paper1Width paper1Height-5*plot1HeightIn];
-sp1.PaperPosition = [0 -3*plot1HeightIn paper1Width paper1Height];
-% sp1.Renderer = 'painters'; sp1.RendererMode = 'manual';
-
-plot2WidthIn = 5;
-plot2HeightIn = 2;
-paper2Width = plot2WidthIn * 3;
-paper2Height = plot2HeightIn * params.sp_Dim(1);
-
-sp2.PaperUnits = 'inches'; 
-sp2.PaperSize = [paper2Width paper2Height-5*plot2HeightIn];
-sp2.PaperPosition = [0 -3*plot2HeightIn paper2Width paper2Height];
-% sp2.Renderer = 'painters'; sp2.RendererMode = 'manual';
+sp2.PaperSize = [params.sp_Dim(2)*1.8 params.sp_Dim(1)*1.45];
+sp2.PaperPosition = [-2 -sp1.PaperSize(2)*.125 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
+sp2.Renderer = 'painters'; sp2.RendererMode = 'manual';
 
 fprintf('\nSaving Subplot 1...')
 tic; print(sp1, fullfile(params.folder, [params.file '_subplot.pdf']),'-dpdf'); toc
