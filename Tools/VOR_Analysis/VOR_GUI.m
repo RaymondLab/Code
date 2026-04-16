@@ -209,7 +209,7 @@ function checkFolderStructure( folder, handles )
     end
     
     % Search for non-calibration smr files
-    smr_files = dir([char(folder) '\**\*.smr']);
+    smr_files = dir([char(folder) '\*.smr']);
     smr_files = smr_files(~contains({smr_files.name}, '_cali'));
 
     % How many files were found?

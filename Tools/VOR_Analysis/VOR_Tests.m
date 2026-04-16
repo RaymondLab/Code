@@ -120,7 +120,8 @@ end
 function params = subPlotDim(params)
 
     %% Prep
-    params.segAmt = length(xlsread(fullfile(params.folder, [params.file '.xlsx']), 1, 'B2:B500'));
+    segCol = readmatrix(fullfile(params.folder, [params.file '.xlsx']), 'Sheet', 1, 'Range', 'B2:B500');
+    params.segAmt = sum(~isnan(segCol));
     sp_width = 10;
     params.sp_Dim = [params.segAmt, sp_width];
     sp_slotList = 1:(params.segAmt * sp_width);

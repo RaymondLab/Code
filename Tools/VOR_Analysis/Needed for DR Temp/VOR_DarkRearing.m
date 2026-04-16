@@ -166,8 +166,8 @@ save(fullfile(pathname, 'result'), 'result','resultStep','resultStim');
 save(fullfile(pathname, 'settings'),'velthres','velthresStim')
 
 % Append results to Excel
-xlswrite(fullfile(pathname,tFilename),{'Delta [t30 - t0]'}, 'Sheet1', 'A20');
-xlswrite(fullfile(pathname,tFilename),result.data(:,4:end),'Sheet1','J2');
-xlswrite(fullfile(pathname,tFilename),result.header(4:end),'Sheet1','J1');
+writecell({'Delta [t30 - t0]'}, fullfile(pathname,tFilename), 'Sheet', 'Sheet1', 'Range', 'A20');
+writematrix(result.data(:,4:end), fullfile(pathname,tFilename), 'Sheet', 'Sheet1', 'Range', 'J2');
+writecell(result.header(4:end), fullfile(pathname,tFilename), 'Sheet', 'Sheet1', 'Range', 'J1');
 
 fprintf('Results saved in %s\n', pathname)

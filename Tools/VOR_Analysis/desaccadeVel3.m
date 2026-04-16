@@ -28,15 +28,48 @@ catch
     print('FAIL')
 end
     
-eye_vel_mse = (eye_vel_pfilt - fit1).^2;
+% eye_vel_mse = (eye_vel_pfilt - fit1).^2;
+% 
+% 
+% % OPTION 1 - USE HIGH PASS
+% if option == 1
+%     omitCenters = abs(eye_vel_pfilt2) > params.saccadeThresh;
+% % OPTION 2 - USE MSE OF 'FIT'
+% elseif option == 2
+%     omitCenters = eye_vel_mse > params.saccadeThresh;
+% end
 
+eye_vel_err = (eye_vel_pfilt - fit1);
 
-% OPTION 1 - USE HIGH PASS
-if option == 1
-    omitCenters = abs(eye_vel_pfilt2) > params.saccadeThresh;
-% OPTION 2 - USE MSE OF 'FIT'
-elseif option == 2
-    omitCenters = eye_vel_mse > params.saccadeThresh;
+maxIter     = 10;
+lambdaPeak  = params.saccadeThresh;  % Strict factor for onset/offset walk
+lambdaOnset = 3;       % Lenient factor for onset/offset walk
+% Start by assuming all finite samples are "clean"
+keep = ~isnan(eye_vel_err); 
+% Iteratatively re-compute threshold until it stabilizes
+for iter = 1:maxIter
+    med                  = median(eye_vel_err(keep), 'omitnan');
+    sigma                = 1.4826 * median(abs(eye_vel_err(keep) - med), 'omitnan');
+    newKeep              = abs(eye_vel_err - med) <= params.saccadeThresh * sigma;
+    newKeep(isnan(eye_vel_err)) = false;  % NaNs never count as "clean"
+    % Stop iterating once the new threshold results in no new detections
+    if isequal(newKeep, keep), break, end
+    keep = newKeep;
+end
+
+% Dual-threshold onset/offset walk
+peakMask  = abs(eye_vel_err - med) >  lambdaPeak  * sigma;   % strict
+onsetMask = abs(eye_vel_err - med) >  lambdaOnset * sigma;   % lenient
+onsetMask(isnan(eye_vel_err)) = false;
+
+% Keep only onsetMask regions that contain at least one peakMask sample
+CC = bwconncomp(onsetMask);
+omitCenters = false(size(eye_vel_err));
+for k = 1:CC.NumObjects
+    idx = CC.PixelIdxList{k};
+    if any(peakMask(idx))
+        omitCenters(idx) = true;
+    end
 end
 
 %%

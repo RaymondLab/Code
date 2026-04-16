@@ -206,8 +206,8 @@ else
 end
 
 % Append results to Excel
-xlswrite(fullfile(params.folder,[params.file '.xlsx']),result.data(:,4:end),'Sheet1','J2');
-xlswrite(fullfile(params.folder,[params.file '.xlsx']),result.header(4:end),'Sheet1','J1');
+writematrix(result.data(:,4:end), fullfile(params.folder,[params.file '.xlsx']), 'Sheet', 'Sheet1', 'Range', 'J2');
+writecell(result.header(4:end), fullfile(params.folder,[params.file '.xlsx']), 'Sheet', 'Sheet1', 'Range', 'J1');
 
 %% === Save .mat file of results ======================================= %%
 save(fullfile(params.folder, 'result'), 'result','T');

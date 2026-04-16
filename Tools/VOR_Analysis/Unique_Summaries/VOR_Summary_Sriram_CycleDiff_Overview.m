@@ -102,12 +102,12 @@ rawMatrix = rawMatrix';
 fitMatrix = fitMatrix';
 
 % Raw Data goes into second sheet
-xlswrite('diffData.xlsx', rawDat, 2);
-xlswrite('diffData.xlsx', rawMatrix, 2, 'A3')
+writecell(rawDat, 'diffData.xlsx', 'Sheet', 2);
+writematrix(rawMatrix, 'diffData.xlsx', 'Sheet', 2, 'Range', 'A3');
 
 % Fit data goes into third sheet
-xlswrite('diffData.xlsx', fitDat, 3);
-xlswrite('diffData.xlsx', fitMatrix, 3, 'A3')
+writecell(fitDat, 'diffData.xlsx', 'Sheet', 3);
+writematrix(fitMatrix, 'diffData.xlsx', 'Sheet', 3, 'Range', 'A3');
 
 
 

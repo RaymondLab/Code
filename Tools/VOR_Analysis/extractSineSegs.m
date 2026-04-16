@@ -81,12 +81,13 @@ endTimes = sort([end_Ss_loc end_SLs_loc end_SLL_loc end_SPs_loc end_SPL_loc end_
 %% Take the Experiment start time listed in the excel file, and remove incorrect segments
 
 % remove segments before start time
-expmt_start_time = xlsread(fullfile(folder,[file '.xlsx']), 1, 'G2' );
+expmt_start_time = readmatrix(fullfile(folder,[file '.xlsx']), 'Sheet', 1, 'Range', 'G2:G2');
 endTimes(startTimes < (expmt_start_time)) = [];
 startTimes(startTimes < (expmt_start_time)) = [];
 
 % remove segments after experiment is over
-[~, segment_Names, ~] = xlsread(fullfile(folder,[file '.xlsx']), 1, 'A2:A500' );
+rawCells = readcell(fullfile(folder,[file '.xlsx']), 'Sheet', 1, 'Range', 'A2:A500');
+segment_Names = rawCells(~cellfun(@(c) any(ismissing(c)), rawCells));
 if length(segment_Names) < length(endTimes)
     endTimes(length(segment_Names)+1:end) = [];
     startTimes(length(segment_Names)+1:end) = [];
@@ -94,6 +95,6 @@ end
 
 %% place start and end times into the excel file
 if ~isempty(startTimes) && ~isempty(endTimes)
-    xlswrite(fullfile(folder,[file '.xlsx']), startTimes, 'Sheet1', 'D2')
-    xlswrite(fullfile(folder,[file '.xlsx']), endTimes, 'Sheet1', 'E2')
+    writematrix(startTimes, fullfile(folder,[file '.xlsx']), 'Sheet', 'Sheet1', 'Range', 'D2');
+    writematrix(endTimes, fullfile(folder,[file '.xlsx']), 'Sheet', 'Sheet1', 'Range', 'E2');
 end
