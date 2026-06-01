@@ -304,8 +304,48 @@ for count = 1:nSegs
         
         % Cosmetics
         xlim([0 max(segTime)]);
-        ylim([-100 100])
+        ylim([-60 60])
         title(datatype)
+
+        % Add scale bar to only the first subplot row
+        if count == 1
+            scalebar_xunits = 0.5;  % Width of scale bar (in seconds) along x-axis
+            scalebar_yunits = 10;   % Height of scale bar (in deg/s) along y-axis
+            scalebar_xlabel = [num2str(scalebar_xunits*1000), ' ms'];
+            scalebar_ylabel = [num2str(scalebar_yunits), ' deg/s'];
+            % Starting y-axis position of scale bar
+            scalebar_ystart = -50;    % In deg/s
+            % Starting/ending x-axis position of horizontal bar
+            scalebar_h_xstart = 0.2;    % In seconds
+            scalebar_h_xend = scalebar_h_xstart + scalebar_xunits;
+            % Starting x-axis position of vertical bar
+            scalebar_v_xstart = scalebar_h_xend;
+            % Starting/Ending y-axis position of vertical bar
+            scalebar_v_yend = scalebar_ystart + scalebar_yunits;
+            % Draw white box background for scale bar
+            scalebar_box_pos = [scalebar_h_xstart-0.1, ...
+                scalebar_ystart-7, ...
+                (scalebar_h_xend-scalebar_h_xstart)+0.6, ...
+                (scalebar_v_yend-scalebar_ystart)+9];
+            rectangle('Position', scalebar_box_pos, ...
+                'FaceColor','w', ...
+                'EdgeColor','k', ...
+                'LineWidth',0.1);
+            % Draw the horizontal and vertical lines
+            line([scalebar_h_xstart,scalebar_h_xend], [scalebar_ystart,scalebar_ystart], 'Color','k', 'LineWidth',0.25);
+            line([scalebar_v_xstart,scalebar_v_xstart], [scalebar_ystart,scalebar_v_yend], 'Color','k', 'LineWidth',0.25);
+            % Add the corresponding text for the bars
+            text(scalebar_h_xstart+0.5*scalebar_xunits, scalebar_ystart+1, ...
+                scalebar_xlabel, ...
+                'HorizontalAlignment','center', ...
+                'VerticalAlignment','top', ...
+                'FontSize',2);
+            text(scalebar_v_xstart+0.05, scalebar_ystart+0.5*scalebar_yunits, ...
+                scalebar_ylabel, ...
+                'HorizontalAlignment','left', ...
+                'VerticalAlignment','middle', ...
+                'FontSize',2);
+        end
         
         % Only add xlabel on final segment
         if count == nSegs
