@@ -31,22 +31,23 @@ params.segAmt = sum(goodRows);
 T = T(goodRows,:);
 
 
-% Used for some of Jaydev & Sriram's Experiments Summer 2019
-[params.segStarts, params.segEnds] = extractSineSegs_B(params.folder);
-
+[params.segStarts, params.segEnds] = extractSegmentTimes(params.folder);
 if length(params.segStarts) ~= params.segAmt
-
-    % Old Version
-    [params.segStarts, params.segEnds] = extractSineSegs(params.folder);
+    % Used for some of Jaydev & Sriram's Experiments Summer 2019
+    [params.segStarts, params.segEnds] = extractSineSegs_B(params.folder);
     if length(params.segStarts) ~= params.segAmt
-
-        % New Version
-        [params.segStarts, params.segEnds] = extractSegmentTimes(params.folder);
+        % Old Version
+        [params.segStarts, params.segEnds] = extractSegmentTimesXx(params.folder);
         if length(params.segStarts) ~= params.segAmt
-            error(sprintf(['\n\n\nSegment Count Error \n', ...
-               'Segments Listed in Excel File: ', num2str(params.segAmt), '\n', ...
-               'Segments Found After Listed Start Time: ', num2str(length(params.segStarts)), '\n', ...
-               'Listed start time needs to be before the first segment starts\n\n']))
+            % Very Old Version
+            [params.segStarts, params.segEnds] = extractSineSegs(params.folder);
+            
+            if length(params.segStarts) ~= params.segAmt
+                error(sprintf(['\n\n\nSegment Count Error \n', ...
+                   'Segments Listed in Excel File: ', num2str(params.segAmt), '\n', ...
+                   'Segments Found After Listed Start Time: ', num2str(length(params.segStarts)), '\n', ...
+                   'Listed start time needs to be before the first segment starts\n\n']))
+            end
         end
     end
 end

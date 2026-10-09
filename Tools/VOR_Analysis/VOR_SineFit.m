@@ -58,6 +58,11 @@ samplerate = data(1).samplerate;
 presaccadeN = round(params.saccadePre*samplerate);
 postsaccadeN = round(params.saccadePost*samplerate);
 
+% Shared y-axis per column: percentiles, data pools, axes handles
+pL = 99.5; pR = 99; pAB = 95;  %pL for block traces, pR for cycles, and pAB for two left columns of subplot2
+yL_all = []; yR_all = []; yAB_all = []; yC_max = 0;
+axL = gobjects(0); axR = gobjects(0); axA = gobjects(0); axB = gobjects(0); axC = gobjects(0);
+
 %% === Cycle through each segment ====================================== %%
 for count = 1:nSegs
     
@@ -269,22 +274,12 @@ for count = 1:nSegs
         stimType = 'Chair';
     end
     
-    ylimits = double([round(min(plotStim)/10)*12, round(max(plotStim)/10)*12]);
-    
-    % Jaydev: Big Axis
-    %ylimits = double([round(min(plotStim)/10)*20 round(max(plotStim)/10)*20])
-    
-    % check for bad or missing stim
-    if abs(ylimits(1)) <= 2
-        ylimits(1) = -2;
-        ylimits(2) = 2;
-    end
-    
     if params.do_subplot1
-        
+
         set(groot, 'CurrentFigure', sp1);
         subplot(params.sp_Dim(1), params.sp_Dim(2), (1:8) + row);
-        
+        axL(end+1) = gca;
+
         % Plot proc or raw
         if params.cleanPlot
             plot(segTime(1:length(eyeVel_proc)), eyeVel_proc, 'k', 'LineWidth', .2); hold on
@@ -295,7 +290,8 @@ for count = 1:nSegs
             plot(segTime(1:length(eyeVel_raw_des)), eyeVel_raw_des, 'b', 'LineWidth', .2);
             plot(segTime, vars*b,'r', 'LineWidth', .3);
         end
-        
+        if params.cleanPlot, yL_all = [yL_all; eyeVel_proc_des(:)]; else, yL_all = [yL_all; eyeVel_raw_des(:)]; end
+
         % Old de-saccade: Plot Thresh lines
         if params.newSac == 0
             plot(segTime, fit1 + rawThres1(1), ':r', 'LineWidth', .2);
@@ -304,74 +300,23 @@ for count = 1:nSegs
         
         % Cosmetics
         xlim([0 max(segTime)]);
-        ylim([-60 60])
         title(datatype)
 
-        % Add scale bar to only the first subplot row
-        if count == 1
-            scalebar_xunits = 0.5;  % Width of scale bar (in seconds) along x-axis
-            scalebar_yunits = 10;   % Height of scale bar (in deg/s) along y-axis
-            scalebar_xlabel = [num2str(scalebar_xunits*1000), ' ms'];
-            scalebar_ylabel = [num2str(scalebar_yunits), ' deg/s'];
-            % Starting y-axis position of scale bar
-            scalebar_ystart = -50;    % In deg/s
-            % Starting/ending x-axis position of horizontal bar
-            scalebar_h_xstart = 0.2;    % In seconds
-            scalebar_h_xend = scalebar_h_xstart + scalebar_xunits;
-            % Starting x-axis position of vertical bar
-            scalebar_v_xstart = scalebar_h_xend;
-            % Starting/Ending y-axis position of vertical bar
-            scalebar_v_yend = scalebar_ystart + scalebar_yunits;
-            % Draw white box background for scale bar
-            scalebar_box_pos = [scalebar_h_xstart-0.1, ...
-                scalebar_ystart-7, ...
-                (scalebar_h_xend-scalebar_h_xstart)+0.6, ...
-                (scalebar_v_yend-scalebar_ystart)+9];
-            rectangle('Position', scalebar_box_pos, ...
-                'FaceColor','w', ...
-                'EdgeColor','k', ...
-                'LineWidth',0.1);
-            % Draw the horizontal and vertical lines
-            line([scalebar_h_xstart,scalebar_h_xend], [scalebar_ystart,scalebar_ystart], 'Color','k', 'LineWidth',0.25);
-            line([scalebar_v_xstart,scalebar_v_xstart], [scalebar_ystart,scalebar_v_yend], 'Color','k', 'LineWidth',0.25);
-            % Add the corresponding text for the bars
-            text(scalebar_h_xstart+0.5*scalebar_xunits, scalebar_ystart+1, ...
-                scalebar_xlabel, ...
-                'HorizontalAlignment','center', ...
-                'VerticalAlignment','top', ...
-                'FontSize',2);
-            text(scalebar_v_xstart+0.05, scalebar_ystart+0.5*scalebar_yunits, ...
-                scalebar_ylabel, ...
-                'HorizontalAlignment','left', ...
-                'VerticalAlignment','middle', ...
-                'FontSize',2);
-        end
-        
         % Only add xlabel on final segment
         if count == nSegs
-            xlabel('Time (s)');    
-        end 
-        
+            xlabel('Time (s)');
+        end
+
         % Text displaying absolute time of segment start
-        text(0, max(ylim)*1.15, ['@ ' num2str(round(params.segStarts(count), 2)), 's'], 'FontSize', 7)
-        
-        % Manual y axis b/c matlab is literal garbage
-        yticks([min(ylim) 0 max(ylim)])
-        yticklabels({})
-        text(0-max(xlim)*.02, .9*max(ylim), num2str(max(ylim)), 'FontSize', 7) % top
-        text(0-max(xlim)*.02, 0, num2str(0), 'FontSize', 7) % 0
-        text(0-max(xlim)*.02, .9*min(ylim), num2str(min(ylim)), 'FontSize', 7) % bottom
-        
-        % Manual x axis  b/c matlab is literal garbage
-        xticks([0 round(max(xlim)/2, 1) max(xlim)])
-        xticklabels({})
-        text(max(xlim)*.99, min(ylim)*1.1, num2str(round(max(xlim))), 'FontSize', 7)
-        text(max(xlim)/2, min(ylim)*1.1, num2str(round(max(xlim)/2)), 'FontSize', 7)
+        text(0, 1.15, ['@ ' num2str(round(params.segStarts(count), 2)), 's'], 'Units','normalized', 'FontSize', 7)
+
+        % X ticks at 0, mid, max
+        setXTicks3(gca);
         drawnow;
         
         % --- Subplot-1: Cycle and Fit ---------------------------------- %
         subplot(params.sp_Dim(1), params.sp_Dim(2), (9:10) + row);
-        
+        axR(end+1) = gca;
 
         % plot
         plot(cycleTime, smooth(eyeVel_good_cycleMean, 50),'b'); hold on
@@ -380,42 +325,31 @@ for count = 1:nSegs
         plot(cycleTime, plotStim, 'k');
         hline(0,':k');
         %sp1.Children.Children(end).MarkerSize = 1;
-        
+        yR_all = [yR_all; eyeVel_good_cycleMean(:); eyeVel_des_cycleMean(:); eyeVel_des_cycleFit(:); plotStim(:)];
+
         % Cosmetics
         box off
-        ylim(ylimits);
         xlim([0 max(cycleTime)]);
-        
-        if count == 1
-            text(0-max(xlim)*.06, 0, 'deg/s', 'FontSize', 8, 'Rotation', 90)
-        end
-        
-        if count == nSegs
-            xlabel('Time (s)');    
-        end 
-        
-        % Add quick reference text
-        ylimRange = ylimits(2) - ylimits(1);
-        text(max(cycleTime)*1.05, ylimits(2)-.1*ylimRange, ['Good Cycles: ', num2str(goodCount), '/', num2str(length(badCycles))],'FontSize',7);
-        text(max(cycleTime)*1.05, ylimits(2)-.2*ylimRange, ['Rel Gain: ' num2str(eyeVel_rel_gain)], 'Fontsize', 7);
-        text(max(cycleTime)*1.05, ylimits(2)-.3*ylimRange, ['Eye Amp: ', num2str(eyeVel_amp,3)],'FontSize',7);
-        text(max(cycleTime)*1.05, ylimits(2)-.4*ylimRange, ['Rel. Phase: ', num2str(eyeVel_rel_phase,3)],'FontSize',7);
-        text(max(cycleTime)*1.05, ylimits(2)-.5*ylimRange, ['Stim: ', stimType],'FontSize',7);
-        text(max(cycleTime)*1.05, ylimits(2)-.6*ylimRange, ['r^2: ', num2str(stat(1))],'FontSize',7);
-        text(max(cycleTime)*1.05, ylimits(2)-.7*ylimRange, ['sacFrac: ', num2str(mean(omitH))],'FontSize',7);
 
-        % Manual y axis b/c matlab is literal garbage
-        yticks([min(ylim) 0 max(ylim)])
-        yticklabels({})
-        text(0-max(xlim)*.05, .9*max(ylim), num2str(max(ylim)), 'FontSize', 7)
-        text(0-max(xlim)*.05, 0, num2str(0), 'FontSize', 7)
-        text(0-max(xlim)*.05, .9*min(ylim), num2str(min(ylim)), 'FontSize', 7)
-        
-        % Manual x axis b/c matlab is literal garbage
-        xticks([0 round(max(xlim)/2, 1) max(xlim)])
-        xticklabels({})
-        text(max(xlim)*.99, min(ylim)*1.1, num2str(max(xlim)), 'FontSize', 7)
-        text(max(xlim)/2, min(ylim)*1.1, num2str(max(xlim)/2), 'FontSize', 7)
+        if count == 1
+            text(-.06, .5, 'deg/s', 'Units','normalized', 'FontSize', 8, 'Rotation', 90)
+        end
+
+        if count == nSegs
+            xlabel('Time (s)');
+        end
+
+        % Add quick reference text
+        text(1.1, .8, ['Good Cycles: ', num2str(goodCount), '/', num2str(length(badCycles))], 'Units','normalized', 'FontSize',7);
+        text(1.1, .7, ['Rel Gain: ' num2str(eyeVel_rel_gain)], 'Units','normalized', 'FontSize',7);
+        text(1.1, .6, ['Eye Amp: ', num2str(eyeVel_amp,3)], 'Units','normalized', 'FontSize',7);
+        text(1.1, .5, ['Rel. Phase: ', num2str(eyeVel_rel_phase,3)], 'Units','normalized', 'FontSize',7);
+        text(1.1, .4, ['Stim: ', stimType], 'Units','normalized', 'FontSize',7);
+        text(1.1, .3, ['r^2: ', num2str(stat(1))], 'Units','normalized', 'FontSize',7);
+        text(1.1, .2, ['sacFrac: ', num2str(mean(omitH))], 'Units','normalized', 'FontSize',7);
+
+        % X ticks at 0, mid, max
+        setXTicks3(gca);
         drawnow;
     end
     
@@ -431,25 +365,22 @@ for count = 1:nSegs
 
             % Figure A) Plot Full-Good Cycles & Mean Trace
             subplot(params.sp_Dim(1), params.sp_Dim(2), (1:3) + row);
+            axA(end+1) = gca;
             plot(cycleTime, eyeVel_des_mat(~badCycles,:)', 'b', 'LineWidth', .2); hold on;
             plot(cycleTime, eyeVel_good_cycleMean, 'k', 'LineWidth', 1);
             hline(0, ':k')
+            yAB_all = [yAB_all; reshape(eyeVel_des_mat(~badCycles,:),[],1); eyeVel_des_cycleFit(:); ...
+                eyeVel_good_cycleMean(:)+eyeVel_good_cycleStd(:); eyeVel_good_cycleMean(:)-eyeVel_good_cycleStd(:)];
 
             % Cosmetics
             xlim([0 max(cycleTime)]);
-            ylim([-50 50])
-            yticks([min(ylim) 0 max(ylim)])
-            yticklabels({})
-            text(0-max(xlim)*.02, .9*max(ylim), num2str(max(ylim)), 'FontSize', 7) % top
-            text(0-max(xlim)*.02, 0, num2str(0), 'FontSize', 7) % 0
-            text(0-max(xlim)*.02, .9*min(ylim), num2str(min(ylim)), 'FontSize', 7) % bottom
-            xticks([])
-            xticklabels([])
+            setXTicks3(gca);
             ylabel([num2str(goodCount), ' / ', num2str(length(badCycles))])
             box off
 
             % Figure B) Error Bars + Mean Trace
             subplot(params.sp_Dim(1), params.sp_Dim(2), (4:6) + row);
+            axB(end+1) = gca;
             plot(cycleTime, eyeVel_good_cycleMean, 'k', 'LineWidth', 1); hold on
             plot(cycleTime, eyeVel_good_cycleMean + eyeVel_good_cycleStd, ':k', 'LineWidth', .2);
             plot(cycleTime, eyeVel_good_cycleMean - eyeVel_good_cycleStd, ':k', 'LineWidth', .2);
@@ -482,15 +413,12 @@ for count = 1:nSegs
             % Cosmetics
             title(datatype)
             xlim([0 max(cycleTime)]);
-            ylim([-50 50])
-            xticklabels([])
-            
-            yticks([])
-            yticklabels([])
+            setXTicks3(gca);
             box off
 
             % Figure C) Power Spectrum of Traces
             subplot(params.sp_Dim(1), params.sp_Dim(2), (7:9) + row);
+            axC(end+1) = gca;
 
             L = length(eyeVel(startpt:end));
             Y = fft(eyeVel(startpt:end));
@@ -498,46 +426,112 @@ for count = 1:nSegs
             P1 = P2(1:floor(L/2+1));
             P1(2:end-1) = 2*P1(2:end-1);
             f = samplerate*(0:(L/2))/L;
-            plot(f,P1, 'k') 
+            plot(f,P1, 'k')
             title([num2str(freq), 'Hz'])
-            
+            yC_max = max(yC_max, max(P1));
+
             % Cosmetics
             xlim([0 15])
-            ylim([0 30])
-            xticks([1:15])
+            xticks(0:15)
+            xticklabels({'0' '' '' '' '' '5' '' '' '' '' '10' '' '' '' '' '15'})
             set(gca, 'TickDir', 'out')
-            xticklabels([])
-            yticks([])
-            yticklabels([])
             box off
 
             % Text
-            text(10, max(ylim), ['Good Cycles: ', num2str(goodCount), '/', num2str(length(badCycles))],'FontSize',7);
-            text(10, max(ylim)-5, ['Rel Gain: ' num2str(eyeVel_rel_gain)], 'Fontsize', 7);
-            text(10, max(ylim)-10, ['Eye Amp: ', num2str(eyeVel_amp,3)],'FontSize',7);
-            text(10, max(ylim)-15, ['Rel. Phase: ', num2str(eyeVel_rel_phase,3)],'FontSize',7);
-            text(10, max(ylim)-20, ['Stim: ', stimType],'FontSize',7);
+            text(.79, 1,   ['Good Cycles: ', num2str(goodCount), '/', num2str(length(badCycles))], 'Units','normalized', 'FontSize',7);
+            text(.79, .83, ['Rel Gain: ' num2str(eyeVel_rel_gain)], 'Units','normalized', 'FontSize',7);
+            text(.79, .67, ['Eye Amp: ', num2str(eyeVel_amp,3)], 'Units','normalized', 'FontSize',7);
+            text(.79, .5,  ['Rel. Phase: ', num2str(eyeVel_rel_phase,3)], 'Units','normalized', 'FontSize',7);
+            text(.79, .33, ['Stim: ', stimType], 'Units','normalized', 'FontSize',7);
         end
 
     end
     
     % Update Row information
     row = row + params.sp_Dim(2);
-    
+
 end
 
+%% === Shared y-axis limits per column ================================= %%
+yL  = [-1 1] * max(10, ceil(prctile(abs(yL_all),  pL)  / 10) * 10);
+yR  = [-1 1] * max(10, ceil(prctile(abs(yR_all),  pR)  / 10) * 10);
+yAB = [-1 1] * max(10, ceil(prctile(abs(yAB_all), pAB) / 10) * 10);
+yC  = [0, max(1, ceil(yC_max * 1.1))];
+
+setSharedYLim(axL, yL,  [yL(1)  0 yL(2)]);
+setSharedYLim(axR, yR,  [yR(1)  0 yR(2)]);
+setSharedYLim(axA, yAB, [yAB(1) 0 yAB(2)]);
+setSharedYLim(axB, yAB, [yAB(1) 0 yAB(2)]);
+setSharedYLim(axC, yC,  [0 yC(2)]);
+
+% Add scale bar to only the first time-series panel
+if ~isempty(axL)
+    set(groot, 'CurrentFigure', sp1); set(sp1, 'CurrentAxes', axL(1));
+    scalebar_xunits = 0.5;  % Width of scale bar (in seconds) along x-axis
+    scalebar_yunits = 10;   % Height of scale bar (in deg/s) along y-axis
+    scalebar_xlabel = [num2str(scalebar_xunits*1000), ' ms'];
+    scalebar_ylabel = [num2str(scalebar_yunits), ' deg/s'];
+    % Starting y-axis position of scale bar
+    scalebar_ystart = 0.83 * yL(1);    % In deg/s
+    % Starting/ending x-axis position of horizontal bar
+    scalebar_h_xstart = 0.2;    % In seconds
+    scalebar_h_xend = scalebar_h_xstart + scalebar_xunits;
+    % Starting x-axis position of vertical bar
+    scalebar_v_xstart = scalebar_h_xend;
+    % Starting/Ending y-axis position of vertical bar
+    scalebar_v_yend = scalebar_ystart + scalebar_yunits;
+    % Draw white box background for scale bar
+    scalebar_box_pos = [scalebar_h_xstart-0.1, ...
+        scalebar_ystart-7, ...
+        (scalebar_h_xend-scalebar_h_xstart)+0.6, ...
+        (scalebar_v_yend-scalebar_ystart)+9];
+    rectangle('Position', scalebar_box_pos, ...
+        'FaceColor','w', ...
+        'EdgeColor','k', ...
+        'LineWidth',0.1);
+    % Draw the horizontal and vertical lines
+    line([scalebar_h_xstart,scalebar_h_xend], [scalebar_ystart,scalebar_ystart], 'Color','k', 'LineWidth',0.25);
+    line([scalebar_v_xstart,scalebar_v_xstart], [scalebar_ystart,scalebar_v_yend], 'Color','k', 'LineWidth',0.25);
+    % Add the corresponding text for the bars
+    text(scalebar_h_xstart+0.5*scalebar_xunits, scalebar_ystart+1, ...
+        scalebar_xlabel, ...
+        'HorizontalAlignment','center', ...
+        'VerticalAlignment','top', ...
+        'FontSize',2);
+    text(scalebar_v_xstart+0.05, scalebar_ystart+0.5*scalebar_yunits, ...
+        scalebar_ylabel, ...
+        'HorizontalAlignment','left', ...
+        'VerticalAlignment','middle', ...
+        'FontSize',2);
+end
 
 %% === Save Figures ==================================================== %%
-sp1.PaperSize = [params.sp_Dim(2)*1.8 params.sp_Dim(1)*1.45];
-sp1.PaperPosition = [-2 -sp1.PaperSize(2)*.125 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
+pad = 0.4;   % inches of extra room for titles (top) and tick values (bottom)
+H = params.sp_Dim(1)*1.45;
+sp1.PaperSize = [params.sp_Dim(2)*1.8, H + 2*pad];
+sp1.PaperPosition = [-2, -H*.125 + pad, params.sp_Dim(2)*2, params.sp_Dim(1)*1.75];
 sp1.Renderer = 'painters'; sp1.RendererMode = 'manual';
 
-sp2.PaperSize = [params.sp_Dim(2)*1.8 params.sp_Dim(1)*1.45];
-sp2.PaperPosition = [-2 -sp1.PaperSize(2)*.125 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
+sp2.PaperSize = sp1.PaperSize;
+sp2.PaperPosition = sp1.PaperPosition;
 sp2.Renderer = 'painters'; sp2.RendererMode = 'manual';
 
 fprintf('\nSaving Subplot 1...')
 tic; print(sp1, fullfile(params.folder, [params.file '_subplot.pdf']),'-dpdf'); toc
 fprintf('Saving Subplot 2...')
 tic; print(sp2, fullfile(params.folder, [params.file '_subplot2.pdf']),'-dpdf'); toc
+
+
+function setSharedYLim(ax, y, yt)
+% One y-range and the same y ticks (with values) for every axes in a column
+for k = 1:numel(ax)
+    set(ax(k), 'YLim', y, 'YTick', yt, 'YTickLabelMode', 'auto');
+    ax(k).XAxis.FontSize = 7;
+    ax(k).YAxis.FontSize = 7;
+end
+
+function setXTicks3(ax)
+% X ticks with values at 0, mid, and max of the current x-range
+xt = [0 max(ax.XLim)/2 max(ax.XLim)];
+set(ax, 'XTick', xt, 'XTickLabel', arrayfun(@(v) num2str(v, 3), xt, 'UniformOutput', false));
 

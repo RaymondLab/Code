@@ -559,10 +559,12 @@ end
 
 
 %% === Save Figures ==================================================== %%
-sp1.PaperSize = [params.sp_Dim(2)*1.8 params.sp_Dim(1)*1.45];
-sp1.PaperPosition = [-2 -sp1.PaperSize(2)*.125 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
-sp2.PaperSize = [params.sp_Dim(2)*1.8 params.sp_Dim(1)*1.45];
-sp2.PaperPosition = [-2 -sp1.PaperSize(2)*.125 params.sp_Dim(2)*2 params.sp_Dim(1)*1.75];
+pad = 0.4;   % inches of extra room for titles (top) and tick values (bottom)
+H = params.sp_Dim(1)*1.45;
+sp1.PaperSize = [params.sp_Dim(2)*1.8, H + 2*pad];
+sp1.PaperPosition = [-2, -H*.125 + pad, params.sp_Dim(2)*2, params.sp_Dim(1)*1.75];
+sp2.PaperSize = sp1.PaperSize;
+sp2.PaperPosition = sp1.PaperPosition;
 
 fprintf('\nSaving Subplot 1...')
 tic; print(sp1, fullfile(params.folder, [params.file '_subplot.pdf']),'-dpdf', '-r300'); toc

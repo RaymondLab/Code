@@ -91,7 +91,8 @@ else
     ylabel(['Raw ' measure])
     title([measure, ' - Raw'])
 end
-legend(scatterHandles([1 4]), uniqueSegs); % TODO Hack-y
+[~, firstIdx] = ismember(uniqueSegs, seg_labels);
+legend(scatterHandles(firstIdx), uniqueSegs);
 
 %% Save Figure
 % save as .pdf
