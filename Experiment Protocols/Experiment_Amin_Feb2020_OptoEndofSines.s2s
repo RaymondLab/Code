@@ -84,9 +84,6 @@ Func ToolbarIdle%()
             else
               expmtLoc% := 1;
             endif
-            sinAmpChair := 0;
-            sinAmpDrum := 10;
-            SetSequencerValues();
             ToolbarLightOn%(); Yield();
             ToolbarSineStart%();
 
@@ -103,9 +100,7 @@ Func ToolbarIdle%()
             else
               test% := 0;
             endif;
-            sinAmpChair := 0;
-            sinAmpDrum := 10;
-            SetSequencerValues();
+
             ToolbarLightOn%(); Yield();
             ToolbarSineStart%();
 
@@ -121,14 +116,17 @@ Func ToolbarIdle%()
               measuredZeroChair := ChanMeasure(hhposCh%, 2, prevTime-2, prevTime-.5);
               measuredZeroDrum := ChanMeasure(htposCh%, 2, prevTime-2, prevTime-.5);
               ToolbarSineStop%();
-              sinAmpChair := 10;
-              sinAmpDrum := 0;
-              SetSequencerValues();
-              SampleKey( "U" );
+
+              if expmtMode = 0 then
+                SampleKey( "U" );
+              else
+                SampleKey( "W" );
+              endif
               sineOn% := 1;
               Yield();
               ToolbarSet(SinePos, "Sine Off",ToolbarSineStop%);
             else
+              ToolbarLightOff%(); Yield();
               ToolbarSineStop%();
               expmtLoc% := 1;
             endif;
@@ -157,16 +155,20 @@ Func ToolbarConfigExpmt%()
   DlgInteger(2,"Number of tests per block",1,100,0,0,1);    'set to 0 if not using Chair
   DlgReal(3,"Run length (s)",0,5000);
   DlgReal(4,"Test length (s)",0,5000);
-  DlgList(5,"Expmt mode", "ipsi|contra");
+  DlgList(5,"Expmt mode", "contra|ipsi");
 
   DlgShow(nBlocks%, nTestreps%, runLength, testLength, expmtMode);
 
   docase
-  case expmtMode = 0 then     'ipsi
-      sinPhChair := 90;
-  case expmtMode = 1 then     'contra
-      sinPhChair := -90;
+  case expmtMode = 0 then     'contra
+      sinPhDrum := 90;
+  case expmtMode = 1 then     'ipsi'
+      sinPhDrum := 90;
   endcase;
+
+  sinAmpChair := 0;
+  sinAmpDrum := 10;
+
 
   SetSequencerValues();
   Return(1);

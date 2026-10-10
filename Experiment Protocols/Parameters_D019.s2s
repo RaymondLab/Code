@@ -3,7 +3,7 @@
 '--------------------------------------------------------------------------------
 ' SEQUENCER FILE LOCATION
 '--------------------------------------------------------------------------------
-var SequencerFile$ := "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Sequencer_D019";
+var SequencerFile$ := "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Kellen's Integrator Code\\Sequencer_D019.pls";
 
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS
@@ -15,15 +15,14 @@ var SequencerFile$ := "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\
 '--------------------------------------------------------------------------------
 
 'Chair converstion factors
-var ChairDegreesPerSecond2Voltage := 0.009323; 'Chair velocity to voltage (Scale)
+var ChairDegreesPerSecond2Voltage := 0.009523; 'Chair velocity to voltage (Scale)
 var ChairDegreesPerSecondOffsetDefault := -.2;         'Chair velocity to voltage (offset)
 var ChairDegreesPerSecondOffset := -.2;         'Starting value, is updated repeatedly
 
 'Drum conversion factors
-var DrumDegreesPerSecond2Voltage := 0.01;      'Drum velocity to voltage (Scale)
-var DrumDegreesPerSecondOffsetDefault := 0.1;        'Drum velocity to voltage (offset)
-var DrumDegreesPerSecondOffset := 0.1;        'Starting value, is updated repeatedly
-
+var DrumDegreesPerSecond2Voltage := 0.01;      'Drum velocity to voltage (Scale) '0.01'
+var DrumDegreesPerSecondOffsetDefault := 0.1;        'Drum velocity to voltage (offset)   '0.1'
+var DrumDegreesPerSecondOffset := 0.1;        'Starting value, is updated repeatedly '0.1'
 'Channel 1: Scaling to display the drum COMMAND signal
 var DrumVoltage2Velocity := 100;                'Voltage to Drum Velocity (Scale)
 var DrumVoltage2VelocityC := 0;                 'Voltage to Drum Velocity (offset)
@@ -33,12 +32,12 @@ var ChairVoltage2Velocity := 1/ChairDegreesPerSecond2Voltage; '107.42869;
 var ChairVoltage2VelocityC := 0;                'Voltage to Chair Velocity (offset)
 
 'Chair velocity readout
-var ChairVelReadoutScale := -99.905;             '
-var ChairVelReadoutOffset := -.03213;
+var ChairVelReadoutScale := 99.915;   '99.900875'          '
+var ChairVelReadoutOffset := -.03213; '-0.0561431'
 
 'Chair position readout
-var ChairPosReadoutScale := -18.0145;
-var ChairPosReadoutOffset := .03016;
+var ChairPosReadoutScale := -18.0145; '-18.01683'
+var ChairPosReadoutOffset := 0.03016; '-29.9841'
 
 'Drum velocity readout - NOT USED FOR D019
 var DrumVelReadoutScale := 1;
@@ -57,5 +56,5 @@ var ChairResetDirection := 1;
 var DrumResetDirection := 1;
 
 'Scale factor for amplitude of sine wave drift'
-var ChairDriftFactor := .06;
-var DrumDriftFactor := .085;
+var ChairDriftFactor := .06; '0.06'
+var DrumDriftFactor := .085;'0.085'

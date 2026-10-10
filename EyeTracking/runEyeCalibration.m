@@ -40,7 +40,7 @@ switch type
 
         % Prompt for ROI around one eye - first click on camera image from the left
         % side, then click-drag to select rectangle
-        vid = setROI(vid,img1, img2, res, boxsize, boxoffset);
+        vid = setROI(vid, img1, img2, res, boxsize, boxoffset);
     % case 'logitech'
     %     res  = [1280 960];
     %     boxsize = 500;
@@ -62,15 +62,7 @@ eyecam(vid,eyetrackon,nframes); % results = time stamps, images are saves as img
 warning on
 
 %% OFFLINE STEP. Set settings for video analysis
-setupEyeAnalysis
-
-%% Run video analysis using settings from above (can be run later)
-% Locate pupil and CR
-eyeAnalysis
-
-% Save results
-saveas(1,'eyetrack1.jpg');
-saveas(2,'eyetrack2.jpg');
-
-%% Analyze calibration to get scale factors
-findmagscaleVel
+currentFolder = pwd;
+cd('C:\Users\Public\RaymondLabCode2\eye_calibration');
+eyeCalibration(currentFolder);
+clear;

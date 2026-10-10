@@ -1,0 +1,208 @@
+'--------------------------------------------------------------------------------
+' IMPORT RIG-SPECIFIC PARAMETERS AND UNIVERSAL PARAMETERS
+'--------------------------------------------------------------------------------
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\RigChoice.s2s"
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal.s2s"
+
+'--------------------------------------------------------------------------------
+var conditionVector[17];
+var conditionString$;
+'--------------------------------------------------------------------------------
+' MAIN PROGRAM
+'--------------------------------------------------------------------------------
+
+ToolbarConfig();
+
+var segIndex := 0;
+var nSegs := 20; '4'
+var segLength := 45;
+var nSegBlcok := 4;
+var ExpmtType;
+var prevExpmtType;
+var indx := 1;
+
+var frequencyVector[21];
+var frequencyString$;
+var j;
+
+'--------------------------------------------------------------------------------
+' Toolbar Callbacks
+'--------------------------------------------------------------------------------
+Func ToolbarIdle%()
+  'This function calls repeatedly whenever nothing else is happening
+  'if runExmpt=1, it is used to run a full expmt automatically.  -HP
+  'expmtMode: 0=habit, 1=0x, 2=2x, 3=ipsi stim, 4=contra stim
+  'test: 0=wait, 1=test, 2=train
+
+  ' Check a valid sampling view is running
+  var currView := ViewKind();
+  if  currView <> 0 then
+      return 1;
+  endif;
+
+  ' Keep sine wave from drifting
+  if MaxTime() > (prevTime + 1/sinHzChair) then
+    if driftFix = 1 then
+      driftFix%();
+    endif;
+  endif;
+
+
+  'If an experiment is running:
+  if runExpmt% = 1 then
+
+      'Check the time. Seconds is the current time - compare it to the goal time of each segment
+      if  MaxTime() > goalTime then
+
+        docase
+
+        ' GAP A
+        case test% = 0 then
+            SampleKey("x");
+            goalTime := MaxTime() + 5;
+            ToolbarInit%(); Yield();
+
+            segIndex := segIndex + 1;
+            if segIndex > nSegs then
+              test% := 9;
+            else
+              test% := 1;
+            endif
+
+        ' GAP B
+        case test% = 1 then
+          goalTime := MaxTime() + 5;
+          ToolbarInit%(); Yield();
+          runFlash(); Yield();
+          ToolbarInit%(); Yield();
+          test% := 2;
+
+        ' Block
+        case test% = 2 then
+          SampleKey("X");
+          goalTime := MaxTime() + segLength;
+
+
+
+          ' Get random Number
+          'if indx = 3 then
+            'prevExpmtType := ExpmtType;
+            'while prevExpmtType = ExpmtType do
+              'ExpmtType := Floor(Rand(4, 0));
+            'wend
+            'indx := 1;
+          'endif
+
+          ExpmtType := frequencyVector[j];
+          printLog(frequencyVector[j]);
+          printLog(j);
+          j := j + 1;
+
+          indx := indx + 1;
+          docase
+          ' VORD
+          case ExpmtType = 0 then
+            SampleKey("0");
+            sinAmpChair := 10;
+            sinAmpDrum := 0;
+            sinPhDrum := 90;
+            sinPhChair := 90;
+            SetSequencerValues();
+
+            ToolbarSineStart%();
+
+          ' OKR
+          case ExpmtType = 1 then
+            SampleKey("1");
+            sinAmpChair := 0;
+            sinAmpDrum := 10;
+            sinPhDrum := 90;
+            sinPhChair := 90;
+            SetSequencerValues();
+
+            ToolbarLightOn%(); Yield();
+            ToolbarSineStart%();
+
+          ' x0
+          case ExpmtType = 2 then
+            SampleKey("2");
+            sinAmpChair := 10;
+            sinAmpDrum := 10;
+            sinPhDrum := 90;
+            sinPhChair := 90;
+            SetSequencerValues();
+
+            ToolbarLightOn%(); Yield();
+            ToolbarSineStart%();
+
+          ' x2
+          case ExpmtType = 3 then
+            SampleKey("3");
+            sinAmpChair := 10;
+            sinAmpDrum := 10;
+            sinPhDrum := -90;
+            sinPhChair := 90;
+            SetSequencerValues();
+
+            ToolbarLightOn%(); Yield();
+            ToolbarSineStart%();
+
+          endcase
+
+
+          test% := 0;
+
+        ' Quit Experiment'
+        case test% = 9 then
+          ToolbarQuitExpmt%();
+          Return(1);
+
+        endcase
+
+
+      endif;
+  endif;
+  Return(1);
+End
+
+'--------------------------------------------------------------------------------
+'Configure expmt settings window
+'--------------------------------------------------------------------------------
+Func ToolbarConfigExpmt%()
+  DlgCreate("Experiment settings");  'Start new dialog
+  DlgInteger(1,"Number of Segments",0,100,0,0,1);
+  DlgReal(2,"Segment Length (s)",0,5000);
+  DlgInteger(3,"Number of tests in set of condition",0,100,0,0,1);
+  DlgInteger(4,"Light flash on?",0,1,0,0,"0|1");
+  DlgInteger(5, "Number of Drum Frequencies (Hz)", 0, 20);
+
+  DlgShow(nSegs, segLength, nSegBlcok, flashon%, numFreqs%);
+  fillFrequencyVector%();
+
+  SetSequencerValues();
+  Return(1);
+End
+
+Func fillFrequencyVector%()
+  DlgCreate("Specify Test Frequencies");  'Start new dialog
+  DlgString(1,"Drum Frequencies (Hz - comma separated)", 100);
+  DlgShow(frequencyString$);
+  ReadStr(frequencyString$, frequencyVector[0:numFreqs%]);
+  randomizeFrequencyVector();
+  frequencyVector[numFreqs%] := -1;
+  PrintLog(frequencyVector);
+  Return(1);
+End
+
+Proc randomizeFrequencyVector()
+  var i%;
+  var swapIdx%;
+  var tmp;
+  for i% := numFreqs%-1 to 0 step -1 do
+      swapIdx% := Floor(Rand(i%+1, 0));
+      tmp :=frequencyVector[swapIdx%];
+      frequencyVector[swapIdx%] := frequencyVector[i%];
+      frequencyVector[i%] := tmp;
+  next;
+end
+printLog(frequencyVector);

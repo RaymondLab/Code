@@ -1,4 +1,4 @@
-function [startTimes, endTimes] = extractSegmentTimes(folder)
+function [startTimes, endTimes] = extractSegmentTimes(folder, first45sec)
 %% setup
 [~, file] = fileparts(folder);
 chanlist = readSpikeFile(fullfile(folder,[file '.smr']),[]);
@@ -15,7 +15,11 @@ SampleKeyTimes = rawdata.data(any(rawdata.samplerate == ['X' 'x'], 2))';
 % segment did not record the 'x' that denoted the end of a segment. This
 % bug was fixed in the experiment protcol late December 2019. 
 
-if SampleKeys(end) == 'X'
+if isempty(SampleKeys)
+    startTimes = [];
+    endTimes = [];
+    return
+elseif SampleKeys(end) == 'X'
     SampleKeys(end+1) = 'x';
     SampleKeyTimes(end+1) = SampleKeyTimes(end) + 45;
 end
@@ -25,8 +29,11 @@ end
 starts = SampleKeyTimes(strfind(SampleKeys, 'Xx'));
 ends = SampleKeyTimes(strfind(SampleKeys, 'Xx')+1);
 startTimes = sort(starts)';
-endTimes = sort(ends)';
-
+if first45sec
+    endTimes = startTimes + 45;
+else
+    endTimes = sort(ends)';
+end
 
 %% Take the Experiment start time listed in the excel file, and remove incorrect segments
 
@@ -35,8 +42,24 @@ expmt_start_time = xlsread(fullfile(folder,[file '.xlsx']), 1, 'G2' );
 endTimes(startTimes < (expmt_start_time)) = [];
 startTimes(startTimes < (expmt_start_time)) = [];
 
-% remove segments after experiment is over
+% Retrieve segment names given on excel sheet
 [~, segment_Names, ~] = xlsread(fullfile(folder,[file '.xlsx']), 1, 'A2:A500' );
+
+% Check for any segment names that contain the substring 'first'
+first_segment_ids = find(contains(segment_Names, 'first', 'IgnoreCase',true));
+
+% For any "first" segments, insert the start/end times corresponding to the following segment
+% For example, if row 5 is "FIRST_5" and row 6 is "x2", then the start/end times of row 5 will reflect the first 5 minutes of "x2"
+if ~isempty(first_segment_ids)
+    for ii = 1:length(first_segment_ids)
+        segIdx = first_segment_ids(ii);
+        segDuration = str2double(regexp(segment_Names{segIdx}, '-?\d+', 'match', 'once')) * 60;
+        startTimes = [startTimes(1:segIdx-1); startTimes(segIdx); startTimes(segIdx:end)];
+        endTimes = [endTimes(1:segIdx-1); startTimes(segIdx+1)+segDuration; endTimes(segIdx:end)];
+    end
+end
+
+% remove segments after experiment is over
 if length(segment_Names) < length(endTimes)
     endTimes(length(segment_Names)+1:end) = [];
     startTimes(length(segment_Names)+1:end) = [];

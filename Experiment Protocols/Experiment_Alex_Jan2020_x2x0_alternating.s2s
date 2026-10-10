@@ -98,6 +98,8 @@ Func ToolbarIdle%()
             SampleKey("X");
             goalTime := MaxTime() + testLength;
 
+            sinPHDrum := sinPHDrum * -1;
+            SetSequencerValues();
             testrep% := testrep% + 1;
 
             if testrep% = nTestreps% then
@@ -109,15 +111,11 @@ Func ToolbarIdle%()
 
             ToolbarSineStart%();
 
-
           ' BLOCK: TRAIN
           case test% = 3 then
             SampleKey("x");
             SampleKey("X");
             goalTime := MaxTime() + runLength;
-
-            sinPHDrum := sinPHDrum * -1;
-            SetSequencerValues();
 
             if rep% < (nBlocks%+1) then
                 ToolbarLightOn%();
@@ -151,7 +149,7 @@ Func ToolbarConfigExpmt%()
   DlgInteger(2,"Number of tests per block",1,100,0,0,1);    'set to 0 if not using Chair
   DlgReal(3,"Run length (s)",0,5000);
   DlgReal(4,"Test length (s)",0,5000);
-  DlgList(5,"Expmt mode", "x0 first|x2 first");
+  DlgList(5,"Expmt mode", "x2 first|x0 first");
 
   DlgShow(nBlocks%, nTestreps%, runLength, testLength, expmtMode);
 

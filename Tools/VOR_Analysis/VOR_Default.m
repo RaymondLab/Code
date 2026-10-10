@@ -2,11 +2,11 @@ function params = VOR_Default(params)
 %{
 VOR_Default
 
-This script takes information stored inside of an smr file and 
+This script takes information stored inside of an smr file and
     1) preprocces it
     2) run the default sine analysis script
 
-This is a modified version of Hannah Payne's script 'runVOR'. 
+This is a modified version of Hannah Payne's script 'runVOR'.
 
 Requires three files to be stored in the current folder
   1. '.smr' data file with channels named 'hepos' etc
@@ -23,7 +23,7 @@ Max Gagnon 8/6/18
 
 
 %% === Import Time Segments ============================================ %%
-T = readtable(fullfile(params.folder,[params.file '.xlsx']));
+T = readtable(fullfile(params.folder,[params.file '.xlsx']), 'NumHeaderLines', 0);
 
 % Remove NaN values from T
 goodRows = ~isnan(table2array(T(:,2)));
@@ -35,18 +35,24 @@ T = T(goodRows,:);
 [params.segStarts, params.segEnds] = extractSineSegs_B(params.folder);
 
 if length(params.segStarts) ~= params.segAmt
-    
+
     % Old Version
     [params.segStarts, params.segEnds] = extractSineSegs(params.folder);
     if length(params.segStarts) ~= params.segAmt
-        
+
         % New Version
-        [params.segStarts, params.segEnds] = extractSegmentTimes(params.folder);
+        [params.segStarts, params.segEnds] = extractSegmentTimes(params.folder, params.first45sec);
         if length(params.segStarts) ~= params.segAmt
-            error(sprintf(['\n\n\nSegment Count Error \n', ...
-               'Segments Listed in Excel File: ', num2str(params.segAmt), '\n', ...
-               'Segments Found After Listed Start Time: ', num2str(length(params.segStarts)), '\n', ...
-               'Listed start time needs to be before the first segment starts\n\n']))
+            
+            % Newest Version
+            [params.segStarts, params.segEnds] = extractSegmentTimes_v2(params.folder, params.first45sec);
+            if length(params.segStarts) ~= params.segAmt
+                error(sprintf(['\n\n\nSegment Count Error \n', ...
+                   'Segments Listed in Excel File: ', num2str(params.segAmt), '\n', ...
+                   'Segments Found After Listed Start Time: ', num2str(length(params.segStarts)), '\n', ...
+                   'Listed start time needs to be before the first segment starts\n\n']))
+            end
+
         end
     end
 end
@@ -87,7 +93,7 @@ end
 % Load data from Spike2
 chanlist = readSpikeFile(fullfile(params.folder,[params.file '.smr']),[]);
 chanindsAll = [chanlist.number];
-chanlabels = {'hhpos','htpos','hepos1','hepos2','hepos','vepos','hhvel','htvel','htvel','TTL3','TTL4'};
+chanlabels = {'hhpos','htpos','hepos1','hepos2','hepos','vepos','hhvel','htvel','HHVEL', 'HTVEL','TTL3','TTL4'};
 chaninds = find(      arrayfun(@(x) any(strcmp(x.title,chanlabels)),chanlist)     );
 rawdata = importSpike(fullfile(params.folder,[params.file '.smr']),chanindsAll(chaninds));
 
@@ -96,20 +102,28 @@ data = rawdata;
 fs = data(1).samplerate;
 
 % Add a drum velocity channel if needed
-if isempty(datchan(data,'htvel')) || max(datchandata(data,'htvel'))<.1
+if isempty(datchan(data,'htvel')) || std(datchandata(data,'htvel')) < 1.0
     data(datchanind(data,'htvel')) = [];
     ind = datchanind(data,'htpos');
     if ~isempty(ind)
         data(end+1) = dat(smooth([diff(smooth(data(ind).data,50)); 0],50)*fs,'htvel',[],fs,data(ind).tstart,data(ind).tend,'deg/s');
+        warning('Invalid htvel signal... deriving from htpos.');
+    else
+        data(datchanind(data,'htvel')) = data(datchanind(data,'HTVEL'));
+        warning('Invalid htvel and htpos signal... using HTVEL.');
     end
 end
 
 % Add a chair velocity channel if needed
-if isempty(datchan(data,'hhvel')) || max(datchandata(data,'hhvel'))<.1
+if isempty(datchan(data,'hhvel')) || std(datchandata(data,'hhvel')) < 1.0
     data(datchanind(data,'hhvel')) = [];
     ind = datchanind(data,'hhpos');
     if ~isempty(ind)
         data(end+1) = dat(smooth([diff(smooth(data(ind).data,50)); 0],50)*fs,'hhvel',[],fs,data(ind).tstart,data(ind).tend,'deg/s');
+        warning('Invalid hhvel signal... deriving from hhpos.');
+    else
+        data(datchanind(data,'hhvel')) = data(datchanind(data,'HHVEL'));
+        warning('Invalid hhvel and hhpos signal... using HHVEL.');
     end
 end
 
@@ -121,7 +135,7 @@ if params.fileCalib
     if ~strncmpi(params.folderCalib, cd, min(length(cd),length(params.folderCalib)))
         copyfile(fullfile(params.folderCalib, params.fileCalib),fullfile(cd, params.fileCalib))
     end
-else   
+else
     figure; plot(datchan(data,{'hhvel','htvel','hepos1','hepos2'})); xlim([params.segStarts(2) params.segEnds(2)])
     scaleCh1 = input('Scale1: ');
     scaleCh2 = input('Scale2: ');
@@ -134,12 +148,14 @@ heposdata = scaleCh1*datchandata(data,'hepos1') + scaleCh2*datchandata(data,'hep
 % Create and add 'horizontal eye position' channel to channel list
 data(end+1) = dat(heposdata,'hepos',[],fs,data(1).tstart,data(1).tend,'deg');
 
-% Filter with 100 Hz lowpass
-data(end) = datlowpass(data(end),100);
+% Change data type to double
+for i = 1:length(data)
+    data(i).data = double(data(i).data);
+end
 
 % Calculate eye velocity for plotting
 veltau = .01;
-hevel = movingslopeCausal(datchandata(data,'hepos'),round(fs*veltau))*fs;
+hevel = movingslope(datchandata(data,'hepos'),round(fs*veltau))*fs;
 
 % Create and add 'horiontal eye velocity' channel to channel list
 data(end+1) = dat(hevel,'hevel',[],fs,data(1).tstart,data(1).tend,'deg/s');

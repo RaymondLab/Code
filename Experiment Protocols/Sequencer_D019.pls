@@ -319,17 +319,22 @@ STEPZ:  'u  DAC    0,SAmpD              ;Turn on drum
 STEPK2: 'k  DAC    0,SAmpD
             DAC    1,Chairoff
             DELAY  StepLeng
+            DAC    0,DrumOff
             DAC    0,SAmpDn
             DAC    1,Chairoff
             DELAY  StepLeng
             DAC    0,DOffOrig
+            DAC    0,DrumOff
             DAC    1,Chairoff
             JUMP   STEPK2
 
 ;-----------------------------------------------------------------------------
 ;Set step command to move chair and drum with Light Queue. For Experiment for Alex F. -- Maxwell 11/19
 ;-----------------------------------------------------------------------------
-STEPK:  'K  DAC    0,SAmpD
+STEPK:  'K  DELAY  stepLen1
+            DIGOUT [.......1]
+            DELAY  QueTime
+            DAC    0,SAmpD
             DAC    1,Chairoff
             DELAY  StepLeng
             DIGOUT [.......0]
@@ -338,8 +343,9 @@ STEPK:  'K  DAC    0,SAmpD
             DELAY  StepLeng
             DAC    0,DOffOrig
             DAC    1,Chairoff
-            DIGOUT [.......1]
-            DELAY  QueTime
+            ;DELAY  stepLen1
+            ;DIGOUT [.......1]
+            ;DELAY  QueTime
             JUMP   STEPK
 
 ;-----------------------------------------------------------------------------
@@ -442,13 +448,36 @@ SINE5: 'U   SZ     0,DrumAmp       ;set cosine amplitude
 
 SINE6:      DIGOUT [.......1]
             DELAY  483
-            DIGOUT [....11..]
+            DIGOUT [....1...]
             DELAY  13
-            DIGOUT [....00.0]
+            DIGOUT [....0..0]
             DELAY  495
             OFFSET 0,DrumOff
             OFFSET 1,Chairoff
             JUMP   SINE6
+
+;-----------------------------------------------------------------------------
+; SINE COMMAND | SPECIAL | with light on only ipsi or contra head movement. For Experiment for Amin. -- Maxwell Jan 2020
+;-----------------------------------------------------------------------------
+SINE7: 'W   SZ     0,DrumAmp       ;set cosine amplitude
+            SZ     1,ChrAmp        ;set cosine amplitude
+            OFFSET 0,DrumOff       ;cosine offset
+            OFFSET 1,Chairoff      ;cosine offset
+            ANGLE  0,DrumPh        ;cosine phase
+            ANGLE  1,ChrPh         ;cosine phase
+
+            RATE   1,ChrFreq       ;set rate and start cosine
+            RATE   0,DrumFreq      ;set rate and start cosine
+
+SINE8:      DIGOUT [.......1]
+            DELAY  483
+            DIGOUT [.....1..]
+            DELAY  13
+            DIGOUT [.....0.0]
+            DELAY  495
+            OFFSET 0,DrumOff
+            OFFSET 1,Chairoff
+            JUMP   SINE8
 
 ;-----------------------------------------------------------------------------
 ;LIGHTON: 'L SZ     0,DrumAmp       ;set cosine amplitude

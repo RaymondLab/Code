@@ -1,0 +1,18 @@
+'--------------------------------------------------------------------------------
+' IMPORT RIG-SPECIFIC PARAMETERS AND UNIVERSAL PARAMETERS
+'--------------------------------------------------------------------------------
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\RigChoice.s2s"
+'#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal.s2s"
+'#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal_Trace.s2s"
+
+'--------------------------------------------------------------------------------
+' SET ARBITRARY WAVEFORM PARAMETERS
+'--------------------------------------------------------------------------------
+' IMPORTANT: Path MUST use forward-slashes NOT back-slashes!
+const sosFilePath$ := "H:/Shared drives/Raymond Lab/Current Members/Negar Asadian, Alexus Jackson/New Sum-of-Sines files/SumOfSines0_4-1_43-3_85Hz1-0_33-NoPulse.smrx";
+var waveDAC% := 1; '3;  'DAC port for chair/stage motor
+PlayWaveAdd("C", "wave", waveDAC%, 0, 1e308, 2, 0, sosFilePath$);
+PlayWaveCycles("C", 0);
+
+var vh%;
+vh% := FileNew(0, 1);     'Create a data file (should check vh%)

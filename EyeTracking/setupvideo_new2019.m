@@ -9,6 +9,7 @@ function vid = setupvideo_new2019(pos)
   % Set up the camera
   set(vid,'FramesPerTrigger',1);
   set(vid,'TriggerRepeat',Inf);
+  set(vid,'Timeout',100);
 
   % Instead of default config, use our 'vid' parameters file.
   % Keep recording forever until we stop it.
@@ -16,6 +17,9 @@ function vid = setupvideo_new2019(pos)
 
   % Get a grayscale image
   set(vid,'ReturnedColorSpace','grayscale');
+  
+  % Set timeout
+  vid.Timeout = 100;
 
   %% Set exposure and gain
   for i = 1:2

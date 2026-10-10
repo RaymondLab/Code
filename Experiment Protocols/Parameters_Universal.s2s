@@ -1,5 +1,3 @@
-' UNIVERSAL PARAMETERS
-
 '--------------------------------------------------------------------------------
 ' SINE PARAMETERS
 '--------------------------------------------------------------------------------
@@ -22,6 +20,7 @@ var stepLength := 250;
 var stepStim := 0;
 var stepAmpChair := 10;
 var stepAmpDrum := 10;
+var stepAmpDrumN := 10;
 var sRest2;
 var sStart;
 var sLength;
@@ -41,8 +40,6 @@ var pulseWaitV := 1000 - pulseDurationV - 5;
 var pulsePeriod := 1000;
 var checkConfig := 1;
 var QueTime := 0;
-
-
 
 '--------------------------------------------------------------------------------
 ' PULSE PARAMETERS
@@ -65,9 +62,9 @@ var everyNCycles := 1;
 '--------------------------------------------------------------------------------
 ' EXPERIMENT PARAMETERS
 '--------------------------------------------------------------------------------
-var nBlocks% := 6;                 'Number of run-test blocks in exmpt
+var nBlocks% := 3;                 'Number of run-test blocks in exmpt
 var nTestreps% := 1;               'Number of times to repeat 40 sec test
-var runLength := 300;             'Seconds to run protocol in each block(300 for 5 min)
+var runLength := 600;             'Seconds to run protocol in each block(300 for 5 min)
 var testLength := 45;             'Seconds to test
 var expmtLoc% := 1;
 var prePostNum := 1;
@@ -85,10 +82,8 @@ var waitLength := 300;
 var prevTime := 0;
 var W := 1;
 var X := 1.02;
-var Y := .9;
+var Y := 0.9;
 var Z := 1;
-
-
 
 '--------------------------------------------------------------------------------
 ' MISC PARAMETERS
@@ -108,6 +103,9 @@ var rotationVelocity := 0.02;
 var radianConversion := 57.295779513; 'divide a value in degrees by this number to convert to radians - from Spike2 manual'
 var measuredZeroChair := 0;
 var measuredZeroDrum := 0;
+
+var numFreqs% := 20;
+var currFreqIdx% := 0;
 
 '--------------------------------------------------------------------------------
 ' TOOLBAR PARAMETERS
@@ -284,12 +282,12 @@ Func ToolbarStepOn%()
   stepOn% := 1;
   if (stepStim = 0) and (stepLight = 0) then
     if (stepPeriod - (2*stepLength)) > 0 then
-  	SampleKey ( "T" );
-  	ToolbarSet(StepPos, "Step Stop", ToolbarStepOff%);
+  	 SampleKey ( "T" );
+  	 ToolbarSet(StepPos, "Step Stop", ToolbarStepOff%);
     else
       if QueTime > 0 then
-      SampleKey("K");
-      ToolbarSet(stepPos, "Step Stop", ToolbarStepOff%);
+        SampleKey("K");
+        ToolbarSet(stepPos, "Step Stop", ToolbarStepOff%);
       else
         SampleKey("k");
         ToolbarSet(stepPos, "Step Stop", ToolbarStepOff%);
@@ -362,7 +360,7 @@ Func ToolbarStepConfig%()
   sAmpChair := ChairVel2Int32%( stepAmpChair );   ' Amp chair
   sAmpChairN := 0-sAmpChair;                      ' Amp chair (opposite direction)
   sAmpDrum := DrumVel2Int32%( stepAmpDrum );      ' Amp drum
-  sAmpDrumN := 0-sAmpDrum;                        ' Amp drum (opposite direction)
+  sAmpDrumN := 0-sAmpDrum;                ' Amp drum (opposite direction)
 ''  if chairDegreesPerSecondOffset > 0 then
 ''    'SampleKey("1");
 ''    sAmpChair := ChairVel2Int32%( stepAmpChair + chairDegreesPerSecondOffset/50);   ' Amp chair
@@ -375,12 +373,12 @@ Func ToolbarStepConfig%()
 ''  endif
 
 
-''  if DrumDegreesPerSecondOffset > 0 then
+'if DrumDegreesPerSecondOffset > 0 then
 ''    SampleKey("1");
 ''    sAmpDrum := DrumVel2Int32%( stepAmpDrum + DrumDegreesPerSecondOffset);   ' Amp chair
 ''    sAmpDrumN := 0-DrumVel2Int32%( stepAmpDrum - DrumDegreesPerSecondOffset*1.02);
 ''  else
-''    SampleKey("2");
+''   SampleKey("2");
 ''    var DrumDegreesPerSecondOffsetNEG := DrumDegreesPerSecondOffset * -1;
 ''    sAmpDrum := DrumVel2Int32%( stepAmpDrum + DrumDegreesPerSecondOffsetNEG*.02);   ' Amp chair
 ''    sAmpDrumN := 0-DrumVel2Int32%( stepAmpDrum + DrumDegreesPerSecondOffsetNEG);
@@ -577,10 +575,10 @@ Proc WindowConfig()
   SampleTitle$(htvelCh%,"htvel");
   SampleComment$(htvelCh%, "Drum Velocity");
 
-  'Channel 15 - ALEX FANNING
-  'SampleEvent(15,4,2,1000); '- ALEX FANNING
-  'SampleTitle$(15,"TTL5"); '- ALEX FANNING
-  'SampleComment$(12, "TTL5: FP Pulse"); '- ALEX FANNING
+  'Channel 15 - ALEX FANNING HYUN
+  SampleEvent(15,4,2,1000); '- ALEX FANNING HYUN
+  SampleTitle$(15,"TTL5"); '- ALEX FANNING HYUN
+  SampleComment$(15, "TTL5: FP Pulse"); '- ALEX FANNING HYUN
 
   'Channel 30
   SampleTextMark(200);
@@ -603,8 +601,8 @@ Proc WindowConfig()
   ChanHide(-1);
 
   'Show certain channels in a particular order
-  ChanShow(1,2,3,4,5,6,7,8,9,10,11,12,13,14,30,31);
-  'ChanShow(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,30,31); 'Alex Fanning
+  'ChanShow(1,2,3,4,5,6,7,8,9,10,11,12,13,14,30,31);
+  ChanShow(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,30,31); 'Alex Fanning
 
   'ChanSelect(13,1);    'Select channel 13
   'ChanOrder(4,1,-3);   'Move selected channels
@@ -629,8 +627,8 @@ Proc WindowConfig()
 
   ' Channel order
   'ChanOrder(0, -1, "5, 4, 8, 13, 3, 2, 1, 12, 11, 10, 9, 30, 31");
-  'ChanOrder(0, -1, "5, 4, 8, 13, 3, 2, 1, 12, 11, 10, 9, 30, 31, 15"); 'Alex Fanning
-  ChanOrder(0, -1, "2,4,8,1,3,13,5,6,9,10,11,12,30,31"); 'Trace Stay
+  ChanOrder(0, -1, "5, 4, 8, 13, 3, 2, 1, 12, 11, 10, 9, 30, 31, 15"); 'Alex Fanning
+  'ChanOrder(0, -1, "2,4,8,1,3,13,5,6,9,10,11,12,30,31"); 'Trace Stay
 
   ' Background Colour'
   ViewColour(0,5);
@@ -735,7 +733,7 @@ Proc SetSequencerValues()
   actualDrumPh  := ((sinPhDrum  + pulsePhase + 180) mod 360) - 180;
 
   'Chair parameters
-  SampleSeqVar( 23, ChairAmp2Int32%( ChairDegreesPerSecondOffset ) );
+  SampleSeqVar( 23, ChairAmp2Int32%( ChairDegreesPerSecondOffset) );
   SampleSeqVar( 27, ChairAmp2Int16%( sinAmpChair ) );
   SampleSeqVar( 28, Angle2Int32%( actualChairPh ) );
   SampleSeqVar( 29, Hz2Int32%( sinHzChair ) );
@@ -846,7 +844,7 @@ Func driftFix%()
     centerLineDrum := (theoreticalCenterDrum + errorOffsetDrum) * DrumResetDirection;
 
   else
-    centerLineChair := 0;
+    centerLineChair := 0; '29.9841'
     centerLineDrum := 0;
   endcase
 
@@ -854,12 +852,14 @@ Func driftFix%()
   ' Measure slope from last 1 cycle of chair/drum position feedback
   var hhposSlope := ChanValue(hhposCh%, prevTime) - ChanValue(hhposCh%, prevTime-(1/sinHzChair));
   var htposSlope := ChanValue(htposCh%, prevTime) - ChanValue(htposCh%, prevTime-(1/sinHzDrum));
+
   var hhposPos := ChanMeasure(hhposCh%, 2, prevTime-(1/sinHzChair), prevTime) + (centerLineChair);
   var htposPos := ChanMeasure(htposCh%, 2, prevTime-(1/sinHzDrum), prevTime) + (centerLineDrum);
 
   ' Scales *1 for D253, *-1 for D019
   ChairDegreesPerSecondOffset :=  (ChairDegreesPerSecondOffsetDefault - hhposSlope/4 - hhposPos/4) * ChairResetDirection;
   DrumDegreesPerSecondOffset  :=  (DrumDegreesPerSecondOffsetDefault - htposSlope/4 - htposPos/4) * DrumResetDirection;
+  printLog(ChanValue(hhposCh%, prevTime));
 
   'ToolbarStepConfig%();
 

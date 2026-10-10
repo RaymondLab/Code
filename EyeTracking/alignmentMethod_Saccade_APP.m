@@ -1,5 +1,16 @@
 function vars = alignmentMethod_Saccade_APP(app, vars)
 disp('Calculating Alignment Based on Saccade Overlap...')
+%{ 
+
+Hotfixes:
+
+8/21/2023 - The variable referenced by this file has not be used since a
+version of the eye calibration GUI commited at the end of 2019. This file
+was not updated when the GUI was, so my guess is that this method of
+alignment is no longer used.
+
+%}
+
 
 %% Prep
 badSpots_vid = vars.sacLoc_vid;

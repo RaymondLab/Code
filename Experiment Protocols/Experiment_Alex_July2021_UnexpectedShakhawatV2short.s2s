@@ -1,0 +1,173 @@
+'--------------------------------------------------------------------------------
+' IMPORT RIG-SPECIFIC PARAMETERS AND UNIVERSAL PARAMETERS
+'--------------------------------------------------------------------------------
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\RigChoice.s2s"
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\Parameters_Universal_sima.s2s"
+
+'--------------------------------------------------------------------------------
+' MAIN PROGRAM
+'--------------------------------------------------------------------------------
+' 0 = GAP
+' 2 = test
+' 3 = train
+' 9 = quit experiment
+
+const Order%[] := {0, 1, 2,
+                   0, 1, 2,
+                   0, 1, 2,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 2,
+                   0, 1, 2,
+                   0, 1, 2,
+                   0, 4};
+
+var expmtIndx := 0;
+runLength := 60; 	'6 trials
+testLength := 60;	'6 trials
+QueTime := 0;
+
+stepPeriod := 2000;
+stepLength := 1000;
+stepAmpChair := 0;
+stepAmpDrum := -10;
+
+ToolbarConfig();
+
+'--------------------------------------------------------------------------------
+' Toolbar Callbacks
+'--------------------------------------------------------------------------------
+Func ToolbarIdle%()
+  'This function calls repeatedly whenever nothing else is happening
+  'if runexpmt=1, it is used to run a full expmt automatically.  -HP
+  'expmtMode: 0=habit, 1=0x, 2=2x, 3=ipsi stim, 4=contra stim
+  'test: 0=wait, 1=test, 2=train
+
+  ' Check a valid sampling view is running
+  var currView := ViewKind();
+  if  currView <> 0 then
+      return 1;
+  endif;
+
+  ' Keep sine wave from drifting
+  if MaxTime() > (prevTime + (stepPeriod+QueTime+stepLen1)/1000) then'1/((stepPeriod)/1000)) then
+    if driftFix = 1 then
+      driftFix%();
+    endif;
+  endif;
+
+
+  'If an experiment is running:
+  if runExpmt% = 1 then
+
+      'Check the time. Seconds is the current time - compare it to the goal time of each segment
+      if  MaxTime() > goalTime then
+
+        SampleKey(str$(Order%[expmtIndx]));
+        docase
+          ' GAP A
+          case Order%[expmtIndx] = 0 then
+            SampleKey("x");
+            test% := 0;
+            goalTime := MaxTime() + 5;
+            test%:=0;
+            tt4 :=0;
+            QueTime := 0;
+            stepAmpDrum := 0;
+            stepPeriod := 1000;
+            ToolbarInit%(); Yield();
+
+          ' GAP B
+          case Order%[expmtIndx] = 1 then
+            test% := 1;
+            QueTime := 0;
+            goalTime := MaxTime() + 5;
+            stepAmpDrum := 0;
+            stepPeriod := 1000;
+            ToolbarInit%(); Yield();
+
+          ' TEST
+          case Order%[expmtIndx] = 2 then
+            SampleKey("X");
+            test% := 2;
+            tt4 :=0;
+            goalTime := MaxTime() + testLength;
+            stepPeriod := 6000;
+            stepLength := 3000;
+            stepAmpChair := 0;
+            stepAmpDrum := -10;
+            QueTime := 0;
+            ToolbarLightOn%(); Yield();
+            ToolbarStepConfig%(); Yield();
+            toolbarStepOn%(); Yield();
+
+          ' TRAIN
+          case Order%[expmtIndx] = 3 then
+            SampleKey("X");
+            test% := 3;
+            tt4 :=0;
+            goalTime := MaxTime() + runLength;
+            stepPeriod := 2000;
+            stepLength := 1000;
+            stepAmpChair := 0;
+            stepAmpDrum := -10;
+            QueTime := 0;
+            ToolbarLightOn%(); Yield();
+            ToolbarStepConfig%(); Yield();
+            toolbarStepOn%(); Yield();
+
+          ' QUIT EXPMT
+          case Order%[expmtIndx] = 4 then
+            test% := 4;
+            stepPeriod := 1000;
+            ToolbarQuitExpmt%();
+            Return(1);
+
+        endcase;
+        expmtIndx := expmtIndx + 1;
+      endif;
+  endif;
+  Return(1);
+End
+
+'--------------------------------------------------------------------------------
+'Configure expmt settings window
+'--------------------------------------------------------------------------------
+Func ToolbarConfigExpmt%()
+  DlgCreate("Experiment settings");  'Start new dialog
+  DlgReal(1,"Run length (s)",0,5000);
+  DlgReal(2,"Test length (s)",0,5000);
+
+  DlgShow(runLength, testLength);
+
+  SetSequencerValues();
+  Return(1);
+End

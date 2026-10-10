@@ -24,7 +24,7 @@ end
 
 %% Import Data
 % Import excel table 
-T = readtable(excel_file);
+T = readtable(excel_file, 'NumHeaderLines', 0);
 
 % Remove NaN values from table
 goodRows = ~isnan(table2array(T(:,2)));
@@ -91,7 +91,13 @@ else
     ylabel(['Raw ' measure])
     title([measure, ' - Raw'])
 end
-legend(scatterHandles([1 4]), uniqueSegs); % TODO Hack-y
+
+% TODO Hack-y
+if length(scatterHandles) < 4
+    legend(scatterHandles([1 3]), uniqueSegs);
+else
+    legend(scatterHandles([1 4]), uniqueSegs);
+end
 
 %% Save Figure
 % save as .pdf

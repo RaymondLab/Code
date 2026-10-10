@@ -1,4 +1,4 @@
-function vid = setROI(vid, img1, img2,res, boxsize, boxoffset)
+function vid = setROI(vid, img1, img2, res, boxsize, boxoffset)
 
 %% Display snapshot
 figure(1);
@@ -45,11 +45,11 @@ finalROI = [roi(1) 500-roi(2)-roi(4) roi(3) roi(4)] + [(res-boxsize)/2 0 0] + [0
 % counts vertical pixels from the bottom instead of the top. hRect counts
 % pixels from the top; thus there is a conversion.
 
-set(vid(1), 'ROIPosition',finalROI);
-set(vid(2), 'ROIPosition',finalROI);
+set(vid(1),'ROIPosition',finalROI);
+set(vid(2),'ROIPosition',finalROI);
 close gcf
 
 
 %% Write images to file
-imwrite(img1, 'img1large.tiff','tiff')
-imwrite(img2, 'img2large.tiff','tiff')
+imwrite(img1,'img1large.tiff','tiff')
+imwrite(img2,'img2large.tiff','tiff')

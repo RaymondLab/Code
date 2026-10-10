@@ -58,6 +58,7 @@ function singleAnalysis(params)
             VOR_DarkRearingGeneralization(params)
         otherwise
             fprintf('Running: Basic Overview\n')
+            %% changed to add filtering parameters
             params = VOR_Default(params);
     end
 
@@ -70,7 +71,7 @@ function singleAnalysis(params)
         case 'Amin_GC_Steps'
             %fprintf('Running: GC Step Summary')
             %VOR_Summary_Amin_gcStep(params)
-            VOR_Summary_Sriram_CycleDiff(params, [15, 16 17], [1, 2, 3], 'T30 - T0', 'head')
+            VOR_Summary_Sriram_CycleDiff(params, [10, 11 12], [1, 2, 3], 'T30 - T0', 'head')
             
         case 'Sriram_OKR'
             fprintf('Running: Fit Subtraction Analysis\n')
@@ -81,8 +82,8 @@ function singleAnalysis(params)
             
         case 'Dark Rearing'
             fprintf('Running: Dark Rearing''s t30 & t0 Analysis\n')
-            VOR_Summary_Sriram_CycleDiff(params, [15, 16 17], [1, 2, 3], 'T30 - T0', 'head')
-            VOR_Summary_Sriram_CycleDiff(params, 14, 4, 'T27 5 - T2 5', 'head')
+            VOR_Summary_Sriram_CycleDiff(params, [9, 10, 11], [1, 2, 3], 'T30 - T0', 'head')
+            VOR_Summary_Sriram_CycleDiff(params, 8, 4, 'T27 5 - T2 5', 'head')
             
         case 'Amin_Gen'
             VOR_Summary_Amin_Gen('eyeHgain', expmtExcelFile, 0);

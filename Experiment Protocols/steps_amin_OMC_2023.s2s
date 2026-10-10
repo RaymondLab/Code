@@ -1,0 +1,665 @@
+' ------------------------------------------------------------------------------
+' TEST SCRIPT FOR SPIKE2 VERSION 10 EXPERIMENTAL PROTOCOL TOOLBAR
+'
+' Values for local (rig-specific) variables are stored in the system registry: 
+' HKEY_CURRENT_USER\Software\CED\Spike2\RigParams
+'
+' To calculate the required counter for some given duration of time dt:
+' (dt * sampleRate / steps_in_loop) - steps_before_loop
+' 
+' Sequencer note: CALL/CALLV and RETURN count as two additional steps
+' ------------------------------------------------------------------------------
+const sequencerFile$ := "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\steps_amin_OMC_2023.pls";
+const sequencerStepSlope := 0.007;  'Ensure this is the same value given for Slope in the above sequencer
+
+' General sampling configuration parameters
+const voltageMax := 10.0;  'Ensure this is the same value found in Edit -> Edit Preferences -> Sampling
+const sampleRate := 1000;  'Sequencer sample rate in Hz, MUST be the same value given in the sequencer file
+var sampleStepsize := 1/sampleRate;  'Sequencer sample rate step size in seconds
+
+' Drum stimulus parameters
+var drumAmp := 10.0;
+var drumFreq := 1.0;
+var drumPhase := 90;
+var drumPosStepAmplitude := drumAmp;
+var drumNegStepAmplitude := -drumAmp;
+var drumSign := drumAmp / Abs(drumAmp);
+var drumStepPeriod := (1.0 / drumFreq) * sampleRate;
+
+' Chair stimulus parameters
+var chairAmp := 10.0;
+var chairFreq := 1.0;
+var chairPhase := -90;
+var chairPosStepAmplitude := chairAmp;
+var chairNegStepAmplitude := -chairAmp;
+var chairSign := chairAmp / Abs(chairAmp);
+var chairStepPeriod := (1.0 / chairFreq) * sampleRate;
+
+' Gap block parameters
+var gapDur := 5.0;  'Total duration (in seconds) of each gap block
+var flashDur := 0.2;  'Duration of TTL flash (in seconds) halfway into each gap block
+var flashDuringTrainingGaps := 0;  'Sets whether to provide halfway flashes for training gaps
+
+' Pre/post test and training block parameters
+var lightDuration := 1.0;  'Duration of TTL light pulses
+var lightPeriod := 2 * lightDuration; 'Period of TTL light pulses
+var stepRelStart := 0.5;  'Start time of step command relative to light pulse
+var targetPeriod := lightPeriod * sampleRate;
+
+' Training block parameters
+var nTrainingBlocks% := 600;
+var trainInterval_inMinutes := 10.0; 'Inserts a test block after every number of training minutes
+var trainDuration := ComputeTrainingDuration(nTrainingBlocks%, lightDuration);
+
+' General block list variables
+var nBlocks%, blockList$[1];
+GenerateBlockList(nTrainingBlocks%);
+
+
+ToolbarStartup();
+
+
+'--------------------------------------------------------------------------------
+' FUNCTION TO UPDATE BLOCK LIST FOR A GIVEN NUMBER OF TRAINING BLOCKS
+'--------------------------------------------------------------------------------
+
+Proc GenerateBlockList(num%)
+    var i%;
+    var prepostList$[] := {"Pp", "Gg", "Pp", "Gg", "Pp", "Gg"};
+    var prepostListLen% := Len(prepostList$[]);
+    var trainingListLen% := Round(2 * num%);
+    var totalTrainingBlocksDuration := num% * 6 * lightDuration;
+    var nTrainingBlocksPerTest% := Round((num% * trainInterval_inMinutes * 60.0) / totalTrainingBlocksDuration);
+    var nTestBlocksDuringTraining% := Floor((1.0 * num% / nTrainingBlocksPerTest%) - 0.5);
+    var totalListLen% := Round((2.0 * prepostListLen%) + trainingListLen% + (2.0 * nTestBlocksDuringTraining%));
+
+    resize blockList$[totalListLen%];  'Resize blockList$[] array to the required size
+    ' Reset all elements of the block list to empty string values
+    for i% := 0 to totalListLen%-1 do
+        blockList$[i%] := "";
+    next;
+
+    ' Populate array with pre-training blocks
+    for i% := 0 to prepostListLen%-1 do
+        blockList$[i%] := prepostList$[i%];
+    next;
+
+    var trainingBlockID%, testingBlockID%, maxTrainingBlockID% := Round(nTrainingBlocksPerTest% * nTestBlocksDuringTraining%);
+    ' Populate array with training blocks
+    for i% := prepostListLen% to Round(prepostListLen% + trainingListLen% + (2 * nTestBlocksDuringTraining%) - 2) step 2 do
+        trainingBlockID% := Round(((i% - prepostListLen%) / 2.0) + 1.0);
+        testingBlockID% := Round((i% - prepostListLen%) / (2.0 * nTrainingBlocksPerTest%));
+        if trainingBlockID% = Round(testingBlockID% * nTrainingBlocksPerTest%)  and (trainingBlockID% <= maxTrainingBlockID%) then
+            blockList$[i%] := "Pp";
+            blockList$[i%+1] := "Gg";
+        else
+            blockList$[i%] := "Tt";
+            if flashDuringTrainingGaps then
+                blockList$[i%+1] := "Gg";
+            else
+                blockList$[i%+1] := "Kk";
+            endif
+        endif;
+    next;
+
+    ' Populate array with post-training blocks
+    for i% := 0 to prepostListLen%-1 do
+        blockList$[totalListLen%-prepostListLen%+i%] := prepostList$[i%];
+    next;
+
+    ' Update nBlocks% with current number of total blocks
+    nBlocks% := Len(blockList$[]);
+    PrintLog("\nBlock list generated:  ", blockList$[], "\n");
+
+    ' Do a final check to make sure there are no consecutive duplicates
+    for i% := 0 to prepostListLen%-2 do
+        if blockList$[i%] = blockList$[i%+1] then
+            Message("[ERROR] Duplicate blocks found between elements %d and %d!", i%, i%+1);
+            halt
+        endif;
+    next;
+
+    ' Compute and display the total experiment duration
+    var nTestTrainBlocksTotal := 6.0 + num% + nTestBlocksDuringTraining%;
+    var totalExperimentDuration := nTestTrainBlocksTotal * ((6.0 * lightDuration) + gapDur);
+    PrintLog("Total experiment duration:  %g seconds | %g minutes | %g hours\n\n", totalExperimentDuration, totalExperimentDuration/60.0, totalExperimentDuration/60.0/60.0);
+End
+
+
+'--------------------------------------------------------------------------------
+' READ/WRITE RIG PARAMETERS FROM/TO LOCAL REGISTRY
+'--------------------------------------------------------------------------------
+
+' Initialize RigParams variables
+var drumVelocity2Voltage, drumVelocityOffsetInitial, drumVelocityOffset, drumPhaseActual;
+var chairVelocity2Voltage, chairVelocityOffsetInitial, chairVelocityOffset, chairPhaseActual;
+var HTVELcom_chScaling, HTVELcom_chOffset, HHVELcom_chScaling, HHVELcom_chOffset;
+var htpos_chScaling, htpos_chOffset, hhpos_chScaling, hhpos_chOffset;
+var htvel_chScaling, htvel_chOffset, hhvel_chScaling, hhvel_chOffset;
+var hepos1_chScaling, hepos1_chOffset, hepos2_chScaling, hepos2_chOffset;
+var drumClockwiseVelVoltage, drumClockwisePosVoltage, chairClockwiseVelVoltage, chairClockwisePosVoltage;
+var rigparam_error%;
+
+' Initialize toolbar-related variables
+var HHVELcom_port%, HTVELcom_port%, hhpos_port%, htpos_port%, hepos1_port%, hepos2_port%, hhvel_port%, htvel_port%;
+var TTL1_port%, TTL2_port%, TTL3_port%, TTL4_port%, TTL5_port%;
+const HHVELcom_ch% := 1; 
+const HTVELcom_ch% := 2; 
+const hhpos_ch% := 3; 
+const htpos_ch% := 4; 
+const hepos1_ch% := 5; 
+const hepos2_ch% := 6; 
+const hhvel_ch% := 7; 
+const htvel_ch% := 8;
+const TTL1_ch% := 10;
+const TTL2_ch% := 11; 
+const TTL3_ch% := 12; 
+const TTL4_ch% := 13; 
+const TTL5_ch% := 14;
+
+' Retrieves rig parameters from local registry
+Func ReadRigParam$(key$, name$)
+    var name_variable_str$;
+    Profile(key$, name$, "", name_variable_str$);
+    ' Check if variable exists or has a valid value, and if an error is found, set error flag to 1
+    if name_variable_str$ = "" then
+        rigparam_error% := 1;
+        PrintLog("[ERROR] Registry variable \"%s\" has no value. Please provide a value and try again.\n", name$);
+        Profile(key$, name$, "");
+        return "0";
+    else
+        ' If no error is found, return the registry value as a string
+        PrintLog("Registry variable \"%s\" loaded with value:  %s\n", name$, name_variable_str$);
+        return name_variable_str$;
+    endif;
+End
+
+Proc LoadRigParams()
+    drumClockwiseVelVoltage := Val(ReadRigParam$("RigParams", "drumClockwiseVelVoltage"));  'Drum velocity voltage sign for clockwise rotation
+    drumClockwisePosVoltage := Val(ReadRigParam$("RigParams", "drumClockwisePosVoltage"));  'Drum position voltage sign for clockwise rotation
+    drumVelocity2Voltage := Val(ReadRigParam$("RigParams", "drumVelocity2Voltage")) * drumClockwiseVelVoltage;   'Drum velocity scaling converted to voltage
+    drumVelocityOffsetInitial := Val(ReadRigParam$("RigParams", "drumVelocityOffsetInitial")) * drumClockwiseVelVoltage;  'Drum velocity offset converted to voltage (initial)
+    drumVelocityOffset := drumVelocityOffsetInitial;  'Drum velocity offset (continuously updated)
+    
+    chairClockwiseVelVoltage := Val(ReadRigParam$("RigParams", "chairClockwiseVelVoltage"));  'Chair velocity voltage sign for clockwise rotation
+    chairClockwisePosVoltage := Val(ReadRigParam$("RigParams", "chairClockwisePosVoltage"));  'Chair position voltage sign for clockwise rotation
+    chairVelocity2Voltage := Val(ReadRigParam$("RigParams", "chairVelocity2Voltage")) * chairClockwiseVelVoltage;  'Chair velocity scaling converted to voltage
+    chairVelocityOffsetInitial := Val(ReadRigParam$("RigParams", "chairVelocityOffsetInitial")) * chairClockwiseVelVoltage;  'Chair velocity offset converted to voltage (initial)
+    chairVelocityOffset := chairVelocityOffsetInitial;  'Chair velocity offset (continuously updated)
+
+    ' Displayed drum COMMAND channel signal scaling/offset
+    HTVELcom_chScaling := Val(ReadRigParam$("RigParams\\ChannelScalingOffset", "HTVELcom_chScaling")) * drumClockwiseVelVoltage;  'Voltage to drum velocity (scaling)
+    HTVELcom_chOffset := Val(ReadRigParam$("RigParams\\ChannelScalingOffset", "HTVELcom_chOffset"));  'Voltage to drum velocity (offset)
+
+    ' Displayed chair COMMAND channel signal scaling/offset
+    HHVELcom_chScaling := Val(ReadRigParam$("RigParams\\ChannelScalingOffset", "HHVELcom_chScaling")) * chairClockwiseVelVoltage;  'Voltage to chair velocity (scaling)
+    HHVELcom_chOffset := Val(ReadRigParam$("RigParams\\ChannelScalingOffset", "HHVELcom_chOffset"));  'Voltage to chair velocity (offset)
+
+    ' Displayed drum position feedback channel signal scaling/offset
+    htpos_chScaling := Val(ReadRigParam$("RigParams\\ChannelScalingOffset", "htpos_chScaling")) * drumClockwisePosVoltage;  'Voltage to drum position (scaling)
+    htpos_chOffset := Val(ReadRigParam$("RigParams\\ChannelScalingOffset", "htpos_chOffset"));  'Voltage to drum position (offset)
+
+    ' Displayed chair position feedback channel signal scaling/offset
+    hhpos_chScaling := Val(ReadRigParam$("RigParams\\ChannelScalingOffset", "hhpos_chScaling")) * chairClockwisePosVoltage;  'Voltage to chair position (scaling)
+    hhpos_chOffset := Val(ReadRigParam$("RigParams\\ChannelScalingOffset", "hhpos_chOffset"));  'Voltage to chair position (offset)
+
+    ' Displayed drum velocity feedback channel signal (if available) scaling/offset
+    htvel_chScaling := Val(ReadRigParam$("RigParams\\ChannelScalingOffset", "htvel_chScaling")) * drumClockwiseVelVoltage;  'Voltage to drum velocity (scaling)
+    htvel_chOffset := Val(ReadRigParam$("RigParams\\ChannelScalingOffset", "htvel_chOffset"));  'Voltage to drum velocity (offset)
+
+    ' Displayed chair velocity feedback channel signal scaling/offset
+    hhvel_chScaling := Val(ReadRigParam$("RigParams\\ChannelScalingOffset", "hhvel_chScaling")) * chairClockwiseVelVoltage;  'Voltage to chair velocity (scaling)
+    hhvel_chOffset := Val(ReadRigParam$("RigParams\\ChannelScalingOffset", "hhvel_chOffset"));  'Voltage to chair velocity (offset)
+
+    ' Displayed eye position channels 1 and 2 signal scaling/offset
+    hepos1_chScaling := Val(ReadRigParam$("RigParams\\ChannelScalingOffset", "hepos1_chScaling"));  'Voltage to eye position (scaling)
+    hepos1_chOffset := Val(ReadRigParam$("RigParams\\ChannelScalingOffset", "hepos1_chOffset"));  'Voltage to eye position (offset)
+    hepos2_chScaling := Val(ReadRigParam$("RigParams\\ChannelScalingOffset", "hepos2_chScaling"));  'Voltage to eye position (scaling)
+    hepos2_chOffset := Val(ReadRigParam$("RigParams\\ChannelScalingOffset", "hepos2_chOffset"));  'Voltage to eye position (offset)
+
+    ' Channel numbers relative to their connection to the 1401
+    ' Note: Channel numbers set to "99" will be ignored and not shown
+    HHVELcom_port% := Val(ReadRigParam$("RigParams\\ChannelNumbers", "HHVELcom_port"));
+    HTVELcom_port% := Val(ReadRigParam$("RigParams\\ChannelNumbers", "HTVELcom_port"));
+    hhpos_port% := Val(ReadRigParam$("RigParams\\ChannelNumbers", "hhpos_port"));
+    htpos_port% := Val(ReadRigParam$("RigParams\\ChannelNumbers", "htpos_port"));
+    hepos1_port% := Val(ReadRigParam$("RigParams\\ChannelNumbers", "hepos1_port"));
+    hepos2_port% := Val(ReadRigParam$("RigParams\\ChannelNumbers", "hepos2_port"));
+    hhvel_port% := Val(ReadRigParam$("RigParams\\ChannelNumbers", "hhvel_port"));
+    htvel_port% := Val(ReadRigParam$("RigParams\\ChannelNumbers", "htvel_port"));
+    TTL1_port% := Val(ReadRigParam$("RigParams\\ChannelNumbers", "TTL1_port"));
+    TTL2_port% := Val(ReadRigParam$("RigParams\\ChannelNumbers", "TTL2_port"));
+    TTL3_port% := Val(ReadRigParam$("RigParams\\ChannelNumbers", "TTL3_port"));
+    TTL4_port% := Val(ReadRigParam$("RigParams\\ChannelNumbers", "TTL4_port"));
+    TTL5_port% := Val(ReadRigParam$("RigParams\\ChannelNumbers", "TTL5_port"));
+
+    if rigparam_error% then
+        Message("Invalid RigParam values were found. Please correct the values described in the Log and try again.");
+        Halt;
+    endif;
+
+    PrintLog("Loading of rig parameters from local registry is complete!\n");
+End
+
+
+'--------------------------------------------------------------------------------
+' TOOLBAR FUNCTIONS
+'--------------------------------------------------------------------------------
+
+var blockNum%, blockFlag%, blockMarkers$;  'Used in ToolbarIdle%()
+var runFlag%;  'Used in ToolbarIdle%() and ToolbarRunExpmt%()
+var drumStepRiseFallTime%;  'Used in ToolbarStartup() and ToolbarExpmtSettings%()
+
+' Initializes and enables our toolbar functions
+Proc ToolbarStartup()
+    LoadRigParams();
+    drumStepRiseFallTime% := Round((Abs(drumVelocity2Voltage) * Abs(drumAmp)) / sequencerStepSlope);
+    PrintLog("\nRise time for RAMP slope of %g from 0 V to %g V:  %d ms\n\n", sequencerStepSlope, drumAmp, drumStepRiseFallTime%);
+    ToolbarClear();
+    ToolbarSet(0, "Idle", ToolbarIdle%);
+    ToolbarSet(1, "Quit", ToolbarQuit%);
+    ToolbarSet(3, "New File", ToolbarNewFile%);
+    ToolbarSet(5, "Expmt Settings", ToolbarExpmtSettings%);
+    ToolbarSet(7, "Run Expmt", ToolbarRunExpmt%);
+    ToolbarEnable(7, 0); 
+    Toolbar("", 231);
+End
+
+var blockStartTime, blockElapsedTime;
+
+' Function that defines what happens during idle times (in computer cycles) while actively sampling
+Func ToolbarIdle%()
+    ' Check whether a valid sampling view is currently running before continuing
+    if ViewKind() <> 0 then
+        return 1;
+    endif;
+    
+    driftFix%();
+
+    if runFlag% = 1 then
+        blockFlag% := SampleSeqVar(4);
+        if blockFlag% = 0 then
+            if blockNum% > 0 then
+                SampleKey(Right$(blockMarkers$, 1));
+                blockElapsedTime := MaxTime() - blockStartTime;
+                if blockElapsedTime < 0.5 then
+                    CursorNew(MaxTime());
+                    PrintLog("\n[ERROR] Sample time: %.4f seconds | Block elapsed time: %.6f seconds | Block number: %d of %d | Block marker: %s\n\n", MaxTime(), blockElapsedTime, blockNum%+1, nBlocks%, Right$(blockMarkers$,1));
+                else
+                    PrintLog("Sample time: %.4f seconds | Block number: %d of %d | Block marker: %s\n", MaxTime(), blockNum%+1, nBlocks%, Right$(blockMarkers$,1));
+                endif
+            endif;        
+            if blockNum% < nBlocks% then
+                blockMarkers$ := blockList$[blockNum%];
+                SampleKey(Left$(blockMarkers$, 1));
+                blockStartTime := MaxTime();
+                PrintLog("Sample time: %.4f seconds | Block number: %d of %d | Block marker: %s\n", MaxTime(), blockNum%+1, nBlocks%, Left$(blockMarkers$,1));
+                blockNum% := blockNum% + 1;
+            else
+                runFlag% := 0;
+                SampleKey("R");
+                SampleKey("a");
+                CursorNew(MaxTime());
+                SampleStop();
+                XRange();
+                PrintLog("EXPERIMENT COMPLETE!\n\n");
+            endif;
+        endif;
+    endif;
+    
+    return 1;
+End
+
+
+' Function that stops all stimuli, resets the sequencer to default, and quits out of the toolbar
+Func ToolbarQuit%()
+    SampleKey("R");
+    SampleKey("a");
+    SampleStop();
+    Yield();
+    PrintLog("MANUALLY QUITTING!\n\n");
+    return 0;
+End
+
+' Function that opens a new sampling window
+Func ToolbarNewFile%()
+    WindowSetup();  'Sets up channels in the new sampling configuration window
+    WindowVisible(3);  'Maximizes the new sampling window to fit the screen
+    ToolbarEnable(7, 1);  'Enables buttons that require a new sampling window
+    ToolbarEnable(3, 0); 
+    SetSequencerValues(); Yield();
+    SampleStart();
+    Yield();
+    SampleKey("R");  'Ensures that sequencer is set to its default configuration prior to sampling
+    SampleKey("0");  'Start drift correction loop
+    return 1;
+End
+
+' Convert between number of training blocks and total training duration
+Func ComputeTrainingDuration(number_of_blocks%, light_duration)
+    var singleBlockDuration := (6 * light_duration) / 60;  'Total duration of a single training block in minutes
+    var totalBlockDuration := number_of_blocks% * singleBlockDuration;
+    return totalBlockDuration;
+End
+
+' Convert between total training duration number of training blocks
+Func ComputeNumTrainingBlocks%(training_duration, light_duration)
+    var singleBlockDuration := (6 * light_duration) / 60;  'Total duration of a single training block in minutes
+    var totalNumberOfBlocks% := Ceil(training_duration / singleBlockDuration);
+    return totalNumberOfBlocks%;
+End
+
+
+Func UpdateSettings%(item%)
+    var tempInt%, tempFloat, tempDuration;
+    docase
+        case item% = 1 then 
+            tempDuration := DlgValue(6);  'Get the current value for TTL light pulse duration
+            tempInt% := DlgValue(item%);  'Get the current value for the number of training blocks
+            tempFloat := ComputeTrainingDuration(tempInt%, tempDuration);  'Compute the new value for training duration
+            DlgValue(2, tempFloat);  'Update value in window
+        case item% = 2 then
+            tempDuration := DlgValue(6);  'Get the current value for TTL light pulse duration
+            tempFloat := DlgValue(item%);  'Get the current value for the training duration
+            tempInt% := ComputeNumTrainingBlocks%(tempFloat, tempDuration);  'Compute the new value for number of training blocks
+            DlgValue(1, tempInt%);  'Update value in window
+        case item% = 6 then
+            tempDuration := DlgValue(6);  'Get the current value for TTL light pulse duration
+            tempInt% := DlgValue(1);  'Get the current value for the number of training blocks
+            tempFloat := ComputeTrainingDuration(tempInt%, tempDuration);  'Compute the new value for training duration
+            DlgValue(2, tempFloat);  'Update value in window
+    endcase
+    return 1;
+End
+
+
+' Function that opens window where certain experimental parameters can be changed
+Func ToolbarExpmtSettings%()
+    var gp1%, gp2%;
+    DlgCreate("EXPERIMENT SETTINGS", 0, 0, 55, 21);  'Start new dialog
+
+    DlgInteger(1, "Number of training blocks: ", 1, 99999, 0, 2, 0);
+    DlgText("OR", 10, 3);
+    DlgReal(2, "Total duration of training (minutes): ", 0.001, 99999.0, 0, 4, 0);
+
+    DlgReal(3, "Gap duration (s): |Total duration of each Gap block.", 0, 100, 0, 7, 0);
+    DlgReal(4, "TTL flash duration (s): |Duration of light flash in the middle of each Gap block.", 0, 50, 0, 8, 0);
+    DlgCheck(5, "Flash during training gaps", 0, 9);
+    
+    DlgReal(6, "TTL light pulse duration (s): | Duration of time that light will be on during each pulse.", 0, 100, 0, 12, 0);
+    DlgReal(7, "Drum step velocity (deg/s): | Drum step velocity.", -30, 30, 0, 13, 0);
+    DlgReal(8, "Drum step light-relative delay (s): | Duration to delay the drum step relative to the light turning on.", 0, 50, 0, 14, 0);
+
+    DlgReal(9, "Chair step velocity (deg/s): | Chair step velocity.", -30, 30, 0, 18, 0);
+
+    DlgAllow(0x3ff, ToolbarIdle%, UpdateSettings%);  'Allow all, no idle, update settings function
+    gp1% := DlgGroup("Gap Block Params", 0.5, 6, -1, 4.5);
+    gp2% := DlgGroup("Test/Training Block Params", 0.5, 11, -1, 4.5);
+    gp2% := DlgGroup("Misc (Not used for this protocol)", 0.5, 17, -1, 2.5);
+
+    DlgShow(nTrainingBlocks%, trainDuration, gapDur, flashDur, flashDuringTrainingGaps, lightDuration, drumAmp, stepRelStart, chairAmp);
+
+    drumSign := (drumAmp / Abs(drumAmp));
+    chairSign := (chairAmp / Abs(chairAmp));
+    
+    lightPeriod := 2 * lightDuration;
+    drumStepRiseFallTime% := Round((Abs(drumVelocity2Voltage) * Abs(drumAmp)) / sequencerStepSlope);
+    PrintLog("Rise time for RAMP slope of %g from 0 V to %g V:  %d ms\n\n", sequencerStepSlope, drumAmp, drumStepRiseFallTime%);
+
+    GenerateBlockList(nTrainingBlocks%);
+    SetSequencerValues();
+    return 1;
+End
+
+' Function that runs experiment based on parameters provided in experimental configuration window
+Func ToolbarRunExpmt%()
+    CursorNew(MaxTime());
+    SampleKey("A");
+    SetSequencerValues();
+    runFlag% := 1;
+    Yield();
+    return 1;
+End
+
+var sampling_window%;  'Only used in WindowSetup()
+
+' Configures the sampling window channels, layout, appearance, etc.
+Proc WindowSetup()
+    ' Set sampling configuration window to a standard state
+    SampleClear();
+
+    ' Attempt to set the sequencer file and halt script on error
+    var setseq_error% := SampleSequencer(sequencerFile$);
+    if setseq_error% < 0 then
+        Message("Sequencer file could not be set: %s", Error$(setseq_error%));
+        halt
+    endif
+
+    SampleSeqCtrl(1, 1);  'Set seqencer jump control to control panel and script only
+    
+    ' Ch 1: HHVEL - Horizontal Head Velocity (Command from 1401 to chair)
+    SampleWaveform(HHVELcom_ch%, HHVELcom_port%, sampleRate, 1);
+    SampleCalibrate(HHVELcom_ch%, "deg/s", HHVELcom_chScaling, HHVELcom_chOffset);
+    SampleTitle$(HHVELcom_ch%, "HHVEL");
+    SampleComment$(HHVELcom_ch%, "Velocity command signal sent from the 1401 to the chair");
+
+    ' Ch 2: HTVEL - Horizontal Target Velocity (Command from 1401 to drum)
+    SampleWaveform(HTVELcom_ch%, HTVELcom_port%, sampleRate, 1);
+    SampleCalibrate(HTVELcom_ch%, "deg/s", HTVELcom_chScaling, HTVELcom_chOffset);
+    SampleTitle$(HTVELcom_ch%, "HTVEL");
+    SampleComment$(HTVELcom_ch%, "Velocity command signal sent from the 1401 to the drum");
+
+    ' Ch 3: hhpos - Horizontal Head Position (Readout from chair motor)
+    SampleWaveform(hhpos_ch%, hhpos_port%, sampleRate, 1);
+    SampleCalibrate(hhpos_ch%, "deg", hhpos_chScaling, hhpos_chOffset);
+    SampleTitle$(hhpos_ch%, "hhpos");
+    SampleComment$(hhpos_ch%, "Chair position readout from motor encoder");
+
+    ' Ch 4: htpos - Horizontal Target Position (Readout from drum motor)
+    SampleWaveform(htpos_ch%, htpos_port%, sampleRate, 1);
+    SampleCalibrate(htpos_ch%, "deg", htpos_chScaling, htpos_chOffset);
+    SampleTitle$(htpos_ch%, "htpos");
+    SampleComment$(htpos_ch%, "Drum position readout from motor encoder");
+
+    ' Ch 5: hepos1 - Horizontal Eye Position 1
+    SampleWaveform(hepos1_ch%, hepos1_port%, sampleRate, 1);
+    SampleCalibrate(hepos1_ch%, "deg", hepos1_chScaling, hepos1_chOffset);
+    SampleTitle$(hepos1_ch%, "hepos1");
+    SampleComment$(hepos1_ch%, "Eye Position 1");
+
+    ' Ch 6: hepos2 - Horizontal Eye Position 2
+    SampleWaveform(hepos2_ch%, hepos2_port%, sampleRate, 1);
+    SampleCalibrate(hepos2_ch%, "deg", hepos2_chScaling, hepos2_chOffset);
+    SampleTitle$(hepos2_ch%, "hepos2");
+    SampleComment$(hepos2_ch%, "Eye Position 2");
+
+    ' Ch 7: hhvel - Horizontal Head Velocity (Readout from chair motor)
+    'SampleWaveform(hhvel_ch%, hhvel_port%, sampleRate, 1);
+    'SampleCalibrate(hhvel_ch%, "deg/s", hhvel_chScaling, hhvel_chOffset);
+    'SampleTitle$(hhvel_ch%, "hhvel");
+    'SampleComment$(hhvel_ch%, "Chair velocity readout from motor encoder");
+
+    ' Ch 8: htvel - Horizontal Target Velocity (Readout from drum motor)
+    'SampleWaveform(htvel_ch%, htvel_port%, sampleRate, 1);
+    'SampleCalibrate(htvel_ch%, "deg/s", htvel_chScaling, htvel_chOffset);
+    'SampleTitle$(htvel_ch%, "htvel");
+    'SampleComment$(htvel_ch%, "Drum velocity readout from motor encoder");
+    
+    ' TTL1: Shutter/LED/Light
+    SampleEvent(TTL1_ch%, TTL1_port%, 2, sampleRate);
+    SampleTitle$(TTL1_ch%, "TTL1");
+    SampleComment$(TTL1_ch%, "TTL1: Shutter");
+    
+    ' TextMark: Event keyboard markersggTTg
+    SampleTextMark(200);
+    
+    SampleOptimise(1, 1, 0, 2, 50);  'Sets sample rate optimising settings
+    SampleMode(1);  'Sets sampling mode to Continuous recording mode
+    sampling_window% := FileNew(0, 1);  'Create and display immediately a new Spike2 data file
+    
+    ViewColourSet(0, .87, .87, .87);  'Sets the background color
+    FontSet("Verdana", 8, 0);  'Sets the font type and size
+    
+    ' Head (Chair Motor) Velocity (Virtual Channel derived from hhpos)
+    var HHVEL_expr$ := "ch(" + Str$(hhpos_ch%) + ")";
+    var HHVEL_vch% := VirtualChan(0, "");
+    VirtualChan(HHVEL_vch%, HHVEL_expr$, 0, 1.0/sampleRate);
+    ChanUnits$(HHVEL_vch%, "deg");
+    ChanProcessAdd(HHVEL_vch%, 1, 0.09);
+    ChanProcessAdd(HHVEL_vch%, 3, 0.006);    
+    ChanTitle$(HHVEL_vch%, "HHVEL (V)"); 
+    ChanComment$(HHVEL_vch%, "Calculated velocity of hhpos");
+
+    ' Target (Drum Motor) Velocity (Virtual Channel derived from htpos)
+    var HTVEL_expr$ := "ch(" + Str$(htpos_ch%) + ")";
+    var HTVEL_vch% := VirtualChan(0, "");
+    VirtualChan(HTVEL_vch%, HTVEL_expr$, 0, 1.0/sampleRate);
+    ChanUnits$(HTVEL_vch%, "deg");
+    ChanProcessAdd(HTVEL_vch%, 1, 0.09);
+    ChanProcessAdd(HTVEL_vch%, 3, 0.006);
+    ChanTitle$(HTVEL_vch%, "HTVEL (V)"); 
+    ChanComment$(HTVEL_vch%, "Calculated velocity of htpos");
+    
+    ' Ensure all channels are visible and specify their order
+    'ChanHide(-1);
+    'ChanShow(1, 2, 10, 31);
+    ChanShow(-1);
+    ChanOrder(0, -1, "10, 30, 31");
+    
+    ' Initial y-ranges for all channels
+    YRange(HHVELcom_ch%, -11, 11);
+    YRange(HTVELcom_ch%, -11, 11);
+    YRange(hhpos_ch%, -10, 10);
+    YRange(htpos_ch%, -10, 10);
+    YRange(hepos1_ch%, -10, 10);
+    YRange(hepos2_ch%, -10, 10);
+    YRange(HHVEL_vch%, -11, 11);
+    YRange(HTVEL_vch%, -11, 11);
+    
+    ' Initial x-range for all channels
+    XRange(0, 20);
+    
+    ' Set channel colors
+    ChanColourSet("1..14", 1, 0.501961, 0, 0.501961);
+    ChanColourSet("v1..v5", 1, 0.501961, 0, 0.752941);
+    ChanColourSet("5,6", 1, 0, 0, 0);
+    
+    ' Add channel horizontal cursors
+    HCursorNew(HHVELcom_ch%);
+    HCursorNew(HTVELcom_ch%);
+    HCursorNew(hhpos_ch%);
+    HCursorNew(htpos_ch%);
+    HCursorNew(HHVEL_vch%);
+    HCursorNew(HTVEL_vch%);
+    
+    ' DECREASE HEIGHT OF CHANNELS (TODO: REMOVE THIS LATER)
+    ChanWeight(HTVELcom_ch%, 0.5);
+    ChanWeight(HHVELcom_ch%, 0.5);
+End
+
+
+'--------------------------------------------------------------------------------
+' UTILITY FUNCTIONS
+'--------------------------------------------------------------------------------
+
+' Check for motor drift and apply correction if necessary
+Func driftFix%()
+    var drumFirstTime, htpos_minID%, htpos_arr[Round(targetPeriod)];
+    var chairFirstTime, hhpos_minID%, hhpos_arr[Round(targetPeriod)];
+    var htpos_error, hhpos_error, Kp := 1.0;
+    var currentTime := MaxTime();
+    ChanData(htpos_ch%, htpos_arr, currentTime-lightPeriod, currentTime, drumFirstTime);
+    ChanData(hhpos_ch%, hhpos_arr, currentTime-lightPeriod, currentTime, chairFirstTime);
+    ArrMul(htpos_arr[], drumSign);
+    ArrMul(hhpos_arr[], chairSign);
+    htpos_minID% := Round(Min(htpos_arr));
+    hhpos_minID% := Round(Min(hhpos_arr));
+    htpos_error := Kp * drumSign * htpos_arr[htpos_minID%];
+    hhpos_error := Kp * chairSign * hhpos_arr[hhpos_minID%];
+
+    drumVelocityOffset := drumVelocityOffsetInitial - htpos_error;
+    drumPosStepAmplitude := drumAmp + drumVelocityOffset;
+    drumNegStepAmplitude := -drumAmp + drumVelocityOffset;
+
+    chairVelocityOffset := chairVelocityOffsetInitial - hhpos_error;
+    chairPosStepAmplitude := chairAmp + chairVelocityOffset;
+    chairNegStepAmplitude := -chairAmp + chairVelocityOffset;
+
+    SetSequencerValues();
+    return 1;
+End
+
+
+' Sends current Spike2 variable values to corresponding Sequencer variables
+Proc SetSequencerValues()
+    ' Compute number of cycle steps for GAP1, GAP2, and GAP3 in sequencer file
+    var halfgapDur := (gapDur - flashDur) / 2;
+    var gap1Dur := Round((halfgapDur * sampleRate / 5) - 2);
+    var gap2Dur := Round((flashDur * sampleRate / 5) - 1);
+    var gap3Dur := Round((halfgapDur * sampleRate / 5) - 1);
+
+    ' Compute number of cycle steps for light duration
+    var lightPer := Round(lightPeriod * sampleRate);
+    var stepDel := Round(stepRelStart * sampleRate / 5);
+    var stepDurP := Round((lightDuration - stepRelStart) * sampleRate / 5);
+    var stepDurN := Round((lightDuration - stepRelStart) * sampleRate / 5); 'originally 13
+    var stepOff := Round((stepRelStart/2) * sampleRate / 5);
+    
+    ' Gap block parameters
+    SampleSeqVar(5, gap1Dur);
+    SampleSeqVar(6, gap2Dur);
+    SampleSeqVar(7, gap3Dur);
+
+    ' Drum parameters
+    SampleSeqVar(8, DrumAmp2Int32%(drumVelocityOffset));
+    SampleSeqVar(9, DrumAmp2Int32%(drumPosStepAmplitude));
+    SampleSeqVar(10, DrumAmp2Int32%(drumNegStepAmplitude));
+
+    ' Chair parameters
+    SampleSeqVar(13, ChairAmp2Int32%(chairVelocityOffset));
+    SampleSeqVar(14, ChairAmp2Int32%(chairPosStepAmplitude));
+    SampleSeqVar(15, ChairAmp2Int32%(chairNegStepAmplitude));
+
+    ' Testing block parameters
+    SampleSeqVar(18, lightPer);
+
+    ' Training block parameters
+    SampleSeqVar(19, stepDel);
+    SampleSeqVar(20, stepDurP);
+    SampleSeqVar(21, stepDurN);
+    SampleSeqVar(22, stepOff);
+End
+
+
+'--------------------------------------------------------------------------------
+' CONVERSION FUNCTIONS
+'--------------------------------------------------------------------------------
+
+' Angles in the range [-180,180] should span [-2147483648.0,2147483647.0]
+Func Angle2Int32%(angle)
+  Return(angle * 2147483647.0 / 180);
+End
+
+' Rates are calculated in degrees per sequencer step, with one degree being 11930465.
+Func Hz2Int32%(hz)
+ 'This assumes a sequencer rate of 1 kHz.
+  Return(hz * 11930465 * 360 / 1000);
+End
+
+' Amplitudes must be converted such that [ 0, 32768 ] spans the positive range of the dac, e.g. [0, 5 ]
+' We have to include the dac maximum and the degrees-per-second-to-voltage conversion factor. Does not include offset.
+Func ChairAmp2Int16%(amp)
+  Return(amp * chairVelocity2Voltage * 32768 / voltageMax);
+End
+
+Func DrumAmp2Int16%(amp)
+  Return(amp * drumVelocity2Voltage * 32768 / voltageMax);
+End
+
+Func ChairAmp2Int32%(amp)
+  Return(amp * chairVelocity2Voltage * 2147483647 / voltageMax);
+End
+
+Func DrumAmp2Int32%(amp)
+  Return(amp * drumVelocity2Voltage * 2147483647 / voltageMax);
+End

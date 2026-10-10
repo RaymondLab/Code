@@ -1,0 +1,100 @@
+'--------------------------------------------------------------------------------
+' IMPORT RIG-SPECIFIC PARAMETERS AND UNIVERSAL PARAMETERS
+'--------------------------------------------------------------------------------
+
+#include "C:\\Users\\Public\\RaymondLabCode\\Experiment Protocols\\RigChoice.s2s"
+#include "Parameters_Toolbar_Integrator.s2s"
+
+'--------------------------------------------------------------------------------
+' MAIN PROGRAM
+'--------------------------------------------------------------------------------
+
+ToolbarConfig();
+
+'--------------------------------------------------------------------------------
+' TOOLBAR CALLBACKS
+'--------------------------------------------------------------------------------
+
+func ToolbarIdle%()
+    ' This function calls repeatedly whenever nothing else is happening
+    ' PrintLog("V44 = %f\n", SampleSeqVar(44));
+
+    ' Check a valid sampling view is running
+    var currView := ViewKind();
+    if currView <> 0 then
+        return 1;
+    endif
+
+    ' Keep sine wave from drifting
+    if MaxTime() > (prevTime + 1/sinHzChair) then
+        if driftFix = 1 then
+            driftFix%();
+        endif
+    endif
+
+    ' Track eye every delta seconds
+    if isTracking% = 1 and MaxTime() > prevTrackTime + delta then
+        trackEye();
+    endif
+
+    ' If an experiment is running:
+    if isRunningExpmt% = 1 then
+        ' Whenever curr time reaches goal time, update the experimental phase
+        if MaxTime() > goalTime then
+            docase
+                ' PRE-TEST
+                ' Light off, no stim
+                case phase% = 1 then
+                    PrintLog("Phase 1: PRE-TEST\n");
+                    goalTime := MaxTime() + preTestLength;
+                    phase% := 2;
+
+                ' TRAIN
+                ' Light on, drum tracks eye
+                case phase% = 2 then
+                    docase
+                        ' Before first block, find null eye pos
+                        case blocksCompleted% = 0 then
+                            findNullEye();
+
+                        ' After first block, increment the gain
+                        case blocksCompleted% < nBlocks% then
+                            gain := gain + gainIncrement;
+
+                        ' All blocks completed
+                        else
+                            ToolbarQuitExpmt%();
+                            return 1;
+                    endcase
+                    PrintLog("Phase 2: TRAIN\n");
+                    goalTime := MaxTime() + trainLength;
+                    ToolbarTrackEyeOn%();
+                    phase% := 3;
+
+                ' TEST
+                ' Light off, no stim
+                case phase% = 3 then
+                    PrintLog("Phase 3: TEST\n");
+                    ToolbarTrackEyeOff%();
+                    goalTime := MaxTime() + testLength;
+                    phase% := 2;
+                    blocksCompleted% := blocksCompleted% + 1;
+            endcase
+        endif
+    endif
+    return 1;
+end
+
+'--------------------------------------------------------------------------------
+' CONFIGURE EXPMT SETTINGS WINDOW
+'--------------------------------------------------------------------------------
+
+func ToolbarConfigExpmt%()
+    DlgCreate("Experiment settings"); ' Start new dialog
+    DlgInteger(1, "Number of train-test blocks", 0, 100, 0, 0, 1);
+    DlgReal(2, "Pre-test length (s)", 0, 5000);
+    DlgReal(3, "Train length (s)", 0, 5000);
+    DlgReal(4, "Test length (s)", 0, 5000);
+    DlgShow(nBlocks%, preTestLength, trainLength, testLength);
+    return 1;
+end

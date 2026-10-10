@@ -67,7 +67,8 @@ if SampleKeys(end) == 'S'
     start_special = SampleKeyTimes(end);
     end_special = rawrecData.tend;
     
-    print('yes')
+    %print('yes');
+    disp('Recording ends before the sine ends');
 else
     start_special = [];
     end_special = [];

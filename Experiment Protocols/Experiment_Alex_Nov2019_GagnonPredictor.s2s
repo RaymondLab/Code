@@ -17,14 +17,24 @@ const Order%[] := {0, 1, 2,
                    0, 1, 2,
                    0, 1, 2,
                    0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
+                   0, 1, 3,
                    0, 1, 2,
                    0, 1, 2,
                    0, 1, 2,
-                   0, 9};
+                   0, 19};
 
 var expmtIndx := 0;
-runLength := 3600; '1 Hour (60 minutes x 60 seconds)
+runLength := 300; '1 Hour (60 minutes x 60 seconds)
 testLength := 45;
+QueTime := 495;
 
 ToolbarConfig();
 
@@ -44,7 +54,7 @@ Func ToolbarIdle%()
   endif;
 
   ' Keep sine wave from drifting
-  if MaxTime() > (prevTime + 1/((stepPeriod+245)/1000)) then
+  if MaxTime() > (prevTime + 1/((stepPeriod+QueTime)/1000)) then
     if driftFix = 1 then
       driftFix%();
     endif;
@@ -67,22 +77,21 @@ Func ToolbarIdle%()
 
           ' GAP B
           case Order%[expmtIndx] = 1 then
-            goalTime := MaxTime() + 5;
+            goalTime := MaxTime() + 10;
             ToolbarInit%(); Yield();
-            runFlash(); Yield();
             ToolbarInit%(); Yield();
 
           ' TEST
           case Order%[expmtIndx] = 2 then
             SampleKey("X");
             goalTime := MaxTime() + testLength;
-            stepPeriod := 1000;
-            stepLength := 250;
+            stepPeriod := 2000;
+            stepLength := 500;
             stepAmpChair := 10;
             stepAmpDrum := 0;
-            ToolbarStepConfig%();
-
-            toolbarStepOn%();
+            stepAmpDrumN := 0;
+            ToolbarStepConfig%(); Yield();
+            toolbarStepOn%(); Yield();
 
 
           ' TRAIN
@@ -93,12 +102,14 @@ Func ToolbarIdle%()
             stepLength := 5000;
             stepAmpChair := 0;
             stepAmpDrum := -10;
+            stepAmpDrumN := 10.02;
+            StepLen1 := 100;
             QueTime := 495;
-            ToolbarStepConfig%();
-            toolbarStepOn%();
+            ToolbarStepConfig%(); Yield();
+            toolbarStepOn%(); Yield();
 
           ' QUIT EXPMT
-          case Order%[expmtIndx] = 9 then
+        case Order%[expmtIndx] = 19 then
             ToolbarQuitExpmt%();
             Return(1);
 
@@ -116,10 +127,11 @@ Func ToolbarConfigExpmt%()
   DlgCreate("Experiment settings");  'Start new dialog
   DlgReal(1,"Run length (s)",0,5000);
   DlgReal(2,"Test length (s)",0,5000);
-  DlgInteger(3,"Light flash on?)",0,1,0,0,"0|1");
+  DlgInteger(3,"Light flash on?)",0,0,0,0,"0|1");
+  DlgReal(4,"Drum peak velocity",-100,100);
+  DlgReal(5,"Delay period length (s)",0,2000);
 
-  DlgShow(runLength, testLength, flashon%,testStim);
-
+  DlgShow(runLength, testLength, flashon%, stepAmpDrum, QueTime);
   SetSequencerValues();
   Return(1);
 End
