@@ -23,7 +23,7 @@ Max Gagnon 8/6/18
 
 
 %% === Import Time Segments ============================================ %%
-T = readtable(fullfile(params.folder,[params.file '.xlsx']));
+T = readtable(fullfile(params.folder,[params.file '.xlsx']), 'Range', 'A:V'); % Fixed columns A:V (user-entered segment info); stray cells outside this range are ignored
 
 % Remove NaN values from T
 goodRows = ~isnan(table2array(T(:,2)));

@@ -24,7 +24,7 @@ end
 
 %% Import Data
 % Import excel table 
-T = readtable(excel_file);
+T = readtable(excel_file, 'Range', 'A:V'); % Fixed columns A:V; stray cells outside this range are ignored
 
 % Remove NaN values from table
 goodRows = ~isnan(table2array(T(:,2)));
